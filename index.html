@@ -391,10 +391,13 @@ onAuthStateChanged(auth,u=>{
     cu=u;role=ROLES[u.email]||'Гүйцэтгэгч';
     e('loginPage').style.display='none';
     e('appPage').style.display='block';
-    const parts=(u.displayName||u.email).split(' ');
+    // Нэрийг CHAIN-аас авах (нэр байвал), эсвэл displayName, эсвэл email local part
+    const chainEntry=CHAIN.find(c=>c.email===u.email);
+    const displayName=u.displayName||(chainEntry?chainEntry.name:null)||u.email;
+    const parts=displayName.split(/[\s.]+/).filter(Boolean);
     const ini=(parts.length>=2
       ? parts[0][0]+parts[1][0]
-      : (u.displayName||u.email).substr(0,2)
+      : displayName.replace(/@.*/,'').substr(0,2)
     ).toUpperCase();
     e('uav').textContent=ini;
     e('uav').title=role;
