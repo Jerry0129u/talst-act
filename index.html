@@ -40,7 +40,7 @@ body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
 .cb{padding:11px 14px}
 .row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid #f5f5f5}
 .row:last-child{border:none}
-.rl{color:#888}.rv{font-weight:500}.amt{color:#1a5fa5;font-size:13px}
+.rl{color:#888}.rv{font-weight:500}.amt{color:#1a5fa5;font-size:13px;font-weight:700}
 .pbwrap{background:#f0f0ec;border-radius:20px;height:5px;overflow:hidden;margin:0 14px}
 .pb{height:5px;border-radius:20px;background:#1d9e75;transition:width 0.6s}
 .plabel{display:flex;justify-content:space-between;font-size:10px;color:#bbb;padding:4px 14px 12px}
@@ -63,20 +63,35 @@ body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
 .hashrow{display:flex;align-items:flex-start;gap:5px;padding-top:6px;border-top:1px solid #f5f5f5}
 .hashval{font-size:9px;color:#bbb;font-family:monospace;word-break:break-all;line-height:1.5}
 .tlwait{opacity:0.4}
-.imgbox{height:44px;background:#f5f5f2;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#bbb;margin-bottom:7px;border:1px dashed #e0e0e0}
 .abtns{display:flex;gap:8px;padding:11px 14px;border-top:1px solid #f0f0f0}
-.bok{flex:1;padding:10px;background:#1d9e75;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s}
+.bok{flex:1;padding:10px;background:#1d9e75;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
 .bok:hover{background:#18896a}
 .bno{padding:10px 14px;background:#fde8e8;color:#c0392b;border:1px solid #f5b8b8;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
 .form-card{background:#fff;border:1px solid #ebebeb;border-radius:14px;padding:16px}
 .ftitle{font-size:14px;font-weight:700;margin-bottom:14px}
 .fl{font-size:11px;color:#888;margin:10px 0 4px;font-weight:600}
 .fl:first-of-type{margin-top:0}
-input,textarea{width:100%;font-size:13px;padding:9px 11px;border:1.5px solid #e8e8e8;border-radius:8px;background:#fafaf9;color:#1a1a1a;outline:none;transition:border 0.2s}
+input[type=text],input[type=number],input[type=date],textarea{width:100%;font-size:13px;padding:9px 11px;border:1.5px solid #e8e8e8;border-radius:8px;background:#fafaf9;color:#1a1a1a;outline:none;transition:border 0.2s}
 input:focus,textarea:focus{border-color:#1d9e75;background:#fff}
 textarea{height:60px;resize:none}
-.sbtn{width:100%;margin-top:14px;padding:12px;background:#1a1a2e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.2s}
-.sbtn:hover{background:#2d2d4e}
+.date-row{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}
+.date-sep{font-size:12px;color:#888;text-align:center;font-weight:600}
+.amount-wrap{position:relative}
+.amount-wrap input{padding-right:4px}
+.amt-fmt{font-size:12px;color:#1a5fa5;font-weight:700;margin-top:4px;min-height:18px}
+.file-upload-btn{width:100%;padding:10px 11px;border:1.5px dashed #e0e0e0;border-radius:8px;background:#fafaf9;cursor:pointer;font-size:12px;color:#888;text-align:center;transition:all 0.2s;display:block}
+.file-upload-btn:hover{border-color:#1d9e75;background:#f0fdf8;color:#1d9e75}
+.file-input{display:none}
+.img-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.img-thumb{width:70px;height:70px;border-radius:8px;object-fit:cover;border:1px solid #e8e8e8;cursor:pointer;position:relative;display:block}
+.img-wrap{position:relative;width:70px;height:70px}
+.img-wrap img{width:100%;height:100%;border-radius:8px;object-fit:cover;border:1px solid #e8e8e8}
+.img-rm{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:#e74c3c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;cursor:pointer;font-weight:700}
+.compress-info{font-size:10px;color:#888;margin-top:4px}
+.prog-bar-wrap{background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden;margin-top:8px;display:none}
+.prog-bar{height:6px;border-radius:20px;background:#1d9e75;transition:width 0.3s}
+.prog-text{font-size:11px;color:#1d9e75;margin-top:4px;display:none}
+.sbtn{width:100%;margin-top:14px;padding:12px;background:#1a1a2e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
 .sbtn:disabled{background:#aaa;cursor:not-allowed}
 .li{background:#fff;border:1px solid #ebebeb;border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all 0.2s}
 .li:hover{border-color:#ccc;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
@@ -93,14 +108,27 @@ textarea{height:60px;resize:none}
 .stl{font-size:10px;color:#bbb;margin-top:2px}
 .empty{text-align:center;padding:36px 20px;color:#bbb;font-size:13px;line-height:1.6}
 .back{font-size:12px;color:#888;cursor:pointer;padding:4px 0;margin-bottom:12px;display:inline-flex;align-items:center;gap:4px}
-.back:hover{color:#1a1a1a}
 .seclbl{font-size:11px;color:#bbb;margin-bottom:8px;font-weight:600}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid #e8e8e8;border-top-color:#1d9e75;border-radius:50%;animation:sp 0.8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .loading{text-align:center;padding:40px;color:#bbb}
+.det-imgs{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-top:1px solid #f5f5f5}
+.det-img{width:80px;height:80px;border-radius:8px;object-fit:cover;cursor:pointer;border:1px solid #e8e8e8}
+.det-img:hover{opacity:0.85}
+/* Lightbox */
+.lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center}
+.lightbox.open{display:flex}
+.lightbox img{max-width:92vw;max-height:90vh;border-radius:10px;object-fit:contain}
+.lightbox-close{position:fixed;top:16px;right:16px;color:#fff;font-size:28px;cursor:pointer;font-weight:300;line-height:1}
 </style>
 </head>
 <body>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lb" onclick="closeLb()">
+  <span class="lightbox-close">✕</span>
+  <img id="lbImg" src="" alt="">
+</div>
 
 <div class="login-wrap" id="loginPage">
   <div class="login-card">
@@ -145,12 +173,30 @@ textarea{height:60px;resize:none}
   <div id="p0">
     <div class="form-card">
       <div class="ftitle">Шинэ акт илгээх</div>
-      <div class="fl">Компанийн нэр</div><input id="fc" placeholder="Модун Констракшн ХХК">
-      <div class="fl">Гэрээний дугаар</div><input id="fg" placeholder="ГЭР-2026-14">
-      <div class="fl">Ажлын тайлбар</div><textarea id="fw" placeholder="Хийсэн ажлын дэлгэрэнгүй..."></textarea>
-      <div class="fl">Хийсэн ажлын хугацаа</div><input id="fd" type="date">
-      <div class="fl">Дүн (₮)</div><input id="fa" type="number" placeholder="48500000">
-      <div class="fl">Ажлын зурагны тайлбар</div><input id="fp" placeholder="3 зураг хавсаргасан">
+      <div class="fl">Компанийн нэр</div>
+      <input type="text" id="fc" placeholder="Модун Констракшн ХХК">
+      <div class="fl">Гэрээний дугаар</div>
+      <input type="text" id="fg" placeholder="ГЭР-2026-14">
+      <div class="fl">Ажлын тайлбар</div>
+      <textarea id="fw" placeholder="Хийсэн ажлын дэлгэрэнгүй..."></textarea>
+      <div class="fl">Ажлын хугацаа (эхлэх — дуусах)</div>
+      <div class="date-row">
+        <input type="date" id="fd1">
+        <span class="date-sep">—</span>
+        <input type="date" id="fd2">
+      </div>
+      <div class="fl">Дүн (₮)</div>
+      <div class="amount-wrap">
+        <input type="number" id="fa" placeholder="48500000" oninput="fmtAmt()">
+        <div class="amt-fmt" id="amtFmt"></div>
+      </div>
+      <div class="fl">Ажлын зурагнууд (олон сонгох боломжтой)</div>
+      <label class="file-upload-btn" for="fimgs">📷 Зураг сонгох (JPG, PNG)</label>
+      <input type="file" id="fimgs" class="file-input" multiple accept="image/*" onchange="addImgs(this)">
+      <div class="img-grid" id="imgGrid"></div>
+      <div class="compress-info" id="compInfo"></div>
+      <div class="prog-bar-wrap" id="progWrap"><div class="prog-bar" id="progBar"></div></div>
+      <div class="prog-text" id="progText"></div>
       <button class="sbtn" id="sbtn" onclick="submitAct()">Акт илгээх</button>
     </div>
   </div>
@@ -159,7 +205,9 @@ textarea{height:60px;resize:none}
     <div class="seclbl" id="aplbl">Батлах боломжтой актууд</div>
     <div id="al"><div class="loading"><div class="spin"></div></div></div>
   </div>
-  <div id="p2" style="display:none"><div id="ll"><div class="loading"><div class="spin"></div></div></div></div>
+  <div id="p2" style="display:none">
+    <div id="ll"><div class="loading"><div class="spin"></div></div></div>
+  </div>
   <div id="p3" style="display:none">
     <div class="stats">
       <div class="stat"><div class="stn" id="s0">—</div><div class="stl">Нийт</div></div>
@@ -188,24 +236,17 @@ const cfg={
   appId:"1:306368853099:web:c94fa0ae7f9a02a3f72d2e"
 };
 
-// EmailJS
-const EJS_SERVICE = 'service_5xe3zfv';
-const EJS_TEMPLATE = 'template_8zefmxg';
-const EJS_KEY = 'Bck-y_wlCHwjWp7pA';
-emailjs.init(EJS_KEY);
+const EJS_SVC='service_5xe3zfv';
+const EJS_TPL='template_8zefmxg';
+emailjs.init('Bck-y_wlCHwjWp7pA');
 
-// Батлах дараалал — хэнд email явуулах
-const APPROVAL_CHAIN = [
-  {name:'Координатор', email:'unumunkh@talstgroup.mn'},
-  {name:'Инженер',     email:'unumunkh@talstgroup.mn'},
-  {name:'Захирал',     email:'unumunkh@talstgroup.mn'},
-  {name:'Нягтлан',     email:'unumunkh@talstgroup.mn'},
+const CHAIN=[
+  {name:'Координатор',email:'unumunkh@talstgroup.mn'},
+  {name:'Инженер',    email:'unumunkh@talstgroup.mn'},
+  {name:'Захирал',    email:'unumunkh@talstgroup.mn'},
+  {name:'Нягтлан',    email:'unumunkh@talstgroup.mn'},
 ];
-
-const ROLES={
- 'unumunkh@talstgroup.mn':'Координатор'
-};
-  
+const ROLES={'unumunkh@talstgroup.mn':'Координатор'};
 const RSTEP={'Координатор':0,'Инженер':1,'Захирал':2,'Нягтлан':3};
 const SN=['Координатор','Инженер','Захирал','Нягтлан'];
 const SE=['zolzaya@talstgroup.mn','barsbat@talstgroup.mn','zorigoo@talstgroup.mn','bayarmaa@talstgroup.mn'];
@@ -215,6 +256,7 @@ const auth=getAuth(fapp);
 const db=getFirestore(fapp);
 
 let cu=null,role='Гүйцэтгэгч',acts=[],prev=2,ctab=0,unsub=null;
+let imgDataList=[];// {name, base64, size}
 
 const e=id=>document.getElementById(id);
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -223,6 +265,69 @@ function gh(){return 'sha256:'+Math.random().toString(36).substr(2,8)+'...'+Math
 function pct(a){return a.status==='done'?100:Math.round((a.step||0)/4*100)}
 function bc(a){return a.status==='done'?'bd':a.status==='rejected'?'br':(a.step||0)===0?'bw':'bp'}
 function bt(a){return a.status==='done'?'✓ Батлагдсан':a.status==='rejected'?'✕ Буцаагдсан':SN[a.step||0]+' хүлээж байна'}
+function fmtN(n){return parseInt(n||0).toLocaleString('mn-MN')}
+
+window.fmtAmt=()=>{
+  const v=e('fa').value;
+  e('amtFmt').textContent=v&&!isNaN(v)?'₮ '+parseInt(v).toLocaleString():'';
+};
+
+// Зураг compress — canvas ашиглан
+function compressImage(file, maxW=800, quality=0.7){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.width,h=img.height;
+        if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+        canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        const b64=canvas.toDataURL('image/jpeg',quality);
+        const kb=Math.round(b64.length*0.75/1024);
+        resolve({name:file.name,base64:b64,sizeKb:kb,w,h});
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+window.addImgs=async(input)=>{
+  const files=Array.from(input.files);
+  if(!files.length)return;
+  e('compInfo').textContent='Зураг боловсруулж байна...';
+  for(const f of files){
+    const d=await compressImage(f);
+    imgDataList.push(d);
+  }
+  renderImgGrid();
+  const total=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
+  e('compInfo').textContent=`${imgDataList.length} зураг · нийт ~${total}KB`;
+  input.value='';
+};
+
+function renderImgGrid(){
+  const g=e('imgGrid');
+  g.innerHTML=imgDataList.map((d,i)=>`
+    <div class="img-wrap">
+      <img src="${d.base64}" title="${d.name}">
+      <div class="img-rm" onclick="rmImg(${i})">✕</div>
+    </div>`).join('');
+}
+
+window.rmImg=(i)=>{
+  imgDataList.splice(i,1);
+  renderImgGrid();
+  const total=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
+  e('compInfo').textContent=imgDataList.length?`${imgDataList.length} зураг · ~${total}KB`:'';
+};
+
+// Lightbox
+window.openLb=(src)=>{e('lbImg').src=src;e('lb').classList.add('open')};
+window.closeLb=()=>e('lb').classList.remove('open');
 
 function toast(m,t='ok'){
   const el=e('toast');el.textContent=m;
@@ -231,16 +336,12 @@ function toast(m,t='ok'){
   setTimeout(()=>el.style.display='none',4000);
 }
 
-// EmailJS илгээх функц
-function sendEmail(toEmail, toName, actData, fromName) {
-  return emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
-    to_email: toEmail,
-    to_name: toName,
-    company: actData.company,
-    contract: actData.contract,
-    work: actData.work,
-    amount: parseInt(actData.amount||0).toLocaleString(),
-    from_name: fromName
+function sendMail(toEmail,toName,act,fromName){
+  return emailjs.send(EJS_SVC,EJS_TPL,{
+    to_email:toEmail,to_name:toName,
+    company:act.company,contract:act.contract,
+    work:act.work,amount:fmtN(act.amount),
+    from_name:fromName
   });
 }
 
@@ -288,30 +389,20 @@ function listen(){
 }
 
 function go(n){
-  [0,1,2,3].forEach(i=>{
-    e('p'+i).style.display='none';
-    e('tb'+i).classList.remove('on');
-  });
+  [0,1,2,3].forEach(i=>{e('p'+i).style.display='none';e('tb'+i).classList.remove('on')});
   e('pd').style.display='none';
-  e('p'+n).style.display='block';
-  e('tb'+n).classList.add('on');
+  e('p'+n).style.display='block';e('tb'+n).classList.add('on');
   ctab=n;
   if(n===1)rA();if(n===2)rL();if(n===3)rD();
 }
-
 function bk(){
   e('pd').style.display='none';
-  e('p'+prev).style.display='block';
-  e('tb'+prev).classList.add('on');
+  e('p'+prev).style.display='block';e('tb'+prev).classList.add('on');
   ctab=prev;
 }
-
 function opd(idx,from){
   prev=from;
-  [0,1,2,3].forEach(i=>{
-    e('p'+i).style.display='none';
-    e('tb'+i).classList.remove('on');
-  });
+  [0,1,2,3].forEach(i=>{e('p'+i).style.display='none';e('tb'+i).classList.remove('on')});
   e('pd').style.display='block';
   e('dc').dataset.idx=idx;
   e('dc').innerHTML=detH(idx);
@@ -322,43 +413,78 @@ async function submitAct(){
   const g=e('fg').value.trim();
   const w=e('fw').value.trim();
   const a=e('fa').value.trim();
-  if(!c||!g||!w||!a){toast('Бүх талбарыг бөглөнө уу!','err');return;}
-  const btn=e('sbtn');btn.disabled=true;btn.textContent='Илгээж байна...';
+  if(!c||!g||!w||!a){toast('Компани, гэрээ, ажил, дүн заавал!','err');return;}
+
+  // Нийт зургийн хэмжээ шалгах
+  const totalKb=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
+  if(totalKb>800){
+    toast(`Зургийн нийт хэмжээ ${totalKb}KB — 800KB-аас бага байх ёстой. Зарим зургийг хасна уу.`,'err');
+    return;
+  }
+
+  const btn=e('sbtn');
+  btn.disabled=true;btn.textContent='Илгээж байна...';
+  e('progWrap').style.display='block';
+  e('progText').style.display='block';
+  e('progBar').style.width='20%';
+  e('progText').textContent='Мэдээлэл бэлдэж байна...';
+
   const aid='АКТ-'+new Date().getFullYear()+'-'+String(Date.now()).substr(-4);
-  const actData={
-    actId:aid,
-    date:new Date().toLocaleDateString('mn-MN'),
-    company:c,contract:g,work:w,
-    wdate:e('fd').value,amount:a,
-    photo:e('fp').value.trim(),
-    step:0,status:'pending',
-    submittedBy:cu.email,
-    submittedByName:cu.displayName||cu.email,
-    createdAt:serverTimestamp(),
-    evs:[{
-      type:'submit',
-      who:cu.displayName||cu.email,
-      whoEmail:cu.email,
-      title:'Акт илгээсэн',
-      detail:c+' · Гэрээ: '+g+' · ₮'+parseInt(a).toLocaleString(),
-      time:ts(),hash:gh()
-    }]
-  };
+
   try{
+    e('progBar').style.width='60%';
+    e('progText').textContent='Firestore-д хадгалж байна...';
+
+    const actData={
+      actId:aid,
+      date:new Date().toLocaleDateString('mn-MN'),
+      company:c,contract:g,work:w,
+      dateFrom:e('fd1').value,
+      dateTo:e('fd2').value,
+      amount:a,
+      images:imgDataList.map(d=>({name:d.name,base64:d.base64,sizeKb:d.sizeKb})),
+      imgCount:imgDataList.length,
+      step:0,status:'pending',
+      submittedBy:cu.email,
+      submittedByName:cu.displayName||cu.email,
+      createdAt:serverTimestamp(),
+      evs:[{
+        type:'submit',
+        who:cu.displayName||cu.email,
+        whoEmail:cu.email,
+        title:'Акт илгээсэн',
+        detail:c+' · '+g+' · ₮'+fmtN(a)+(imgDataList.length?` · ${imgDataList.length} зураг (~${totalKb}KB)`:' · Зураггүй'),
+        time:ts(),hash:gh()
+      }]
+    };
+
     await addDoc(collection(db,'acts'),actData);
-    // Координаторт email илгээх
-    await sendEmail(
-      APPROVAL_CHAIN[0].email,
-      APPROVAL_CHAIN[0].name,
-      actData,
-      cu.displayName||cu.email
-    );
+
+    e('progBar').style.width='85%';
+    e('progText').textContent='Email илгээж байна...';
+
+    await sendMail(CHAIN[0].email,CHAIN[0].name,actData,cu.displayName||cu.email);
+
+    e('progBar').style.width='100%';
     toast('✅ Акт илгээгдлээ! Координаторт email очлоо.');
-    ['fc','fg','fw','fd','fa','fp'].forEach(id=>e(id).value='');
+
+    ['fc','fg','fw','fd1','fd2','fa'].forEach(id=>e(id).value='');
+    imgDataList=[];
+    e('imgGrid').innerHTML='';
+    e('compInfo').textContent='';
+    e('amtFmt').textContent='';
+
   }catch(err){
     toast('Алдаа: '+err.message,'err');
+    console.error(err);
   }
+
   btn.disabled=false;btn.textContent='Акт илгээх';
+  setTimeout(()=>{
+    e('progWrap').style.display='none';
+    e('progText').style.display='none';
+    e('progBar').style.width='0%';
+  },1500);
 }
 
 async function approve(docId){
@@ -366,78 +492,48 @@ async function approve(docId){
   if(!a||a.status!=='pending'){toast('Батлах боломжгүй!','err');return;}
   if(RSTEP[role]!==a.step){toast('Та энэ актыг батлах эрхгүй!','err');return;}
   const newEvs=[...(a.evs||[]),{
-    type:'approve',
-    who:cu.displayName||cu.email,
-    whoEmail:cu.email,
+    type:'approve',who:cu.displayName||cu.email,whoEmail:cu.email,
     title:role+' батлав ✓',
     detail:cu.email+' · Google нэвтрэлтээр баталгаажсан',
     time:ts(),hash:gh()
   }];
-  const ns=(a.step||0)+1;
-  const done=ns>=4;
+  const ns=(a.step||0)+1;const done=ns>=4;
   const upd={step:ns,evs:newEvs};
   if(done){
     upd.status='done';
-    upd.evs=[...newEvs,{
-      type:'done',who:'Систем',
-      title:'🎉 Бүрэн батлагдсан',
-      detail:'Нягтланд мэдэгдэл очлоо · Гүйлгээ хийх боломжтой',
-      time:ts(),hash:gh()
-    }];
+    upd.evs=[...newEvs,{type:'done',who:'Систем',title:'🎉 Бүрэн батлагдсан',
+      detail:'Нягтланд мэдэгдэл очлоо · Гүйлгээ хийх боломжтой',time:ts(),hash:gh()}];
   }
   try{
     await updateDoc(doc(db,'acts',docId),upd);
     if(done){
-      // Нягтланд email
-      await sendEmail(
-        APPROVAL_CHAIN[3].email,
-        APPROVAL_CHAIN[3].name,
-        a,
-        cu.displayName||cu.email
-      );
+      await sendMail(CHAIN[3].email,CHAIN[3].name,a,cu.displayName||cu.email);
       toast('🎉 Бүрэн батлагдлаа! Нягтланд email очлоо.');
-    } else {
-      // Дараагийн хүнд email
-      await sendEmail(
-        APPROVAL_CHAIN[ns].email,
-        APPROVAL_CHAIN[ns].name,
-        a,
-        cu.displayName||cu.email
-      );
+    }else{
+      await sendMail(CHAIN[ns].email,CHAIN[ns].name,a,cu.displayName||cu.email);
       toast('✅ '+SN[ns]+' уруу илгээгдлээ. Email очлоо.');
     }
     rA();
-  }catch(err){
-    toast('Алдаа: '+err.message,'err');
-  }
+  }catch(err){toast('Алдаа: '+err.message,'err');}
 }
 
 async function reject(docId){
-  const a=acts.find(x=>x.id===docId);
-  if(!a)return;
+  const a=acts.find(x=>x.id===docId);if(!a)return;
   const reason=prompt('Буцаасан шалтгаан:')||'Тодруулгатай байна';
   const newEvs=[...(a.evs||[]),{
-    type:'reject',
-    who:cu.displayName||cu.email,
-    whoEmail:cu.email,
-    title:role+' буцаав ✕',
-    detail:'Шалтгаан: '+reason,
-    time:ts(),hash:gh()
+    type:'reject',who:cu.displayName||cu.email,whoEmail:cu.email,
+    title:role+' буцаав ✕',detail:'Шалтгаан: '+reason,time:ts(),hash:gh()
   }];
   try{
     await updateDoc(doc(db,'acts',docId),{status:'rejected',evs:newEvs});
-    toast('❌ Акт буцаагдлаа.');
-    bk();
-  }catch(err){
-    toast('Алдаа: '+err.message,'err');
-  }
+    toast('❌ Акт буцаагдлаа.');bk();
+  }catch(err){toast('Алдаа: '+err.message,'err');}
 }
 
 function evH(ev,isLast){
   const dc=ev.type==='approve'||ev.type==='done'||ev.type==='submit'?'dd':ev.type==='reject'?'dj':'da';
   const ic=ev.type==='approve'||ev.type==='done'||ev.type==='submit'?'✓':ev.type==='reject'?'✕':'→';
   const lk=ev.type==='submit'||ev.type==='approve'||ev.type==='done'?'🔒':'🔓';
-  const img=ev.type==='submit'?'<div class="imgbox">[ажлын зураг · GPS байршил]</div>':'';
   return `<div class="tli">
     <div class="tll">
       <div class="dot ${dc}">${ic}</div>
@@ -455,7 +551,6 @@ function evH(ev,isLast){
         </div>
       </div>
       <div class="tlcb">
-        ${img}
         <div class="tldtl">${esc(ev.detail)}</div>
         <div class="hashrow">
           <span style="font-size:10px">🔐</span>
@@ -487,8 +582,18 @@ function detH(idx){
   const a=acts[idx];if(!a)return '';
   const p=pct(a);const step=a.step||0;
   const canA=a.status==='pending'&&role!=='Гүйцэтгэгч'&&RSTEP[role]===step;
+  const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:a.dateFrom||a.dateTo||'—';
+
+  let imgsHtml='';
+  if(a.images&&a.images.length){
+    imgsHtml='<div class="det-imgs">'+
+      a.images.map(img=>`<img class="det-img" src="${img.base64}" onclick="openLb('${img.base64}')" loading="lazy" title="${esc(img.name)}">`).join('')
+    +'</div>';
+  }
+
   let tl=(a.evs||[]).map(ev=>evH(ev,false)).join('');
   if(a.status==='pending')for(let i=step;i<4;i++)tl+=wevH(i,i===3);
+
   return `<div class="card">
     <div class="ch">
       <div>
@@ -500,11 +605,12 @@ function detH(idx){
     <div class="cb">
       <div class="row"><span class="rl">Компани</span><span class="rv">${esc(a.company)}</span></div>
       <div class="row"><span class="rl">Гэрээний дугаар</span><span class="rv">${esc(a.contract)}</span></div>
-      <div class="row"><span class="rl">Хугацаа</span><span class="rv">${esc(a.wdate||'—')}</span></div>
-      <div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${parseInt(a.amount||0).toLocaleString()}</span></div>
+      <div class="row"><span class="rl">Ажлын хугацаа</span><span class="rv">${esc(dr)}</span></div>
+      <div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
       <div class="row"><span class="rl">Илгээсэн</span><span class="rv">${esc(a.submittedByName||a.submittedBy||'—')}</span></div>
-      ${a.photo?`<div class="row"><span class="rl">Зураг</span><span class="rv">${esc(a.photo)}</span></div>`:''}
+      ${a.imgCount?`<div class="row"><span class="rl">Зурагнууд</span><span class="rv">${a.imgCount} зураг</span></div>`:''}
     </div>
+    ${imgsHtml}
     <div class="pbwrap"><div class="pb" style="width:${p}%"></div></div>
     <div class="plabel"><span>${p}% дууссан</span><span>${step}/4 батлалт</span></div>
     ${canA?`<div class="abtns">
@@ -520,6 +626,7 @@ function detH(idx){
 
 function liH(a,idx,from){
   const p=pct(a);
+  const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:'';
   return `<div class="li" onclick="opd(${idx},${from})">
     <div class="li-top">
       <div>
@@ -528,7 +635,7 @@ function liH(a,idx,from){
       </div>
       <span class="badge ${bc(a)}">${bt(a)}</span>
     </div>
-    <div class="li-sub">${esc(a.company)} · ₮${parseInt(a.amount||0).toLocaleString()}</div>
+    <div class="li-sub">${esc(a.company)} · ₮${fmtN(a.amount)}${dr?' · '+esc(dr):''}</div>
     <div style="display:flex;align-items:center;gap:7px">
       <div class="mbwrap"><div class="mb" style="width:${p}%"></div></div>
       <span class="mpct">${p}%</span>
@@ -547,14 +654,12 @@ function rA(){
     ?list.map(a=>liH(a,acts.indexOf(a),1)).join('')
     :'<div class="empty">Таны батлах акт байхгүй байна</div>';
 }
-
 function rL(){
   const el=e('ll');
   el.innerHTML=acts.length
     ?acts.map((a,i)=>liH(a,i,2)).join('')
     :'<div class="empty">Одоогоор акт байхгүй байна</div>';
 }
-
 function rD(){
   e('s0').textContent=acts.length;
   e('s1').textContent=acts.filter(a=>a.status==='pending').length;
