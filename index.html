@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Гүйцэтгэлийн Акт — Talst Group</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;min-height:100vh}
@@ -21,12 +22,13 @@ body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
 .appname{font-size:15px;font-weight:700;margin-left:8px}
 .user-pill{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:#fff;border:1px solid #e8e8e8;cursor:pointer}
 .uav{width:26px;height:26px;border-radius:50%;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700}
-.uname{font-size:11px;font-weight:500;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uname{font-size:11px;font-weight:500;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .urole{font-size:9px;color:#888}
 .tabs{display:flex;gap:3px;margin-bottom:14px;background:#e8e8e4;padding:3px;border-radius:10px}
 .tab{flex:1;padding:7px 2px;font-size:11px;font-weight:600;border:none;background:transparent;color:#888;cursor:pointer;border-radius:8px;transition:all 0.2s}
 .tab.on{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
-.toast{padding:10px 14px;border-radius:10px;font-size:12px;font-weight:500;margin-bottom:12px;display:none}
+.toast{padding:10px 14px;border-radius:10px;font-size:12px;font-weight:500;margin-bottom:12px;display:none;animation:fi 0.3s}
+@keyframes fi{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .tok{background:#dff5ec;color:#0a5a35;border:1px solid #b8e8d0}
 .terr{background:#fde8e8;color:#7a0a0a;border:1px solid #f5b8b8}
 .card{background:#fff;border:1px solid #ebebeb;border-radius:14px;overflow:hidden;margin-bottom:10px}
@@ -63,7 +65,7 @@ body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
 .tlwait{opacity:0.4}
 .imgbox{height:44px;background:#f5f5f2;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#bbb;margin-bottom:7px;border:1px dashed #e0e0e0}
 .abtns{display:flex;gap:8px;padding:11px 14px;border-top:1px solid #f0f0f0}
-.bok{flex:1;padding:10px;background:#1d9e75;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.bok{flex:1;padding:10px;background:#1d9e75;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s}
 .bok:hover{background:#18896a}
 .bno{padding:10px 14px;background:#fde8e8;color:#c0392b;border:1px solid #f5b8b8;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
 .form-card{background:#fff;border:1px solid #ebebeb;border-radius:14px;padding:16px}
@@ -73,7 +75,8 @@ body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
 input,textarea{width:100%;font-size:13px;padding:9px 11px;border:1.5px solid #e8e8e8;border-radius:8px;background:#fafaf9;color:#1a1a1a;outline:none;transition:border 0.2s}
 input:focus,textarea:focus{border-color:#1d9e75;background:#fff}
 textarea{height:60px;resize:none}
-.sbtn{width:100%;margin-top:14px;padding:12px;background:#1a1a2e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+.sbtn{width:100%;margin-top:14px;padding:12px;background:#1a1a2e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.2s}
+.sbtn:hover{background:#2d2d4e}
 .sbtn:disabled{background:#aaa;cursor:not-allowed}
 .li{background:#fff;border:1px solid #ebebeb;border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all 0.2s}
 .li:hover{border-color:#ccc;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
@@ -90,6 +93,7 @@ textarea{height:60px;resize:none}
 .stl{font-size:10px;color:#bbb;margin-top:2px}
 .empty{text-align:center;padding:36px 20px;color:#bbb;font-size:13px;line-height:1.6}
 .back{font-size:12px;color:#888;cursor:pointer;padding:4px 0;margin-bottom:12px;display:inline-flex;align-items:center;gap:4px}
+.back:hover{color:#1a1a1a}
 .seclbl{font-size:11px;color:#bbb;margin-bottom:8px;font-weight:600}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid #e8e8e8;border-top-color:#1d9e75;border-radius:50%;animation:sp 0.8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -112,7 +116,7 @@ textarea{height:60px;resize:none}
       </svg>
       Google-р нэвтрэх
     </button>
-    <div class="login-note">Coordinator, Инженер, Захирал, Нягтлан нар talstgroup.mn имэйлээрээ нэвтэрнэ.<br>Гүйцэтгэгч компаниуд ч Gmail-р нэвтэрч болно.</div>
+    <div class="login-note">Координатор, Инженер, Захирал, Нягтлан нар talstgroup.mn имэйлээрээ нэвтэрнэ.<br>Гүйцэтгэгч компаниуд ч Gmail-р нэвтэрч болно.</div>
   </div>
 </div>
 
@@ -155,11 +159,7 @@ textarea{height:60px;resize:none}
     <div class="seclbl" id="aplbl">Батлах боломжтой актууд</div>
     <div id="al"><div class="loading"><div class="spin"></div></div></div>
   </div>
-
-  <div id="p2" style="display:none">
-    <div id="ll"><div class="loading"><div class="spin"></div></div></div>
-  </div>
-
+  <div id="p2" style="display:none"><div id="ll"><div class="loading"><div class="spin"></div></div></div></div>
   <div id="p3" style="display:none">
     <div class="stats">
       <div class="stat"><div class="stn" id="s0">—</div><div class="stl">Нийт</div></div>
@@ -168,7 +168,6 @@ textarea{height:60px;resize:none}
     </div>
     <div id="dl"></div>
   </div>
-
   <div id="pd" style="display:none">
     <span class="back" onclick="bk()">← Буцах</span>
     <div id="dc"></div>
@@ -180,15 +179,43 @@ import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-ap
 import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut as fbOut}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getFirestore,collection,addDoc,doc,updateDoc,onSnapshot,query,orderBy,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const cfg={apiKey:"AIzaSyAIG54jlntVl7b5Y4MHR2IxDNHA7Xp3KeE",authDomain:"talst-act.firebaseapp.com",projectId:"talst-act",storageBucket:"talst-act.firebasestorage.app",messagingSenderId:"306368853099",appId:"1:306368853099:web:c94fa0ae7f9a02a3f72d2e"};
-const fapp=initializeApp(cfg);
-const auth=getAuth(fapp);
-const db=getFirestore(fapp);
+const cfg={
+  apiKey:"AIzaSyAIG54jlntVl7b5Y4MHR2IxDNHA7Xp3KeE",
+  authDomain:"talst-act.firebaseapp.com",
+  projectId:"talst-act",
+  storageBucket:"talst-act.firebasestorage.app",
+  messagingSenderId:"306368853099",
+  appId:"1:306368853099:web:c94fa0ae7f9a02a3f72d2e"
+};
 
-const ROLES={'zolzaya@talstgroup.mn':'Координатор','barsbat@talstgroup.mn':'Инженер','zorigoo@talstgroup.mn':'Захирал','bayarmaa@talstgroup.mn':'Нягтлан'};
+// EmailJS
+const EJS_SERVICE = 'service_5xe3zfv';
+const EJS_TEMPLATE = 'template_8zefmxg';
+const EJS_KEY = 'Bck-y_wlCHwjWp7pA';
+emailjs.init(EJS_KEY);
+
+// Батлах дараалал — хэнд email явуулах
+const APPROVAL_CHAIN = [
+  {name:'Координатор', email:'zolzaya@talstgroup.mn'},
+  {name:'Инженер',     email:'barsbat@talstgroup.mn'},
+  {name:'Захирал',     email:'zorigoo@talstgroup.mn'},
+  {name:'Нягтлан',     email:'bayarmaa@talstgroup.mn'},
+];
+
+const ROLES={
+  'zolzaya@talstgroup.mn':'Координатор',
+  'barsbat@talstgroup.mn':'Инженер',
+  'zorigoo@talstgroup.mn':'Захирал',
+  'bayarmaa@talstgroup.mn':'Нягтлан',
+  'unumunkh@talstgroup.mn':'Захирал'
+};
 const RSTEP={'Координатор':0,'Инженер':1,'Захирал':2,'Нягтлан':3};
 const SN=['Координатор','Инженер','Захирал','Нягтлан'];
 const SE=['zolzaya@talstgroup.mn','barsbat@talstgroup.mn','zorigoo@talstgroup.mn','bayarmaa@talstgroup.mn'];
+
+const fapp=initializeApp(cfg);
+const auth=getAuth(fapp);
+const db=getFirestore(fapp);
 
 let cu=null,role='Гүйцэтгэгч',acts=[],prev=2,ctab=0,unsub=null;
 
@@ -200,22 +227,51 @@ function pct(a){return a.status==='done'?100:Math.round((a.step||0)/4*100)}
 function bc(a){return a.status==='done'?'bd':a.status==='rejected'?'br':(a.step||0)===0?'bw':'bp'}
 function bt(a){return a.status==='done'?'✓ Батлагдсан':a.status==='rejected'?'✕ Буцаагдсан':SN[a.step||0]+' хүлээж байна'}
 
-function toast(m,t='ok'){const el=e('toast');el.textContent=m;el.className='toast '+(t==='ok'?'tok':'terr');el.style.display='block';setTimeout(()=>el.style.display='none',3500)}
+function toast(m,t='ok'){
+  const el=e('toast');el.textContent=m;
+  el.className='toast '+(t==='ok'?'tok':'terr');
+  el.style.display='block';
+  setTimeout(()=>el.style.display='none',4000);
+}
 
-window.signInGoogle=async()=>{try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(err){toast('Алдаа: '+err.message,'err')}};
-window.doSignOut=async()=>{if(confirm('Гарах уу?')){if(unsub)unsub();await fbOut(auth)}};
-window.go=go;window.bk=bk;window.opd=opd;window.submitAct=submitAct;window.approve=approve;window.reject=reject;
+// EmailJS илгээх функц
+function sendEmail(toEmail, toName, actData, fromName) {
+  return emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+    to_email: toEmail,
+    to_name: toName,
+    company: actData.company,
+    contract: actData.contract,
+    work: actData.work,
+    amount: parseInt(actData.amount||0).toLocaleString(),
+    from_name: fromName
+  });
+}
+
+window.signInGoogle=async()=>{
+  try{await signInWithPopup(auth,new GoogleAuthProvider())}
+  catch(err){toast('Нэвтрэхэд алдаа гарлаа','err')}
+};
+window.doSignOut=async()=>{
+  if(confirm('Гарах уу?')){if(unsub)unsub();await fbOut(auth)}
+};
+window.go=go;window.bk=bk;window.opd=opd;
+window.submitAct=submitAct;window.approve=approve;window.reject=reject;
 
 onAuthStateChanged(auth,u=>{
   if(u){
     cu=u;role=ROLES[u.email]||'Гүйцэтгэгч';
-    e('loginPage').style.display='none';e('appPage').style.display='block';
+    e('loginPage').style.display='none';
+    e('appPage').style.display='block';
     const ini=(u.displayName||u.email).split(' ').map(n=>n[0]).join('').toUpperCase().substr(0,2);
-    e('uav').textContent=ini;e('uname').textContent=u.displayName||u.email;e('urole').textContent=role;
+    e('uav').textContent=ini;
+    e('uname').textContent=u.displayName||u.email;
+    e('urole').textContent=role;
     e('aplbl').textContent=role+' горимд батлах актууд';
     listen();
   }else{
-    cu=null;e('loginPage').style.display='flex';e('appPage').style.display='none';
+    cu=null;
+    e('loginPage').style.display='flex';
+    e('appPage').style.display='none';
     if(unsub){unsub();unsub=null;}
   }
 });
@@ -224,35 +280,87 @@ function listen(){
   const q=query(collection(db,'acts'),orderBy('createdAt','desc'));
   unsub=onSnapshot(q,snap=>{
     acts=snap.docs.map(d=>({id:d.id,...d.data()}));
-    if(ctab===1)rA();if(ctab===2)rL();if(ctab===3)rD();
-    if(e('pd').style.display!=='none'){const idx=parseInt(e('dc').dataset.idx||'-1');if(idx>=0)e('dc').innerHTML=detH(idx);}
+    if(ctab===1)rA();
+    if(ctab===2)rL();
+    if(ctab===3)rD();
+    if(e('pd').style.display!=='none'){
+      const idx=parseInt(e('dc').dataset.idx||'-1');
+      if(idx>=0)e('dc').innerHTML=detH(idx);
+    }
   });
 }
 
 function go(n){
-  [0,1,2,3].forEach(i=>{e('p'+i).style.display='none';e('tb'+i).classList.remove('on')});
-  e('pd').style.display='none';e('p'+n).style.display='block';e('tb'+n).classList.add('on');
-  ctab=n;if(n===1)rA();if(n===2)rL();if(n===3)rD();
+  [0,1,2,3].forEach(i=>{
+    e('p'+i).style.display='none';
+    e('tb'+i).classList.remove('on');
+  });
+  e('pd').style.display='none';
+  e('p'+n).style.display='block';
+  e('tb'+n).classList.add('on');
+  ctab=n;
+  if(n===1)rA();if(n===2)rL();if(n===3)rD();
 }
-function bk(){e('pd').style.display='none';e('p'+prev).style.display='block';e('tb'+prev).classList.add('on');ctab=prev;}
-function opd(idx,from){prev=from;[0,1,2,3].forEach(i=>{e('p'+i).style.display='none';e('tb'+i).classList.remove('on')});e('pd').style.display='block';e('dc').dataset.idx=idx;e('dc').innerHTML=detH(idx);}
+
+function bk(){
+  e('pd').style.display='none';
+  e('p'+prev).style.display='block';
+  e('tb'+prev).classList.add('on');
+  ctab=prev;
+}
+
+function opd(idx,from){
+  prev=from;
+  [0,1,2,3].forEach(i=>{
+    e('p'+i).style.display='none';
+    e('tb'+i).classList.remove('on');
+  });
+  e('pd').style.display='block';
+  e('dc').dataset.idx=idx;
+  e('dc').innerHTML=detH(idx);
+}
 
 async function submitAct(){
-  const c=e('fc').value.trim(),g=e('fg').value.trim(),w=e('fw').value.trim(),a=e('fa').value.trim();
+  const c=e('fc').value.trim();
+  const g=e('fg').value.trim();
+  const w=e('fw').value.trim();
+  const a=e('fa').value.trim();
   if(!c||!g||!w||!a){toast('Бүх талбарыг бөглөнө уу!','err');return;}
   const btn=e('sbtn');btn.disabled=true;btn.textContent='Илгээж байна...';
   const aid='АКТ-'+new Date().getFullYear()+'-'+String(Date.now()).substr(-4);
+  const actData={
+    actId:aid,
+    date:new Date().toLocaleDateString('mn-MN'),
+    company:c,contract:g,work:w,
+    wdate:e('fd').value,amount:a,
+    photo:e('fp').value.trim(),
+    step:0,status:'pending',
+    submittedBy:cu.email,
+    submittedByName:cu.displayName||cu.email,
+    createdAt:serverTimestamp(),
+    evs:[{
+      type:'submit',
+      who:cu.displayName||cu.email,
+      whoEmail:cu.email,
+      title:'Акт илгээсэн',
+      detail:c+' · Гэрээ: '+g+' · ₮'+parseInt(a).toLocaleString(),
+      time:ts(),hash:gh()
+    }]
+  };
   try{
-    await addDoc(collection(db,'acts'),{
-      actId:aid,date:new Date().toLocaleDateString('mn-MN'),
-      company:c,contract:g,work:w,wdate:e('fd').value,amount:a,photo:e('fp').value.trim(),
-      step:0,status:'pending',submittedBy:cu.email,submittedByName:cu.displayName||cu.email,
-      createdAt:serverTimestamp(),
-      evs:[{type:'submit',who:cu.displayName||cu.email,whoEmail:cu.email,title:'Акт илгээсэн',detail:c+' · Гэрээ: '+g+' · ₮'+parseInt(a).toLocaleString(),time:ts(),hash:gh()}]
-    });
-    toast('✅ Акт илгээгдлээ! Координаторт мэдэгдэл очлоо.');
+    await addDoc(collection(db,'acts'),actData);
+    // Координаторт email илгээх
+    await sendEmail(
+      APPROVAL_CHAIN[0].email,
+      APPROVAL_CHAIN[0].name,
+      actData,
+      cu.displayName||cu.email
+    );
+    toast('✅ Акт илгээгдлээ! Координаторт email очлоо.');
     ['fc','fg','fw','fd','fa','fp'].forEach(id=>e(id).value='');
-  }catch(err){toast('Алдаа: '+err.message,'err');}
+  }catch(err){
+    toast('Алдаа: '+err.message,'err');
+  }
   btn.disabled=false;btn.textContent='Акт илгээх';
 }
 
@@ -260,35 +368,122 @@ async function approve(docId){
   const a=acts.find(x=>x.id===docId);
   if(!a||a.status!=='pending'){toast('Батлах боломжгүй!','err');return;}
   if(RSTEP[role]!==a.step){toast('Та энэ актыг батлах эрхгүй!','err');return;}
-  const newEvs=[...(a.evs||[]),{type:'approve',who:cu.displayName||cu.email,whoEmail:cu.email,title:role+' батлав ✓',detail:cu.email+' · Google нэвтрэлтээр баталгаажсан',time:ts(),hash:gh()}];
-  const ns=(a.step||0)+1;const done=ns>=4;
-  const upd={step:ns,evs:done?[...newEvs,{type:'done',who:'Систем',title:'🎉 Бүрэн батлагдсан',detail:'Нягтланд мэдэгдэл очлоо · Гүйлгээ хийх боломжтой',time:ts(),hash:gh()}]:newEvs};
-  if(done)upd.status='done';
-  try{await updateDoc(doc(db,'acts',docId),upd);toast(done?'🎉 Бүрэн батлагдлаа!':'✅ '+SN[ns]+' уруу илгээгдлээ.');rA();}catch(err){toast('Алдаа: '+err.message,'err');}
+  const newEvs=[...(a.evs||[]),{
+    type:'approve',
+    who:cu.displayName||cu.email,
+    whoEmail:cu.email,
+    title:role+' батлав ✓',
+    detail:cu.email+' · Google нэвтрэлтээр баталгаажсан',
+    time:ts(),hash:gh()
+  }];
+  const ns=(a.step||0)+1;
+  const done=ns>=4;
+  const upd={step:ns,evs:newEvs};
+  if(done){
+    upd.status='done';
+    upd.evs=[...newEvs,{
+      type:'done',who:'Систем',
+      title:'🎉 Бүрэн батлагдсан',
+      detail:'Нягтланд мэдэгдэл очлоо · Гүйлгээ хийх боломжтой',
+      time:ts(),hash:gh()
+    }];
+  }
+  try{
+    await updateDoc(doc(db,'acts',docId),upd);
+    if(done){
+      // Нягтланд email
+      await sendEmail(
+        APPROVAL_CHAIN[3].email,
+        APPROVAL_CHAIN[3].name,
+        a,
+        cu.displayName||cu.email
+      );
+      toast('🎉 Бүрэн батлагдлаа! Нягтланд email очлоо.');
+    } else {
+      // Дараагийн хүнд email
+      await sendEmail(
+        APPROVAL_CHAIN[ns].email,
+        APPROVAL_CHAIN[ns].name,
+        a,
+        cu.displayName||cu.email
+      );
+      toast('✅ '+SN[ns]+' уруу илгээгдлээ. Email очлоо.');
+    }
+    rA();
+  }catch(err){
+    toast('Алдаа: '+err.message,'err');
+  }
 }
 
 async function reject(docId){
-  const a=acts.find(x=>x.id===docId);if(!a)return;
+  const a=acts.find(x=>x.id===docId);
+  if(!a)return;
   const reason=prompt('Буцаасан шалтгаан:')||'Тодруулгатай байна';
-  const newEvs=[...(a.evs||[]),{type:'reject',who:cu.displayName||cu.email,whoEmail:cu.email,title:role+' буцаав ✕',detail:'Шалтгаан: '+reason,time:ts(),hash:gh()}];
-  try{await updateDoc(doc(db,'acts',docId),{status:'rejected',evs:newEvs});toast('❌ Буцаагдлаа.');bk();}catch(err){toast('Алдаа: '+err.message,'err');}
+  const newEvs=[...(a.evs||[]),{
+    type:'reject',
+    who:cu.displayName||cu.email,
+    whoEmail:cu.email,
+    title:role+' буцаав ✕',
+    detail:'Шалтгаан: '+reason,
+    time:ts(),hash:gh()
+  }];
+  try{
+    await updateDoc(doc(db,'acts',docId),{status:'rejected',evs:newEvs});
+    toast('❌ Акт буцаагдлаа.');
+    bk();
+  }catch(err){
+    toast('Алдаа: '+err.message,'err');
+  }
 }
 
 function evH(ev,isLast){
   const dc=ev.type==='approve'||ev.type==='done'||ev.type==='submit'?'dd':ev.type==='reject'?'dj':'da';
   const ic=ev.type==='approve'||ev.type==='done'||ev.type==='submit'?'✓':ev.type==='reject'?'✕':'→';
   const lk=ev.type==='submit'||ev.type==='approve'||ev.type==='done'?'🔒':'🔓';
-  const img=ev.type==='submit'?'<div class="imgbox">[ажлын зураг · GPS байршил бүртгэгдсэн]</div>':'';
-  return `<div class="tli"><div class="tll"><div class="dot ${dc}">${ic}</div>${!isLast?`<div class="dline ld"></div>`:''}</div>
-  <div class="tlr"><div class="tlcard"><div class="tlch"><div><div class="tlwho">${esc(ev.who)} · ${esc(ev.whoEmail||'')}</div><div class="tltitle">${esc(ev.title)}</div></div>
-  <div style="display:flex;align-items:center;gap:4px"><span style="font-size:12px">${lk}</span><div class="tltime">${ev.time||''}</div></div></div>
-  <div class="tlcb">${img}<div class="tldtl">${esc(ev.detail)}</div>
-  <div class="hashrow"><span style="font-size:10px">🔐</span><div class="hashval">${ev.hash||''} · ${ev.time||''}</div></div></div></div></div></div>`;
+  const img=ev.type==='submit'?'<div class="imgbox">[ажлын зураг · GPS байршил]</div>':'';
+  return `<div class="tli">
+    <div class="tll">
+      <div class="dot ${dc}">${ic}</div>
+      ${!isLast?`<div class="dline ld"></div>`:''}
+    </div>
+    <div class="tlr"><div class="tlcard">
+      <div class="tlch">
+        <div>
+          <div class="tlwho">${esc(ev.who)} · ${esc(ev.whoEmail||'')}</div>
+          <div class="tltitle">${esc(ev.title)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="font-size:12px">${lk}</span>
+          <div class="tltime">${ev.time||''}</div>
+        </div>
+      </div>
+      <div class="tlcb">
+        ${img}
+        <div class="tldtl">${esc(ev.detail)}</div>
+        <div class="hashrow">
+          <span style="font-size:10px">🔐</span>
+          <div class="hashval">${ev.hash||''} · ${ev.time||''}</div>
+        </div>
+      </div>
+    </div></div>
+  </div>`;
 }
 
 function wevH(i,isLast){
-  return `<div class="tli"><div class="tll"><div class="dot dw" style="font-size:10px">${i+1}</div>${!isLast?`<div class="dline lw"></div>`:''}</div>
-  <div class="tlr"><div class="tlcard tlwait"><div class="tlch"><div><div class="tlwho">${SE[i]}</div><div class="tltitle">${SN[i]} хүлээгдэж байна...</div></div></div></div></div></div>`;
+  return `<div class="tli">
+    <div class="tll">
+      <div class="dot dw" style="font-size:10px">${i+1}</div>
+      ${!isLast?`<div class="dline lw"></div>`:''}
+    </div>
+    <div class="tlr"><div class="tlcard tlwait">
+      <div class="tlch">
+        <div>
+          <div class="tlwho">${SE[i]}</div>
+          <div class="tltitle">${SN[i]} хүлээгдэж байна...</div>
+        </div>
+      </div>
+    </div></div>
+  </div>`;
 }
 
 function detH(idx){
@@ -297,44 +492,80 @@ function detH(idx){
   const canA=a.status==='pending'&&role!=='Гүйцэтгэгч'&&RSTEP[role]===step;
   let tl=(a.evs||[]).map(ev=>evH(ev,false)).join('');
   if(a.status==='pending')for(let i=step;i<4;i++)tl+=wevH(i,i===3);
-  return `<div class="card"><div class="ch"><div><div class="cid">${esc(a.actId)} · ${esc(a.date)}</div><div class="ctitle">${esc(a.work)}</div></div><span class="badge ${bc(a)}">${bt(a)}</span></div>
-  <div class="cb">
-    <div class="row"><span class="rl">Компани</span><span class="rv">${esc(a.company)}</span></div>
-    <div class="row"><span class="rl">Гэрээний дугаар</span><span class="rv">${esc(a.contract)}</span></div>
-    <div class="row"><span class="rl">Хугацаа</span><span class="rv">${esc(a.wdate||'—')}</span></div>
-    <div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${parseInt(a.amount||0).toLocaleString()}</span></div>
-    <div class="row"><span class="rl">Илгээсэн</span><span class="rv">${esc(a.submittedByName||a.submittedBy||'—')}</span></div>
-    ${a.photo?`<div class="row"><span class="rl">Зураг</span><span class="rv">${esc(a.photo)}</span></div>`:''}
-  </div>
-  <div class="pbwrap"><div class="pb" style="width:${p}%"></div></div>
-  <div class="plabel"><span>${p}% дууссан</span><span>${step}/4 батлалт</span></div>
-  ${canA?`<div class="abtns"><button class="bok" onclick="approve('${a.id}')">✓ Батлах</button><button class="bno" onclick="reject('${a.id}')">✕ Буцаах</button></div>`:''}
-  <div class="tl"><div class="tll-label">ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ</div>${tl}</div></div>`;
+  return `<div class="card">
+    <div class="ch">
+      <div>
+        <div class="cid">${esc(a.actId)} · ${esc(a.date)}</div>
+        <div class="ctitle">${esc(a.work)}</div>
+      </div>
+      <span class="badge ${bc(a)}">${bt(a)}</span>
+    </div>
+    <div class="cb">
+      <div class="row"><span class="rl">Компани</span><span class="rv">${esc(a.company)}</span></div>
+      <div class="row"><span class="rl">Гэрээний дугаар</span><span class="rv">${esc(a.contract)}</span></div>
+      <div class="row"><span class="rl">Хугацаа</span><span class="rv">${esc(a.wdate||'—')}</span></div>
+      <div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${parseInt(a.amount||0).toLocaleString()}</span></div>
+      <div class="row"><span class="rl">Илгээсэн</span><span class="rv">${esc(a.submittedByName||a.submittedBy||'—')}</span></div>
+      ${a.photo?`<div class="row"><span class="rl">Зураг</span><span class="rv">${esc(a.photo)}</span></div>`:''}
+    </div>
+    <div class="pbwrap"><div class="pb" style="width:${p}%"></div></div>
+    <div class="plabel"><span>${p}% дууссан</span><span>${step}/4 батлалт</span></div>
+    ${canA?`<div class="abtns">
+      <button class="bok" onclick="approve('${a.id}')">✓ Батлах</button>
+      <button class="bno" onclick="reject('${a.id}')">✕ Буцаах</button>
+    </div>`:''}
+    <div class="tl">
+      <div class="tll-label">ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ</div>
+      ${tl}
+    </div>
+  </div>`;
 }
 
 function liH(a,idx,from){
   const p=pct(a);
-  return `<div class="li" onclick="opd(${idx},${from})"><div class="li-top"><div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div><span class="badge ${bc(a)}">${bt(a)}</span></div>
-  <div class="li-sub">${esc(a.company)} · ₮${parseInt(a.amount||0).toLocaleString()}</div>
-  <div style="display:flex;align-items:center;gap:7px"><div class="mbwrap"><div class="mb" style="width:${p}%"></div></div><span class="mpct">${p}%</span></div></div>`;
+  return `<div class="li" onclick="opd(${idx},${from})">
+    <div class="li-top">
+      <div>
+        <div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div>
+        <div class="li-title">${esc(a.work)}</div>
+      </div>
+      <span class="badge ${bc(a)}">${bt(a)}</span>
+    </div>
+    <div class="li-sub">${esc(a.company)} · ₮${parseInt(a.amount||0).toLocaleString()}</div>
+    <div style="display:flex;align-items:center;gap:7px">
+      <div class="mbwrap"><div class="mb" style="width:${p}%"></div></div>
+      <span class="mpct">${p}%</span>
+    </div>
+  </div>`;
 }
 
 function rA(){
-  const el=e('al');if(!acts.length){el.innerHTML='<div class="empty">Акт байхгүй байна</div>';return;}
+  const el=e('al');
+  if(!acts.length){el.innerHTML='<div class="empty">Акт байхгүй байна</div>';return;}
   if(role==='Гүйцэтгэгч'){el.innerHTML='<div class="empty">Акт илгээх таб ашиглана уу</div>';return;}
-  const list=role==='Нягтлан'?acts.filter(a=>a.status==='done'):acts.filter(a=>a.status==='pending'&&(a.step||0)===RSTEP[role]);
-  el.innerHTML=list.length?list.map(a=>liH(a,acts.indexOf(a),1)).join(''):'<div class="empty">Таны батлах акт байхгүй байна</div>';
+  const list=role==='Нягтлан'
+    ?acts.filter(a=>a.status==='done')
+    :acts.filter(a=>a.status==='pending'&&(a.step||0)===RSTEP[role]);
+  el.innerHTML=list.length
+    ?list.map(a=>liH(a,acts.indexOf(a),1)).join('')
+    :'<div class="empty">Таны батлах акт байхгүй байна</div>';
 }
 
 function rL(){
   const el=e('ll');
-  el.innerHTML=acts.length?acts.map((a,i)=>liH(a,i,2)).join(''):'<div class="empty">Одоогоор акт байхгүй байна</div>';
+  el.innerHTML=acts.length
+    ?acts.map((a,i)=>liH(a,i,2)).join('')
+    :'<div class="empty">Одоогоор акт байхгүй байна</div>';
 }
 
 function rD(){
-  e('s0').textContent=acts.length;e('s1').textContent=acts.filter(a=>a.status==='pending').length;e('s2').textContent=acts.filter(a=>a.status==='done').length;
+  e('s0').textContent=acts.length;
+  e('s1').textContent=acts.filter(a=>a.status==='pending').length;
+  e('s2').textContent=acts.filter(a=>a.status==='done').length;
   const el=e('dl');
-  el.innerHTML=acts.length?acts.map((a,i)=>liH(a,i,3)).join(''):'<div class="empty">Акт байхгүй байна</div>';
+  el.innerHTML=acts.length
+    ?acts.map((a,i)=>liH(a,i,3)).join('')
+    :'<div class="empty">Акт байхгүй байна</div>';
 }
 </script>
 </body>
