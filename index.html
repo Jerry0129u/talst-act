@@ -20,8 +20,8 @@ body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 0 14px}
 .logo{width:32px;height:32px;background:#1a1a2e;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
 .appname{font-size:15px;font-weight:700;margin-left:8px}
-.user-pill{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;border-radius:20px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;transition:all 0.2s}.user-pill:hover{border-color:#ccc;background:#f8f8f8}
-.uav{width:26px;height:26px;border-radius:50%;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700}
+.user-pill{display:flex;align-items:center;padding:3px;border-radius:50%;background:#fff;border:2px solid #e8e8e8;cursor:pointer;transition:all 0.2s}.user-pill:hover{border-color:#1a1a2e}
+.uav{width:30px;height:30px;border-radius:50%;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;letter-spacing:0.5px;flex-shrink:0}
 
 .tabs{display:flex;gap:3px;margin-bottom:14px;background:#e8e8e4;padding:3px;border-radius:10px}
 .tab{flex:1;padding:7px 2px;font-size:11px;font-weight:600;border:none;background:transparent;color:#888;cursor:pointer;border-radius:8px;transition:all 0.2s}
@@ -153,7 +153,6 @@ textarea{height:60px;resize:none}
     </div>
     <div class="user-pill" onclick="doSignOut()">
       <div class="uav" id="uav">?</div>
-      <div id="uroleicon" style="font-size:15px;line-height:1">⚡</div>
     </div>
   </div>
   <div id="toast" class="toast"></div>
@@ -392,11 +391,13 @@ onAuthStateChanged(auth,u=>{
     cu=u;role=ROLES[u.email]||'Гүйцэтгэгч';
     e('loginPage').style.display='none';
     e('appPage').style.display='block';
-    const ini=(u.displayName||u.email).split(' ').map(n=>n[0]).join('').toUpperCase().substr(0,2);
+    const parts=(u.displayName||u.email).split(' ');
+    const ini=(parts.length>=2
+      ? parts[0][0]+parts[1][0]
+      : (u.displayName||u.email).substr(0,2)
+    ).toUpperCase();
     e('uav').textContent=ini;
-    const roleIcons={'Координатор':'🎯','Инженер':'⚙️','Захирал':'👔','Нягтлан':'📊','Гүйцэтгэгч':'🏗️'};
-    e('uroleicon').textContent=roleIcons[role]||'👤';
-    e('uroleicon').title=role;
+    e('uav').title=role;
     e('aplbl').textContent=role+' горимд батлах актууд';
     listen();
   }else{
