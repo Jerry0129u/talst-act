@@ -115,7 +115,6 @@ textarea{height:60px;resize:none}
 .det-imgs{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-top:1px solid #f5f5f5}
 .det-img{width:80px;height:80px;border-radius:8px;object-fit:cover;cursor:pointer;border:1px solid #e8e8e8}
 .det-img:hover{opacity:0.85}
-/* Lightbox */
 .lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center}
 .lightbox.open{display:flex}
 .lightbox img{max-width:92vw;max-height:90vh;border-radius:10px;object-fit:contain}
@@ -124,7 +123,6 @@ textarea{height:60px;resize:none}
 </head>
 <body>
 
-<!-- Lightbox -->
 <div class="lightbox" id="lb" onclick="closeLb()">
   <span class="lightbox-close">✕</span>
   <img id="lbImg" src="" alt="">
@@ -256,7 +254,7 @@ const auth=getAuth(fapp);
 const db=getFirestore(fapp);
 
 let cu=null,role='Гүйцэтгэгч',acts=[],prev=2,ctab=0,unsub=null;
-let imgDataList=[];// {name, base64, size}
+let imgDataList=[];
 
 const e=id=>document.getElementById(id);
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -272,8 +270,7 @@ window.fmtAmt=()=>{
   e('amtFmt').textContent=v&&!isNaN(v)?'₮ '+parseInt(v).toLocaleString():'';
 };
 
-// Зураг compress — canvas ашиглан
-function compressImage(file, maxW=800, quality=0.7){
+function compressImage(file,maxW=800,quality=0.7){
   return new Promise(resolve=>{
     const reader=new FileReader();
     reader.onload=ev=>{
@@ -325,7 +322,6 @@ window.rmImg=(i)=>{
   e('compInfo').textContent=imgDataList.length?`${imgDataList.length} зураг · ~${total}KB`:'';
 };
 
-// Lightbox
 window.openLb=(src)=>{e('lbImg').src=src;e('lb').classList.add('open')};
 window.closeLb=()=>e('lb').classList.remove('open');
 
@@ -336,13 +332,23 @@ function toast(m,t='ok'){
   setTimeout(()=>el.style.display='none',4000);
 }
 
+// ✅ ЗАСАГДСАН: email болон name параметр нэмэгдсэн
 function sendMail(toEmail,toName,act,fromName){
-  return emailjs.send(EJS_SVC,EJS_TPL,{
-    to_email:toEmail,to_name:toName,
-    company:act.company,contract:act.contract,
-    work:act.work,amount:fmtN(act.amount),
-    from_name:fromName
-  });
+  const params={
+    to_email:toEmail,
+    to_name:toName,
+    company:act.company,
+    contract:act.contract,
+    work:act.work,
+    amount:fmtN(act.amount),
+    from_name:fromName,
+    email:toEmail,      // EmailJS template-д {{email}} → Reply To талбарт
+    name:fromName,      // EmailJS template-д {{name}} → From Name талбарт
+  };
+  console.log('📧 Email илгээж байна:', toEmail, params);
+  return emailjs.send(EJS_SVC,EJS_TPL,params)
+    .then(r=>console.log('✅ Email амжилттай:', r))
+    .catch(err=>{ console.error('❌ EmailJS алдаа:', err); throw err; });
 }
 
 window.signInGoogle=async()=>{
@@ -415,7 +421,6 @@ async function submitAct(){
   const a=e('fa').value.trim();
   if(!c||!g||!w||!a){toast('Компани, гэрээ, ажил, дүн заавал!','err');return;}
 
-  // Нийт зургийн хэмжээ шалгах
   const totalKb=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
   if(totalKb>800){
     toast(`Зургийн нийт хэмжээ ${totalKb}KB — 800KB-аас бага байх ёстой. Зарим зургийг хасна уу.`,'err');
