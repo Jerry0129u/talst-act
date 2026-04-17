@@ -273,8 +273,8 @@ textarea{height:60px;resize:none}
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-      <div class="chart-card" style="margin-bottom:0"><div style="font-size:11px;color:#888;margin-bottom:6px">Нийт дүн</div><div style="font-size:18px;font-weight:600" id="dTotalAmt">—</div><div style="font-size:10px;color:#aaa;margin-top:3px">бүх актын нийлбэр</div></div>
-      <div class="chart-card" style="margin-bottom:0"><div style="font-size:11px;color:#888;margin-bottom:6px">Батлагдсан дүн</div><div style="font-size:18px;font-weight:600;color:#1d9e75" id="dDoneAmt">—</div><div style="font-size:10px;color:#aaa;margin-top:3px">дууссан актуудын дүн</div></div>
+      <div class="metric-card"><div class="metric-label">Нийт дүн</div><div style="font-size:13px;font-weight:500;color:var(--color-text-primary,#1a1a1a);margin-top:4px;word-break:break-all" id="dTotalAmt">—</div></div>
+      <div class="metric-card"><div class="metric-label">Батлагдсан</div><div style="font-size:13px;font-weight:500;color:#1d9e75;margin-top:4px;word-break:break-all" id="dDoneAmt">—</div></div>
     </div>
   </div>
   <div id="pd" style="display:none">
@@ -697,16 +697,29 @@ function rD(){
   });
   if(dbBarChart){dbBarChart.destroy();dbBarChart=null;}
   const ctx=e('dbBarChart');if(!ctx)return;
+  const barColors=last8.map(a=>a.status==='done'?'#1d9e75':a.status==='rejected'?'#e24b4a':'#378add');
+  const barData=last8.map(a=>parseInt(a.amount||0));
   dbBarChart=new Chart(ctx,{
     type:'bar',
-    data:{labels,datasets:[
-      {label:'Дууссан',data:last8.map(a=>a.status==='done'?1:0),backgroundColor:'#1d9e75',borderRadius:4,borderSkipped:false},
-      {label:'Явцад',data:last8.map(a=>a.status==='pending'?1:0),backgroundColor:'#378add',borderRadius:4,borderSkipped:false},
-      {label:'Буцаагдсан',data:last8.map(a=>a.status==='rejected'?1:0),backgroundColor:'#e24b4a',borderRadius:4,borderSkipped:false},
-    ]},
+    data:{labels,datasets:[{
+      label:'Дүн',
+      data:barData,
+      backgroundColor:barColors,
+      borderRadius:6,
+      borderSkipped:false,
+    }]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#888',autoSkip:false}},y:{display:false}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          label:ctx=>'₮'+parseInt(ctx.raw||0).toLocaleString('mn-MN'),
+          title:ctx=>{const a=last8[ctx[0].dataIndex];return a.work||labels[ctx[0].dataIndex];}
+        }}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10},color:'#888',autoSkip:false,maxRotation:0}},
+        y:{display:false,beginAtZero:true},
+      },
     }
   });
 }
