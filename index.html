@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="mn">
 <head>
@@ -83,11 +82,11 @@ textarea{height:60px;resize:none}
 .file-upload-btn{width:100%;padding:10px 11px;border:1.5px dashed #e0e0e0;border-radius:8px;background:#fafaf9;cursor:pointer;font-size:12px;color:#888;text-align:center;transition:all 0.2s;display:block}
 .file-upload-btn:hover{border-color:#1d9e75;background:#f0fdf8;color:#1d9e75}
 .file-input{display:none}
-.img-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.img-thumb{width:70px;height:70px;border-radius:8px;object-fit:cover;border:1px solid #e8e8e8;cursor:pointer;position:relative;display:block}
-.img-wrap{position:relative;width:70px;height:70px}
-.img-wrap img{width:100%;height:100%;border-radius:8px;object-fit:cover;border:1px solid #e8e8e8}
-.img-rm{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:#e74c3c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;cursor:pointer;font-weight:700}
+.img-grid{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.pdf-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:8px;width:100%}
+.pdf-item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:600}
+.pdf-item-size{font-size:10px;color:#888;flex-shrink:0}
+.pdf-rm{width:18px;height:18px;background:#e74c3c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;cursor:pointer;font-weight:700;flex-shrink:0}
 .compress-info{font-size:10px;color:#888;margin-top:4px}
 .prog-bar-wrap{background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden;margin-top:8px;display:none}
 .prog-bar{height:6px;border-radius:20px;background:#1d9e75;transition:width 0.3s}
@@ -113,22 +112,14 @@ textarea{height:60px;resize:none}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid #e8e8e8;border-top-color:#1d9e75;border-radius:50%;animation:sp 0.8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .loading{text-align:center;padding:40px;color:#bbb}
-.det-imgs{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-top:1px solid #f5f5f5}
-.det-img{width:80px;height:80px;border-radius:8px;object-fit:cover;cursor:pointer;border:1px solid #e8e8e8}
-.det-img:hover{opacity:0.85}
-.lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center}
-.lightbox.open{display:flex}
-.lightbox img{max-width:92vw;max-height:90vh;border-radius:10px;object-fit:contain}
-.lightbox-close{position:fixed;top:16px;right:16px;color:#fff;font-size:28px;cursor:pointer;font-weight:300;line-height:1}
+.det-pdfs{display:flex;flex-direction:column;gap:6px;padding:10px 14px;border-top:1px solid #f5f5f5}
+.det-pdf-link{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:8px;text-decoration:none;color:#1a1a1a;font-size:12px;font-weight:500;transition:background 0.2s}
+.det-pdf-link:hover{background:#e8f4ff;border-color:#b8d8f5}
+.det-pdf-link span.pdf-fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.det-pdf-link span.pdf-fsize{font-size:10px;color:#888;flex-shrink:0}
 </style>
 </head>
 <body>
-
-<div class="lightbox" id="lb" onclick="closeLb()">
-  <span class="lightbox-close">✕</span>
-  <img id="lbImg" src="" alt="">
-</div>
-
 <div class="login-wrap" id="loginPage">
   <div class="login-card">
     <div class="login-logo">АКТ</div>
@@ -146,7 +137,6 @@ textarea{height:60px;resize:none}
     <div class="login-note">Координатор, Инженер, Захирал, Нягтлан нар talstgroup.mn имэйлээрээ нэвтэрнэ.<br>Гүйцэтгэгч компаниуд ч Gmail-р нэвтэрч болно.</div>
   </div>
 </div>
-
 <div class="app" id="appPage">
   <div class="topbar">
     <div style="display:flex;align-items:center">
@@ -168,7 +158,6 @@ textarea{height:60px;resize:none}
     <button class="tab" id="tb2" onclick="go(2)">Актууд</button>
     <button class="tab" id="tb3" onclick="go(3)">Дашборд</button>
   </div>
-
   <div id="p0">
     <div class="form-card">
       <div class="ftitle">Шинэ акт илгээх</div>
@@ -189,9 +178,9 @@ textarea{height:60px;resize:none}
         <input type="number" id="fa" placeholder="48500000" oninput="fmtAmt()">
         <div class="amt-fmt" id="amtFmt"></div>
       </div>
-      <div class="fl">Ажлын зурагнууд (олон сонгох боломжтой)</div>
-      <label class="file-upload-btn" for="fimgs">📷 Зураг сонгох (JPG, PNG)</label>
-      <input type="file" id="fimgs" class="file-input" multiple accept="image/*" onchange="addImgs(this)">
+      <div class="fl">PDF файлууд (олон сонгох боломжтой)</div>
+      <label class="file-upload-btn" for="fimgs">📄 PDF файл сонгох</label>
+      <input type="file" id="fimgs" class="file-input" multiple accept=".pdf,application/pdf" onchange="addImgs(this)">
       <div class="img-grid" id="imgGrid"></div>
       <div class="compress-info" id="compInfo"></div>
       <div class="prog-bar-wrap" id="progWrap"><div class="prog-bar" id="progBar"></div></div>
@@ -199,7 +188,6 @@ textarea{height:60px;resize:none}
       <button class="sbtn" id="sbtn" onclick="submitAct()">Акт илгээх</button>
     </div>
   </div>
-
   <div id="p1" style="display:none">
     <div class="seclbl" id="aplbl">Батлах боломжтой актууд</div>
     <div id="al"><div class="loading"><div class="spin"></div></div></div>
@@ -220,12 +208,10 @@ textarea{height:60px;resize:none}
     <div id="dc"></div>
   </div>
 </div>
-
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut as fbOut}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import{getFirestore,collection,addDoc,doc,updateDoc,onSnapshot,query,orderBy,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 const cfg={
   apiKey:"AIzaSyAIG54jlntVl7b5Y4MHR2IxDNHA7Xp3KeE",
   authDomain:"talst-act.firebaseapp.com",
@@ -234,11 +220,9 @@ const cfg={
   messagingSenderId:"306368853099",
   appId:"1:306368853099:web:c94fa0ae7f9a02a3f72d2e"
 };
-
 const EJS_SVC='service_op473um';
 const EJS_TPL='template_8zefmxg';
 emailjs.init('Bck-y_wlCHwjWp7pA');
-
 const CHAIN=[
   {name:'Координатор',email:'unumunkh@talstgroup.mn'},
   {name:'Инженер',    email:'unumunkh@talstgroup.mn'},
@@ -249,14 +233,11 @@ const ROLES={'unumunkh@talstgroup.mn':'Координатор'};
 const RSTEP={'Координатор':0,'Инженер':1,'Захирал':2,'Нягтлан':3};
 const SN=['Координатор','Инженер','Захирал','Нягтлан'];
 const SE=['zolzaya@talstgroup.mn','barsbat@talstgroup.mn','zorigoo@talstgroup.mn','bayarmaa@talstgroup.mn'];
-
 const fapp=initializeApp(cfg);
 const auth=getAuth(fapp);
 const db=getFirestore(fapp);
-
 let cu=null,role='Гүйцэтгэгч',acts=[],prev=2,ctab=0,unsub=null;
 let imgDataList=[];
-
 const e=id=>document.getElementById(id);
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function ts(){return new Date().toLocaleString('mn-MN')}
@@ -265,29 +246,19 @@ function pct(a){return a.status==='done'?100:Math.round((a.step||0)/4*100)}
 function bc(a){return a.status==='done'?'bd':a.status==='rejected'?'br':(a.step||0)===0?'bw':'bp'}
 function bt(a){return a.status==='done'?'✓ Батлагдсан':a.status==='rejected'?'✕ Буцаагдсан':SN[a.step||0]+' хүлээж байна'}
 function fmtN(n){return parseInt(n||0).toLocaleString('mn-MN')}
-
 window.fmtAmt=()=>{
   const v=e('fa').value;
   e('amtFmt').textContent=v&&!isNaN(v)?'₮ '+parseInt(v).toLocaleString():'';
 };
 
-function compressImage(file,maxW=800,quality=0.7){
+// PDF файл уншигч — base64 болгон хөрвүүлнэ
+function readPDF(file){
   return new Promise(resolve=>{
     const reader=new FileReader();
     reader.onload=ev=>{
-      const img=new Image();
-      img.onload=()=>{
-        const canvas=document.createElement('canvas');
-        let w=img.width,h=img.height;
-        if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
-        canvas.width=w;canvas.height=h;
-        const ctx=canvas.getContext('2d');
-        ctx.drawImage(img,0,0,w,h);
-        const b64=canvas.toDataURL('image/jpeg',quality);
-        const kb=Math.round(b64.length*0.75/1024);
-        resolve({name:file.name,base64:b64,sizeKb:kb,w,h});
-      };
-      img.src=ev.target.result;
+      const base64=ev.target.result;
+      const kb=Math.round(base64.length*0.75/1024);
+      resolve({name:file.name,base64:base64,sizeKb:kb,type:'pdf'});
     };
     reader.readAsDataURL(file);
   });
@@ -296,23 +267,25 @@ function compressImage(file,maxW=800,quality=0.7){
 window.addImgs=async(input)=>{
   const files=Array.from(input.files);
   if(!files.length)return;
-  e('compInfo').textContent='Зураг боловсруулж байна...';
+  e('compInfo').textContent='PDF файл уншиж байна...';
   for(const f of files){
-    const d=await compressImage(f);
+    const d=await readPDF(f);
     imgDataList.push(d);
   }
   renderImgGrid();
   const total=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
-  e('compInfo').textContent=`${imgDataList.length} зураг · нийт ~${total}KB`;
+  e('compInfo').textContent=`${imgDataList.length} PDF файл · нийт ~${total}KB`;
   input.value='';
 };
 
 function renderImgGrid(){
   const g=e('imgGrid');
   g.innerHTML=imgDataList.map((d,i)=>`
-    <div class="img-wrap">
-      <img src="${d.base64}" title="${d.name}">
-      <div class="img-rm" onclick="rmImg(${i})">✕</div>
+    <div class="pdf-item">
+      <span style="font-size:20px;flex-shrink:0">📄</span>
+      <span class="pdf-item-name" title="${esc(d.name)}">${esc(d.name)}</span>
+      <span class="pdf-item-size">~${d.sizeKb}KB</span>
+      <div class="pdf-rm" onclick="rmImg(${i})">✕</div>
     </div>`).join('');
 }
 
@@ -320,11 +293,8 @@ window.rmImg=(i)=>{
   imgDataList.splice(i,1);
   renderImgGrid();
   const total=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
-  e('compInfo').textContent=imgDataList.length?`${imgDataList.length} зураг · ~${total}KB`:'';
+  e('compInfo').textContent=imgDataList.length?`${imgDataList.length} PDF файл · ~${total}KB`:'';
 };
-
-window.openLb=(src)=>{e('lbImg').src=src;e('lb').classList.add('open')};
-window.closeLb=()=>e('lb').classList.remove('open');
 
 function toast(m,t='ok'){
   const el=e('toast');el.textContent=m;
@@ -332,8 +302,6 @@ function toast(m,t='ok'){
   el.style.display='block';
   setTimeout(()=>el.style.display='none',4000);
 }
-
-// ✅ ЗАСАГДСАН: email болон name параметр нэмэгдсэн
 function sendMail(toEmail,toName,act,fromName){
   const params={
     to_email:toEmail,
@@ -343,15 +311,14 @@ function sendMail(toEmail,toName,act,fromName){
     work:act.work,
     amount:fmtN(act.amount),
     from_name:fromName,
-    email:toEmail,      // EmailJS template-д {{email}} → Reply To талбарт
-    name:fromName,      // EmailJS template-д {{name}} → From Name талбарт
+    email:toEmail,
+    name:fromName,
   };
   console.log('📧 Email илгээж байна:', toEmail, params);
   return emailjs.send(EJS_SVC,EJS_TPL,params)
     .then(r=>console.log('✅ Email амжилттай:', r))
     .catch(err=>{ console.error('❌ EmailJS алдаа:', err); throw err; });
 }
-
 window.signInGoogle=async()=>{
   try{await signInWithPopup(auth,new GoogleAuthProvider())}
   catch(err){toast('Нэвтрэхэд алдаа гарлаа','err')}
@@ -361,7 +328,6 @@ window.doSignOut=async()=>{
 };
 window.go=go;window.bk=bk;window.opd=opd;
 window.submitAct=submitAct;window.approve=approve;window.reject=reject;
-
 onAuthStateChanged(auth,u=>{
   if(u){
     cu=u;role=ROLES[u.email]||'Гүйцэтгэгч';
@@ -380,7 +346,6 @@ onAuthStateChanged(auth,u=>{
     if(unsub){unsub();unsub=null;}
   }
 });
-
 function listen(){
   const q=query(collection(db,'acts'),orderBy('createdAt','desc'));
   unsub=onSnapshot(q,snap=>{
@@ -394,7 +359,6 @@ function listen(){
     }
   });
 }
-
 function go(n){
   [0,1,2,3].forEach(i=>{e('p'+i).style.display='none';e('tb'+i).classList.remove('on')});
   e('pd').style.display='none';
@@ -414,33 +378,27 @@ function opd(idx,from){
   e('dc').dataset.idx=idx;
   e('dc').innerHTML=detH(idx);
 }
-
 async function submitAct(){
   const c=e('fc').value.trim();
   const g=e('fg').value.trim();
   const w=e('fw').value.trim();
   const a=e('fa').value.trim();
   if(!c||!g||!w||!a){toast('Компани, гэрээ, ажил, дүн заавал!','err');return;}
-
   const totalKb=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
-  if(totalKb>800){
-    toast(`Зургийн нийт хэмжээ ${totalKb}KB — 800KB-аас бага байх ёстой. Зарим зургийг хасна уу.`,'err');
+  if(totalKb>5000){
+    toast(`PDF файлын нийт хэмжээ ${totalKb}KB — 5MB-аас бага байх ёстой. Зарим файлыг хасна уу.`,'err');
     return;
   }
-
   const btn=e('sbtn');
   btn.disabled=true;btn.textContent='Илгээж байна...';
   e('progWrap').style.display='block';
   e('progText').style.display='block';
   e('progBar').style.width='20%';
   e('progText').textContent='Мэдээлэл бэлдэж байна...';
-
   const aid='АКТ-'+new Date().getFullYear()+'-'+String(Date.now()).substr(-4);
-
   try{
     e('progBar').style.width='60%';
     e('progText').textContent='Firestore-д хадгалж байна...';
-
     const actData={
       actId:aid,
       date:new Date().toLocaleDateString('mn-MN'),
@@ -448,7 +406,7 @@ async function submitAct(){
       dateFrom:e('fd1').value,
       dateTo:e('fd2').value,
       amount:a,
-      images:imgDataList.map(d=>({name:d.name,base64:d.base64,sizeKb:d.sizeKb})),
+      images:imgDataList.map(d=>({name:d.name,base64:d.base64,sizeKb:d.sizeKb,type:'pdf'})),
       imgCount:imgDataList.length,
       step:0,status:'pending',
       submittedBy:cu.email,
@@ -459,32 +417,25 @@ async function submitAct(){
         who:cu.displayName||cu.email,
         whoEmail:cu.email,
         title:'Акт илгээсэн',
-        detail:c+' · '+g+' · ₮'+fmtN(a)+(imgDataList.length?` · ${imgDataList.length} зураг (~${totalKb}KB)`:' · Зураггүй'),
+        detail:c+' · '+g+' · ₮'+fmtN(a)+(imgDataList.length?` · ${imgDataList.length} PDF (~${totalKb}KB)`:' · PDF байхгүй'),
         time:ts(),hash:gh()
       }]
     };
-
     await addDoc(collection(db,'acts'),actData);
-
     e('progBar').style.width='85%';
     e('progText').textContent='Email илгээж байна...';
-
     await sendMail(CHAIN[0].email,CHAIN[0].name,actData,cu.displayName||cu.email);
-
     e('progBar').style.width='100%';
     toast('✅ Акт илгээгдлээ! Координаторт email очлоо.');
-
     ['fc','fg','fw','fd1','fd2','fa'].forEach(id=>e(id).value='');
     imgDataList=[];
     e('imgGrid').innerHTML='';
     e('compInfo').textContent='';
     e('amtFmt').textContent='';
-
   }catch(err){
     toast('Алдаа: '+err.message,'err');
     console.error(err);
   }
-
   btn.disabled=false;btn.textContent='Акт илгээх';
   setTimeout(()=>{
     e('progWrap').style.display='none';
@@ -492,7 +443,6 @@ async function submitAct(){
     e('progBar').style.width='0%';
   },1500);
 }
-
 async function approve(docId){
   const a=acts.find(x=>x.id===docId);
   if(!a||a.status!=='pending'){toast('Батлах боломжгүй!','err');return;}
@@ -522,7 +472,6 @@ async function approve(docId){
     rA();
   }catch(err){toast('Алдаа: '+err.message,'err');}
 }
-
 async function reject(docId){
   const a=acts.find(x=>x.id===docId);if(!a)return;
   const reason=prompt('Буцаасан шалтгаан:')||'Тодруулгатай байна';
@@ -535,7 +484,6 @@ async function reject(docId){
     toast('❌ Акт буцаагдлаа.');bk();
   }catch(err){toast('Алдаа: '+err.message,'err');}
 }
-
 function evH(ev,isLast){
   const dc=ev.type==='approve'||ev.type==='done'||ev.type==='submit'?'dd':ev.type==='reject'?'dj':'da';
   const ic=ev.type==='approve'||ev.type==='done'||ev.type==='submit'?'✓':ev.type==='reject'?'✕':'→';
@@ -566,7 +514,6 @@ function evH(ev,isLast){
     </div></div>
   </div>`;
 }
-
 function wevH(i,isLast){
   return `<div class="tli">
     <div class="tll">
@@ -583,23 +530,25 @@ function wevH(i,isLast){
     </div></div>
   </div>`;
 }
-
 function detH(idx){
   const a=acts[idx];if(!a)return '';
   const p=pct(a);const step=a.step||0;
   const canA=a.status==='pending'&&role!=='Гүйцэтгэгч'&&RSTEP[role]===step;
   const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:a.dateFrom||a.dateTo||'—';
-
-  let imgsHtml='';
+  let pdfsHtml='';
   if(a.images&&a.images.length){
-    imgsHtml='<div class="det-imgs">'+
-      a.images.map(img=>`<img class="det-img" src="${img.base64}" onclick="openLb('${img.base64}')" loading="lazy" title="${esc(img.name)}">`).join('')
+    pdfsHtml='<div class="det-pdfs">'+
+      a.images.map(f=>`
+        <a class="det-pdf-link" href="${f.base64}" download="${esc(f.name)}">
+          <span style="font-size:18px;flex-shrink:0">📄</span>
+          <span class="pdf-fname">${esc(f.name)}</span>
+          <span class="pdf-fsize">~${f.sizeKb}KB</span>
+          <span style="font-size:10px;color:#1a5fa5;flex-shrink:0">↓ Татах</span>
+        </a>`).join('')
     +'</div>';
   }
-
   let tl=(a.evs||[]).map(ev=>evH(ev,false)).join('');
   if(a.status==='pending')for(let i=step;i<4;i++)tl+=wevH(i,i===3);
-
   return `<div class="card">
     <div class="ch">
       <div>
@@ -614,9 +563,9 @@ function detH(idx){
       <div class="row"><span class="rl">Ажлын хугацаа</span><span class="rv">${esc(dr)}</span></div>
       <div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
       <div class="row"><span class="rl">Илгээсэн</span><span class="rv">${esc(a.submittedByName||a.submittedBy||'—')}</span></div>
-      ${a.imgCount?`<div class="row"><span class="rl">Зурагнууд</span><span class="rv">${a.imgCount} зураг</span></div>`:''}
+      ${a.imgCount?`<div class="row"><span class="rl">PDF файлууд</span><span class="rv">${a.imgCount} файл</span></div>`:''}
     </div>
-    ${imgsHtml}
+    ${pdfsHtml}
     <div class="pbwrap"><div class="pb" style="width:${p}%"></div></div>
     <div class="plabel"><span>${p}% дууссан</span><span>${step}/4 батлалт</span></div>
     ${canA?`<div class="abtns">
@@ -629,7 +578,6 @@ function detH(idx){
     </div>
   </div>`;
 }
-
 function liH(a,idx,from){
   const p=pct(a);
   const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:'';
@@ -648,7 +596,6 @@ function liH(a,idx,from){
     </div>
   </div>`;
 }
-
 function rA(){
   const el=e('al');
   if(!acts.length){el.innerHTML='<div class="empty">Акт байхгүй байна</div>';return;}
