@@ -82,11 +82,13 @@ textarea{height:60px;resize:none}
 .file-upload-btn{width:100%;padding:10px 11px;border:1.5px dashed #e0e0e0;border-radius:8px;background:#fafaf9;cursor:pointer;font-size:12px;color:#888;text-align:center;transition:all 0.2s;display:block}
 .file-upload-btn:hover{border-color:#1d9e75;background:#f0fdf8;color:#1d9e75}
 .file-input{display:none}
-.img-grid{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.pdf-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:8px;width:100%}
-.pdf-item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:600}
-.pdf-item-size{font-size:10px;color:#888;flex-shrink:0}
-.pdf-rm{width:18px;height:18px;background:#e74c3c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;cursor:pointer;font-weight:700;flex-shrink:0}
+.pdf-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.pdf-item{display:flex;align-items:center;justify-content:space-between;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:8px;padding:8px 10px}
+.pdf-info{display:flex;align-items:center;gap:8px;overflow:hidden}
+.pdf-icon{font-size:18px;flex-shrink:0}
+.pdf-name{font-size:12px;font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.pdf-size{font-size:10px;color:#999;flex-shrink:0}
+.pdf-rm{width:20px;height:20px;background:#e74c3c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;cursor:pointer;font-weight:700;flex-shrink:0}
 .compress-info{font-size:10px;color:#888;margin-top:4px}
 .prog-bar-wrap{background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden;margin-top:8px;display:none}
 .prog-bar{height:6px;border-radius:20px;background:#1d9e75;transition:width 0.3s}
@@ -113,10 +115,10 @@ textarea{height:60px;resize:none}
 @keyframes sp{to{transform:rotate(360deg)}}
 .loading{text-align:center;padding:40px;color:#bbb}
 .det-pdfs{display:flex;flex-direction:column;gap:6px;padding:10px 14px;border-top:1px solid #f5f5f5}
-.det-pdf-link{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:8px;text-decoration:none;color:#1a1a1a;font-size:12px;font-weight:500;transition:background 0.2s}
-.det-pdf-link:hover{background:#e8f4ff;border-color:#b8d8f5}
-.det-pdf-link span.pdf-fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.det-pdf-link span.pdf-fsize{font-size:10px;color:#888;flex-shrink:0}
+.det-pdf-item{display:flex;align-items:center;gap:8px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:8px;padding:8px 10px}
+.det-pdf-name{font-size:12px;font-weight:500;color:#333}
+.det-pdf-size{font-size:10px;color:#999;margin-left:auto}
+.det-pdf-open{font-size:11px;color:#1a5fa5;font-weight:600;cursor:pointer;text-decoration:underline;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -178,10 +180,11 @@ textarea{height:60px;resize:none}
         <input type="number" id="fa" placeholder="48500000" oninput="fmtAmt()">
         <div class="amt-fmt" id="amtFmt"></div>
       </div>
-      <div class="fl">PDF файлууд (олон сонгох боломжтой)</div>
-      <label class="file-upload-btn" for="fimgs">📄 PDF файл сонгох</label>
-      <input type="file" id="fimgs" class="file-input" multiple accept=".pdf,application/pdf" onchange="addImgs(this)">
-      <div class="img-grid" id="imgGrid"></div>
+      <!-- ✅ ӨӨРЧЛӨЛТ: Зураг → PDF файл -->
+      <div class="fl">Ажлын баримт бичгүүд (PDF)</div>
+      <label class="file-upload-btn" for="fpdfs">📄 PDF файл сонгох</label>
+      <input type="file" id="fpdfs" class="file-input" multiple accept="application/pdf" onchange="addPdfs(this)">
+      <div class="pdf-list" id="pdfList"></div>
       <div class="compress-info" id="compInfo"></div>
       <div class="prog-bar-wrap" id="progWrap"><div class="prog-bar" id="progBar"></div></div>
       <div class="prog-text" id="progText"></div>
@@ -237,7 +240,10 @@ const fapp=initializeApp(cfg);
 const auth=getAuth(fapp);
 const db=getFirestore(fapp);
 let cu=null,role='Гүйцэтгэгч',acts=[],prev=2,ctab=0,unsub=null;
-let imgDataList=[];
+
+// ✅ ӨӨРЧЛӨЛТ: imgDataList → pdfDataList
+let pdfDataList=[];
+
 const e=id=>document.getElementById(id);
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function ts(){return new Date().toLocaleString('mn-MN')}
@@ -251,49 +257,58 @@ window.fmtAmt=()=>{
   e('amtFmt').textContent=v&&!isNaN(v)?'₮ '+parseInt(v).toLocaleString():'';
 };
 
-// PDF файл уншигч — base64 болгон хөрвүүлнэ
-function readPDF(file){
+// ✅ ӨӨРЧЛӨЛТ: PDF уншдаг функц (зураг compress хийхгүй, base64 болгоно)
+function readPdfAsBase64(file){
   return new Promise(resolve=>{
     const reader=new FileReader();
     reader.onload=ev=>{
-      const base64=ev.target.result;
-      const kb=Math.round(base64.length*0.75/1024);
-      resolve({name:file.name,base64:base64,sizeKb:kb,type:'pdf'});
+      const b64=ev.target.result; // data:application/pdf;base64,...
+      const kb=Math.round(file.size/1024);
+      resolve({name:file.name,base64:b64,sizeKb:kb});
     };
     reader.readAsDataURL(file);
   });
 }
 
-window.addImgs=async(input)=>{
+// ✅ ӨӨРЧЛӨЛТ: addImgs → addPdfs
+window.addPdfs=async(input)=>{
   const files=Array.from(input.files);
   if(!files.length)return;
-  e('compInfo').textContent='PDF файл уншиж байна...';
+  e('compInfo').textContent='PDF боловсруулж байна...';
   for(const f of files){
-    const d=await readPDF(f);
-    imgDataList.push(d);
+    if(f.type!=='application/pdf'){
+      toast('Зөвхөн PDF файл сонгоно уу: '+f.name,'err');
+      continue;
+    }
+    const d=await readPdfAsBase64(f);
+    pdfDataList.push(d);
   }
-  renderImgGrid();
-  const total=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
-  e('compInfo').textContent=`${imgDataList.length} PDF файл · нийт ~${total}KB`;
+  renderPdfList();
+  const total=pdfDataList.reduce((s,x)=>s+x.sizeKb,0);
+  e('compInfo').textContent=`${pdfDataList.length} PDF · нийт ~${total}KB`;
   input.value='';
 };
 
-function renderImgGrid(){
-  const g=e('imgGrid');
-  g.innerHTML=imgDataList.map((d,i)=>`
+// ✅ ӨӨРЧЛӨЛТ: PDF жагсаалт харуулах
+function renderPdfList(){
+  const g=e('pdfList');
+  g.innerHTML=pdfDataList.map((d,i)=>`
     <div class="pdf-item">
-      <span style="font-size:20px;flex-shrink:0">📄</span>
-      <span class="pdf-item-name" title="${esc(d.name)}">${esc(d.name)}</span>
-      <span class="pdf-item-size">~${d.sizeKb}KB</span>
-      <div class="pdf-rm" onclick="rmImg(${i})">✕</div>
+      <div class="pdf-info">
+        <span class="pdf-icon">📄</span>
+        <span class="pdf-name" title="${esc(d.name)}">${esc(d.name)}</span>
+      </div>
+      <span class="pdf-size">${d.sizeKb}KB</span>
+      <div class="pdf-rm" onclick="rmPdf(${i})">✕</div>
     </div>`).join('');
 }
 
-window.rmImg=(i)=>{
-  imgDataList.splice(i,1);
-  renderImgGrid();
-  const total=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
-  e('compInfo').textContent=imgDataList.length?`${imgDataList.length} PDF файл · ~${total}KB`:'';
+// ✅ ӨӨРЧЛӨЛТ: rmImg → rmPdf
+window.rmPdf=(i)=>{
+  pdfDataList.splice(i,1);
+  renderPdfList();
+  const total=pdfDataList.reduce((s,x)=>s+x.sizeKb,0);
+  e('compInfo').textContent=pdfDataList.length?`${pdfDataList.length} PDF · ~${total}KB`:'';
 };
 
 function toast(m,t='ok'){
@@ -384,11 +399,14 @@ async function submitAct(){
   const w=e('fw').value.trim();
   const a=e('fa').value.trim();
   if(!c||!g||!w||!a){toast('Компани, гэрээ, ажил, дүн заавал!','err');return;}
-  const totalKb=imgDataList.reduce((s,x)=>s+x.sizeKb,0);
-  if(totalKb>5000){
-    toast(`PDF файлын нийт хэмжээ ${totalKb}KB — 5MB-аас бага байх ёстой. Зарим файлыг хасна уу.`,'err');
+
+  // ✅ ӨӨРЧЛӨЛТ: PDF хэмжээ шалгах (2MB хязгаар)
+  const totalKb=pdfDataList.reduce((s,x)=>s+x.sizeKb,0);
+  if(totalKb>2048){
+    toast(`PDF-ийн нийт хэмжээ ${totalKb}KB — 2MB-аас бага байх ёстой. Зарим файлыг хасна уу.`,'err');
     return;
   }
+
   const btn=e('sbtn');
   btn.disabled=true;btn.textContent='Илгээж байна...';
   e('progWrap').style.display='block';
@@ -399,6 +417,8 @@ async function submitAct(){
   try{
     e('progBar').style.width='60%';
     e('progText').textContent='Firestore-д хадгалж байна...';
+
+    // ✅ ӨӨРЧЛӨЛТ: images → pdfs, imgCount → pdfCount
     const actData={
       actId:aid,
       date:new Date().toLocaleDateString('mn-MN'),
@@ -406,8 +426,8 @@ async function submitAct(){
       dateFrom:e('fd1').value,
       dateTo:e('fd2').value,
       amount:a,
-      images:imgDataList.map(d=>({name:d.name,base64:d.base64,sizeKb:d.sizeKb,type:'pdf'})),
-      imgCount:imgDataList.length,
+      pdfs:pdfDataList.map(d=>({name:d.name,base64:d.base64,sizeKb:d.sizeKb})),
+      pdfCount:pdfDataList.length,
       step:0,status:'pending',
       submittedBy:cu.email,
       submittedByName:cu.displayName||cu.email,
@@ -417,7 +437,7 @@ async function submitAct(){
         who:cu.displayName||cu.email,
         whoEmail:cu.email,
         title:'Акт илгээсэн',
-        detail:c+' · '+g+' · ₮'+fmtN(a)+(imgDataList.length?` · ${imgDataList.length} PDF (~${totalKb}KB)`:' · PDF байхгүй'),
+        detail:c+' · '+g+' · ₮'+fmtN(a)+(pdfDataList.length?` · ${pdfDataList.length} PDF (~${totalKb}KB)`:' · Баримтгүй'),
         time:ts(),hash:gh()
       }]
     };
@@ -428,8 +448,8 @@ async function submitAct(){
     e('progBar').style.width='100%';
     toast('✅ Акт илгээгдлээ! Координаторт email очлоо.');
     ['fc','fg','fw','fd1','fd2','fa'].forEach(id=>e(id).value='');
-    imgDataList=[];
-    e('imgGrid').innerHTML='';
+    pdfDataList=[];
+    e('pdfList').innerHTML='';
     e('compInfo').textContent='';
     e('amtFmt').textContent='';
   }catch(err){
@@ -535,18 +555,21 @@ function detH(idx){
   const p=pct(a);const step=a.step||0;
   const canA=a.status==='pending'&&role!=='Гүйцэтгэгч'&&RSTEP[role]===step;
   const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:a.dateFrom||a.dateTo||'—';
+
+  // ✅ ӨӨРЧЛӨЛТ: PDF жагсаалт харуулах (зурагны grid биш)
   let pdfsHtml='';
-  if(a.images&&a.images.length){
+  if(a.pdfs&&a.pdfs.length){
     pdfsHtml='<div class="det-pdfs">'+
-      a.images.map(f=>`
-        <a class="det-pdf-link" href="${f.base64}" download="${esc(f.name)}">
-          <span style="font-size:18px;flex-shrink:0">📄</span>
-          <span class="pdf-fname">${esc(f.name)}</span>
-          <span class="pdf-fsize">~${f.sizeKb}KB</span>
-          <span style="font-size:10px;color:#1a5fa5;flex-shrink:0">↓ Татах</span>
-        </a>`).join('')
+      a.pdfs.map(pdf=>`
+        <div class="det-pdf-item">
+          <span style="font-size:18px">📄</span>
+          <span class="det-pdf-name">${esc(pdf.name)}</span>
+          <span class="det-pdf-size">${pdf.sizeKb}KB</span>
+          <a class="det-pdf-open" href="${pdf.base64}" download="${esc(pdf.name)}" onclick="event.stopPropagation()">Татах</a>
+        </div>`).join('')
     +'</div>';
   }
+
   let tl=(a.evs||[]).map(ev=>evH(ev,false)).join('');
   if(a.status==='pending')for(let i=step;i<4;i++)tl+=wevH(i,i===3);
   return `<div class="card">
@@ -563,7 +586,7 @@ function detH(idx){
       <div class="row"><span class="rl">Ажлын хугацаа</span><span class="rv">${esc(dr)}</span></div>
       <div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
       <div class="row"><span class="rl">Илгээсэн</span><span class="rv">${esc(a.submittedByName||a.submittedBy||'—')}</span></div>
-      ${a.imgCount?`<div class="row"><span class="rl">PDF файлууд</span><span class="rv">${a.imgCount} файл</span></div>`:''}
+      ${a.pdfCount?`<div class="row"><span class="rl">Баримт бичгүүд</span><span class="rv">${a.pdfCount} PDF файл</span></div>`:''}
     </div>
     ${pdfsHtml}
     <div class="pbwrap"><div class="pb" style="width:${p}%"></div></div>
