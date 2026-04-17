@@ -13,17 +13,6 @@ body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
 .login-logo{width:52px;height:52px;background:#1a1a2e;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;margin:0 auto 14px}
 .login-title{font-size:21px;font-weight:700;margin-bottom:4px}
 .login-sub{font-size:12px;color:#999;margin-bottom:24px;line-height:1.6}
-.team-section{margin-bottom:22px}
-.team-label{font-size:9px;color:#bbb;font-weight:700;letter-spacing:1px;margin-bottom:12px;text-transform:uppercase}
-.team-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
-.team-member{display:flex;flex-direction:column;align-items:center;gap:5px}
-.team-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.13);transition:transform 0.18s;cursor:default}
-.team-av:hover{transform:scale(1.1)}
-.team-name{font-size:9px;font-weight:600;color:#555;text-align:center;line-height:1.3}
-.team-role{font-size:8px;color:#bbb;text-align:center}
-.divider{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.divider-line{flex:1;height:1px;background:#efefef}
-.divider-text{font-size:9px;color:#ccc;white-space:nowrap;letter-spacing:0.8px;font-weight:600}
 .google-btn{width:100%;padding:13px 20px;background:#fff;border:1.5px solid #e0e0e0;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s}
 .google-btn:hover{background:#f8f8f8;border-color:#ccc;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
 .login-note{font-size:10px;color:#ccc;margin-top:14px;line-height:1.7}
@@ -121,6 +110,17 @@ textarea{height:60px;resize:none}
 .sbtn{width:100%;margin-top:14px;padding:12px;background:#1a1a2e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
 .sbtn:disabled{background:#aaa;cursor:not-allowed}
 .li{background:#fff;border:1px solid #ebebeb;border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all 0.2s}
+.li.done{background:linear-gradient(135deg,#f0fdf8 0%,#e8f8f2 100%);border-color:#b8e8d0}
+.li.done .li-title{color:#0a5a35}
+.li.done .li-id{color:#6dbf9a}
+.li.done .li-sub{color:#4a9a70}
+.li.done .mpct{color:#1d9e75;font-weight:700}
+.done-section-label{font-size:10px;font-weight:700;color:#1d9e75;letter-spacing:0.8px;padding:16px 2px 8px;display:flex;align-items:center;gap:6px}
+.done-section-label::before{content:'';flex:1;height:1px;background:#b8e8d0}
+.done-section-label::after{content:'';flex:1;height:1px;background:#b8e8d0}
+.in-progress-label{font-size:10px;font-weight:700;color:#888;letter-spacing:0.8px;padding:4px 2px 8px;display:flex;align-items:center;gap:6px}
+.in-progress-label::before{content:'';flex:1;height:1px;background:#e8e8e8}
+.in-progress-label::after{content:'';flex:1;height:1px;background:#e8e8e8}
 .li:hover{border-color:#ccc;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
 .li-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:8px}
 .li-id{font-size:10px;color:#bbb;margin-bottom:2px}
@@ -151,46 +151,7 @@ textarea{height:60px;resize:none}
   <div class="login-card">
     <div class="login-logo">АКТ</div>
     <div class="login-title">Talst Group</div>
-    <div class="login-sub">Гүйцэтгэлийн акт баталгаажуулах систем</div>
-
-    <!-- Баг гишүүд — зөвхөн харагдац, нэвтрэх эрхгүй -->
-    <div class="team-section">
-      <div class="team-label">Баг гишүүд</div>
-      <div class="team-row">
-        <div class="team-member">
-          <div class="team-av" style="background:#e74c3c">БӨ</div>
-          <div class="team-name">Б.Өнөмөнх</div>
-          <div class="team-role">Координатор</div>
-        </div>
-        <div class="team-member">
-          <div class="team-av" style="background:#3498db">АЗ</div>
-          <div class="team-name">А.Золзаяа</div>
-          <div class="team-role">Инженер</div>
-        </div>
-        <div class="team-member">
-          <div class="team-av" style="background:#8e44ad">ДБ</div>
-          <div class="team-name">Д.Барсат</div>
-          <div class="team-role">Захирал</div>
-        </div>
-        <div class="team-member">
-          <div class="team-av" style="background:#27ae60">ӨЗ</div>
-          <div class="team-name">Ө.Зоригоо</div>
-          <div class="team-role">Нягтлан</div>
-        </div>
-        <div class="team-member">
-          <div class="team-av" style="background:#e67e22">ДБА</div>
-          <div class="team-name">Д.Баярмаа</div>
-          <div class="team-role">Гүйцэтгэгч</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="divider">
-      <div class="divider-line"></div>
-      <div class="divider-text">GOOGLE ИМЭЙЛЭЭРЭЭ НЭВТЭРНЭ ҮҮ</div>
-      <div class="divider-line"></div>
-    </div>
-
+    <div class="login-sub">Гүйцэтгэлийн акт баталгаажуулах систем.<br>Google имэйлээрээ нэвтэрнэ үү.</div>
     <button class="google-btn" onclick="signInGoogle()">
       <svg width="20" height="20" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -201,8 +162,7 @@ textarea{height:60px;resize:none}
       Google-р нэвтрэх
     </button>
     <div class="login-note">
-      Батлах эрх нь таны talstgroup.mn имэйлээр тодорхойлогдоно.<br>
-      Гүйцэтгэгч компаниуд Gmail-р нэвтэрч болно.
+      Координатор, Инженер, Захирал, Нягтлан нар talstgroup.mn имэйлээрээ нэвтэрнэ.<br>Гүйцэтгэгч компаниуд ч Gmail-р нэвтэрч болно.
     </div>
   </div>
 </div>
@@ -569,10 +529,27 @@ function liH(a,idx,from){
     </div>
   </div>`;
 }
+function liHDone(a,idx,from){
+  const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:'';
+  const isDone=a.status==='done';
+  return `<div class="li done" onclick="opd(${idx},${from})">
+    <div class="li-top">
+      <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div>
+      <span class="badge ${isDone?'bd':'br'}">${isDone?'✓ Батлагдсан':'✕ Буцаагдсан'}</span>
+    </div>
+    <div class="li-sub">${esc(a.company)} · ₮${fmtN(a.amount)}${dr?' · '+esc(dr):''}</div>
+    <div style="display:flex;align-items:center;gap:7px">
+      <div class="mbwrap"><div class="mb" style="width:100%;background:${isDone?'#1d9e75':'#e74c3c'}"></div></div>
+      <span class="mpct" style="color:${isDone?'#1d9e75':'#e74c3c'}">${isDone?'100%':'✕'}</span>
+    </div>
+  </div>`;
+}
 function rA(){
   const el=e('al');
   if(!acts.length){el.innerHTML='<div class="empty">Акт байхгүй байна</div>';return;}
   if(role==='Гүйцэтгэгч'){el.innerHTML='<div class="empty">Акт илгээх таб ашиглана уу</div>';return;}
+  // Координатор: step===0 байгаа pending актууд
+  // Бусад роль: өөрийн step-тэй тохирох pending актууд
   const list=role==='Нягтлан'
     ?acts.filter(a=>a.status==='done')
     :acts.filter(a=>a.status==='pending'&&(a.step||0)===RSTEP[role]);
@@ -580,7 +557,21 @@ function rA(){
 }
 function rL(){
   const el=e('ll');
-  el.innerHTML=acts.length?acts.map((a,i)=>liH(a,i,2)).join(''):'<div class="empty">Одоогоор акт байхгүй байна</div>';
+  const inProgress=acts.filter(a=>a.status==='pending'&&(a.step||0)>=1);
+  const done=acts.filter(a=>a.status==='done'||a.status==='rejected');
+  if(!inProgress.length&&!done.length){
+    el.innerHTML='<div class="empty">Одоогоор акт байхгүй байна</div>';return;
+  }
+  let html='';
+  if(inProgress.length){
+    html+='<div class="in-progress-label">ЯВЦАД</div>';
+    html+=inProgress.map(a=>liH(a,acts.indexOf(a),2)).join('');
+  }
+  if(done.length){
+    html+='<div class="done-section-label">✓ ДУУССАН</div>';
+    html+=done.map(a=>liHDone(a,acts.indexOf(a),2)).join('');
+  }
+  el.innerHTML=html;
 }
 function rD(){
   e('s0').textContent=acts.length;
