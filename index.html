@@ -9,19 +9,30 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;min-height:100vh}
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.login-card{background:#fff;border:1px solid #e8e8e8;border-radius:20px;padding:40px 32px;max-width:360px;width:100%;text-align:center}
-.login-logo{width:56px;height:56px;background:#1a1a2e;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;margin:0 auto 20px}
-.login-title{font-size:22px;font-weight:700;margin-bottom:6px}
-.login-sub{font-size:13px;color:#888;margin-bottom:32px;line-height:1.6}
+.login-card{background:#fff;border:1px solid #e8e8e8;border-radius:20px;padding:36px 28px;max-width:380px;width:100%;text-align:center}
+.login-logo{width:52px;height:52px;background:#1a1a2e;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;margin:0 auto 14px}
+.login-title{font-size:21px;font-weight:700;margin-bottom:4px}
+.login-sub{font-size:12px;color:#999;margin-bottom:24px;line-height:1.6}
+.team-section{margin-bottom:22px}
+.team-label{font-size:9px;color:#bbb;font-weight:700;letter-spacing:1px;margin-bottom:12px;text-transform:uppercase}
+.team-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.team-member{display:flex;flex-direction:column;align-items:center;gap:5px}
+.team-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.13);transition:transform 0.18s;cursor:default}
+.team-av:hover{transform:scale(1.1)}
+.team-name{font-size:9px;font-weight:600;color:#555;text-align:center;line-height:1.3}
+.team-role{font-size:8px;color:#bbb;text-align:center}
+.divider{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.divider-line{flex:1;height:1px;background:#efefef}
+.divider-text{font-size:9px;color:#ccc;white-space:nowrap;letter-spacing:0.8px;font-weight:600}
 .google-btn{width:100%;padding:13px 20px;background:#fff;border:1.5px solid #e0e0e0;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s}
-.google-btn:hover{background:#f8f8f8;border-color:#ccc}
-.login-note{font-size:11px;color:#bbb;margin-top:20px;line-height:1.6}
+.google-btn:hover{background:#f8f8f8;border-color:#ccc;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.login-note{font-size:10px;color:#ccc;margin-top:14px;line-height:1.7}
 .app{max-width:480px;margin:0 auto;padding:12px 12px 40px;display:none}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 0 14px}
 .logo{width:32px;height:32px;background:#1a1a2e;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
 .appname{font-size:15px;font-weight:700;margin-left:8px}
 .user-pill{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:#fff;border:1px solid #e8e8e8;cursor:pointer}
-.uav{width:26px;height:26px;border-radius:50%;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700}
+.uav{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700}
 .uname{font-size:11px;font-weight:500;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .urole{font-size:9px;color:#888}
 .tabs{display:flex;gap:3px;margin-bottom:14px;background:#e8e8e4;padding:3px;border-radius:10px}
@@ -126,7 +137,46 @@ textarea{height:60px;resize:none}
   <div class="login-card">
     <div class="login-logo">АКТ</div>
     <div class="login-title">Talst Group</div>
-    <div class="login-sub">Гүйцэтгэлийн акт баталгаажуулах систем.<br>Google имэйлээрээ нэвтэрнэ үү.</div>
+    <div class="login-sub">Гүйцэтгэлийн акт баталгаажуулах систем</div>
+
+    <!-- Баг гишүүд — зөвхөн харагдац, нэвтрэх эрхгүй -->
+    <div class="team-section">
+      <div class="team-label">Баг гишүүд</div>
+      <div class="team-row">
+        <div class="team-member">
+          <div class="team-av" style="background:#e74c3c">БӨ</div>
+          <div class="team-name">Б.Өнөмөнх</div>
+          <div class="team-role">Координатор</div>
+        </div>
+        <div class="team-member">
+          <div class="team-av" style="background:#3498db">АЗ</div>
+          <div class="team-name">А.Золзаяа</div>
+          <div class="team-role">Инженер</div>
+        </div>
+        <div class="team-member">
+          <div class="team-av" style="background:#8e44ad">ДБ</div>
+          <div class="team-name">Д.Барсат</div>
+          <div class="team-role">Захирал</div>
+        </div>
+        <div class="team-member">
+          <div class="team-av" style="background:#27ae60">ӨЗ</div>
+          <div class="team-name">Ө.Зоригоо</div>
+          <div class="team-role">Нягтлан</div>
+        </div>
+        <div class="team-member">
+          <div class="team-av" style="background:#e67e22">ДБА</div>
+          <div class="team-name">Д.Баярмаа</div>
+          <div class="team-role">Гүйцэтгэгч</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">GOOGLE ИМЭЙЛЭЭРЭЭ НЭВТЭРНЭ ҮҮ</div>
+      <div class="divider-line"></div>
+    </div>
+
     <button class="google-btn" onclick="signInGoogle()">
       <svg width="20" height="20" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -136,9 +186,13 @@ textarea{height:60px;resize:none}
       </svg>
       Google-р нэвтрэх
     </button>
-    <div class="login-note">Координатор, Инженер, Захирал, Нягтлан нар talstgroup.mn имэйлээрээ нэвтэрнэ.<br>Гүйцэтгэгч компаниуд ч Gmail-р нэвтэрч болно.</div>
+    <div class="login-note">
+      Батлах эрх нь таны talstgroup.mn имэйлээр тодорхойлогдоно.<br>
+      Гүйцэтгэгч компаниуд Gmail-р нэвтэрч болно.
+    </div>
   </div>
 </div>
+
 <div class="app" id="appPage">
   <div class="topbar">
     <div style="display:flex;align-items:center">
@@ -180,7 +234,6 @@ textarea{height:60px;resize:none}
         <input type="number" id="fa" placeholder="48500000" oninput="fmtAmt()">
         <div class="amt-fmt" id="amtFmt"></div>
       </div>
-      <!-- ✅ ӨӨРЧЛӨЛТ: Зураг → PDF файл -->
       <div class="fl">Ажлын баримт бичгүүд (PDF)</div>
       <label class="file-upload-btn" for="fpdfs">📄 PDF файл сонгох</label>
       <input type="file" id="fpdfs" class="file-input" multiple accept="application/pdf" onchange="addPdfs(this)">
@@ -211,6 +264,7 @@ textarea{height:60px;resize:none}
     <div id="dc"></div>
   </div>
 </div>
+
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut as fbOut}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -228,22 +282,28 @@ const EJS_TPL='template_8zefmxg';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 const CHAIN=[
   {name:'Координатор',email:'unumunkh@talstgroup.mn'},
-  {name:'Инженер',    email:'unumunkh@talstgroup.mn'},
-  {name:'Захирал',    email:'unumunkh@talstgroup.mn'},
-  {name:'Нягтлан',    email:'unumunkh@talstgroup.mn'},
+  {name:'Инженер',    email:'zolzaya@talstgroup.mn'},
+  {name:'Захирал',   email:'barsbat@talstgroup.mn'},
+  {name:'Нягтлан',   email:'zorigoo@talstgroup.mn'},
 ];
-const ROLES={'unumunkh@talstgroup.mn':'Координатор'};
+const ROLES={
+  'unumunkh@talstgroup.mn':'Координатор',
+  'zolzaya@talstgroup.mn':'Инженер',
+  'barsbat@talstgroup.mn':'Захирал',
+  'zorigoo@talstgroup.mn':'Нягтлан',
+};
+const ROLE_COLORS={
+  'Координатор':'#e74c3c','Инженер':'#3498db',
+  'Захирал':'#8e44ad','Нягтлан':'#27ae60','Гүйцэтгэгч':'#e67e22',
+};
 const RSTEP={'Координатор':0,'Инженер':1,'Захирал':2,'Нягтлан':3};
 const SN=['Координатор','Инженер','Захирал','Нягтлан'];
-const SE=['zolzaya@talstgroup.mn','barsbat@talstgroup.mn','zorigoo@talstgroup.mn','bayarmaa@talstgroup.mn'];
+const SE=['unumunkh@talstgroup.mn','zolzaya@talstgroup.mn','barsbat@talstgroup.mn','zorigoo@talstgroup.mn'];
 const fapp=initializeApp(cfg);
 const auth=getAuth(fapp);
 const db=getFirestore(fapp);
 let cu=null,role='Гүйцэтгэгч',acts=[],prev=2,ctab=0,unsub=null;
-
-// ✅ ӨӨРЧЛӨЛТ: imgDataList → pdfDataList
 let pdfDataList=[];
-
 const e=id=>document.getElementById(id);
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function ts(){return new Date().toLocaleString('mn-MN')}
@@ -252,112 +312,71 @@ function pct(a){return a.status==='done'?100:Math.round((a.step||0)/4*100)}
 function bc(a){return a.status==='done'?'bd':a.status==='rejected'?'br':(a.step||0)===0?'bw':'bp'}
 function bt(a){return a.status==='done'?'✓ Батлагдсан':a.status==='rejected'?'✕ Буцаагдсан':SN[a.step||0]+' хүлээж байна'}
 function fmtN(n){return parseInt(n||0).toLocaleString('mn-MN')}
-window.fmtAmt=()=>{
-  const v=e('fa').value;
-  e('amtFmt').textContent=v&&!isNaN(v)?'₮ '+parseInt(v).toLocaleString():'';
-};
-
-// ✅ ӨӨРЧЛӨЛТ: PDF уншдаг функц (зураг compress хийхгүй, base64 болгоно)
+window.fmtAmt=()=>{const v=e('fa').value;e('amtFmt').textContent=v&&!isNaN(v)?'₮ '+parseInt(v).toLocaleString():'';};
 function readPdfAsBase64(file){
   return new Promise(resolve=>{
     const reader=new FileReader();
-    reader.onload=ev=>{
-      const b64=ev.target.result; // data:application/pdf;base64,...
-      const kb=Math.round(file.size/1024);
-      resolve({name:file.name,base64:b64,sizeKb:kb});
-    };
+    reader.onload=ev=>resolve({name:file.name,base64:ev.target.result,sizeKb:Math.round(file.size/1024)});
     reader.readAsDataURL(file);
   });
 }
-
-// ✅ ӨӨРЧЛӨЛТ: addImgs → addPdfs
 window.addPdfs=async(input)=>{
-  const files=Array.from(input.files);
-  if(!files.length)return;
+  const files=Array.from(input.files);if(!files.length)return;
   e('compInfo').textContent='PDF боловсруулж байна...';
   for(const f of files){
-    if(f.type!=='application/pdf'){
-      toast('Зөвхөн PDF файл сонгоно уу: '+f.name,'err');
-      continue;
-    }
-    const d=await readPdfAsBase64(f);
-    pdfDataList.push(d);
+    if(f.type!=='application/pdf'){toast('Зөвхөн PDF файл сонгоно уу: '+f.name,'err');continue;}
+    pdfDataList.push(await readPdfAsBase64(f));
   }
   renderPdfList();
   const total=pdfDataList.reduce((s,x)=>s+x.sizeKb,0);
   e('compInfo').textContent=`${pdfDataList.length} PDF · нийт ~${total}KB`;
   input.value='';
 };
-
-// ✅ ӨӨРЧЛӨЛТ: PDF жагсаалт харуулах
 function renderPdfList(){
-  const g=e('pdfList');
-  g.innerHTML=pdfDataList.map((d,i)=>`
+  e('pdfList').innerHTML=pdfDataList.map((d,i)=>`
     <div class="pdf-item">
-      <div class="pdf-info">
-        <span class="pdf-icon">📄</span>
+      <div class="pdf-info"><span class="pdf-icon">📄</span>
         <span class="pdf-name" title="${esc(d.name)}">${esc(d.name)}</span>
       </div>
       <span class="pdf-size">${d.sizeKb}KB</span>
       <div class="pdf-rm" onclick="rmPdf(${i})">✕</div>
     </div>`).join('');
 }
-
-// ✅ ӨӨРЧЛӨЛТ: rmImg → rmPdf
 window.rmPdf=(i)=>{
-  pdfDataList.splice(i,1);
-  renderPdfList();
+  pdfDataList.splice(i,1);renderPdfList();
   const total=pdfDataList.reduce((s,x)=>s+x.sizeKb,0);
   e('compInfo').textContent=pdfDataList.length?`${pdfDataList.length} PDF · ~${total}KB`:'';
 };
-
 function toast(m,t='ok'){
   const el=e('toast');el.textContent=m;
   el.className='toast '+(t==='ok'?'tok':'terr');
-  el.style.display='block';
-  setTimeout(()=>el.style.display='none',4000);
+  el.style.display='block';setTimeout(()=>el.style.display='none',4000);
 }
 function sendMail(toEmail,toName,act,fromName){
-  const params={
-    to_email:toEmail,
-    to_name:toName,
-    company:act.company,
-    contract:act.contract,
-    work:act.work,
-    amount:fmtN(act.amount),
-    from_name:fromName,
-    email:toEmail,
-    name:fromName,
-  };
-  console.log('📧 Email илгээж байна:', toEmail, params);
-  return emailjs.send(EJS_SVC,EJS_TPL,params)
-    .then(r=>console.log('✅ Email амжилттай:', r))
-    .catch(err=>{ console.error('❌ EmailJS алдаа:', err); throw err; });
+  return emailjs.send(EJS_SVC,EJS_TPL,{
+    to_email:toEmail,to_name:toName,company:act.company,contract:act.contract,
+    work:act.work,amount:fmtN(act.amount),from_name:fromName,email:toEmail,name:fromName,
+  }).then(r=>console.log('✅',r)).catch(err=>{console.error('❌',err);throw err;});
 }
 window.signInGoogle=async()=>{
   try{await signInWithPopup(auth,new GoogleAuthProvider())}
   catch(err){toast('Нэвтрэхэд алдаа гарлаа','err')}
 };
-window.doSignOut=async()=>{
-  if(confirm('Гарах уу?')){if(unsub)unsub();await fbOut(auth)}
-};
+window.doSignOut=async()=>{if(confirm('Гарах уу?')){if(unsub)unsub();await fbOut(auth)}};
 window.go=go;window.bk=bk;window.opd=opd;
 window.submitAct=submitAct;window.approve=approve;window.reject=reject;
 onAuthStateChanged(auth,u=>{
   if(u){
     cu=u;role=ROLES[u.email]||'Гүйцэтгэгч';
-    e('loginPage').style.display='none';
-    e('appPage').style.display='block';
+    e('loginPage').style.display='none';e('appPage').style.display='block';
     const ini=(u.displayName||u.email).split(' ').map(n=>n[0]).join('').toUpperCase().substr(0,2);
-    e('uav').textContent=ini;
+    e('uav').textContent=ini;e('uav').style.background=ROLE_COLORS[role]||'#888';
     e('uname').textContent=u.displayName||u.email;
     e('urole').textContent=role;
     e('aplbl').textContent=role+' горимд батлах актууд';
     listen();
   }else{
-    cu=null;
-    e('loginPage').style.display='flex';
-    e('appPage').style.display='none';
+    cu=null;e('loginPage').style.display='flex';e('appPage').style.display='none';
     if(unsub){unsub();unsub=null;}
   }
 });
@@ -365,9 +384,7 @@ function listen(){
   const q=query(collection(db,'acts'),orderBy('createdAt','desc'));
   unsub=onSnapshot(q,snap=>{
     acts=snap.docs.map(d=>({id:d.id,...d.data()}));
-    if(ctab===1)rA();
-    if(ctab===2)rL();
-    if(ctab===3)rD();
+    if(ctab===1)rA();if(ctab===2)rL();if(ctab===3)rD();
     if(e('pd').style.display!=='none'){
       const idx=parseInt(e('dc').dataset.idx||'-1');
       if(idx>=0)e('dc').innerHTML=detH(idx);
@@ -377,91 +394,51 @@ function listen(){
 function go(n){
   [0,1,2,3].forEach(i=>{e('p'+i).style.display='none';e('tb'+i).classList.remove('on')});
   e('pd').style.display='none';
-  e('p'+n).style.display='block';e('tb'+n).classList.add('on');
-  ctab=n;
+  e('p'+n).style.display='block';e('tb'+n).classList.add('on');ctab=n;
   if(n===1)rA();if(n===2)rL();if(n===3)rD();
 }
 function bk(){
   e('pd').style.display='none';
-  e('p'+prev).style.display='block';e('tb'+prev).classList.add('on');
-  ctab=prev;
+  e('p'+prev).style.display='block';e('tb'+prev).classList.add('on');ctab=prev;
 }
 function opd(idx,from){
   prev=from;
   [0,1,2,3].forEach(i=>{e('p'+i).style.display='none';e('tb'+i).classList.remove('on')});
-  e('pd').style.display='block';
-  e('dc').dataset.idx=idx;
-  e('dc').innerHTML=detH(idx);
+  e('pd').style.display='block';e('dc').dataset.idx=idx;e('dc').innerHTML=detH(idx);
 }
 async function submitAct(){
-  const c=e('fc').value.trim();
-  const g=e('fg').value.trim();
-  const w=e('fw').value.trim();
-  const a=e('fa').value.trim();
+  const c=e('fc').value.trim(),g=e('fg').value.trim(),w=e('fw').value.trim(),a=e('fa').value.trim();
   if(!c||!g||!w||!a){toast('Компани, гэрээ, ажил, дүн заавал!','err');return;}
-
-  // ✅ ӨӨРЧЛӨЛТ: PDF хэмжээ шалгах (2MB хязгаар)
   const totalKb=pdfDataList.reduce((s,x)=>s+x.sizeKb,0);
-  if(totalKb>2048){
-    toast(`PDF-ийн нийт хэмжээ ${totalKb}KB — 2MB-аас бага байх ёстой. Зарим файлыг хасна уу.`,'err');
-    return;
-  }
-
-  const btn=e('sbtn');
-  btn.disabled=true;btn.textContent='Илгээж байна...';
-  e('progWrap').style.display='block';
-  e('progText').style.display='block';
-  e('progBar').style.width='20%';
-  e('progText').textContent='Мэдээлэл бэлдэж байна...';
+  if(totalKb>2048){toast(`PDF нийт ${totalKb}KB — 2MB-аас бага байх ёстой.`,'err');return;}
+  const btn=e('sbtn');btn.disabled=true;btn.textContent='Илгээж байна...';
+  e('progWrap').style.display='block';e('progText').style.display='block';
+  e('progBar').style.width='20%';e('progText').textContent='Мэдээлэл бэлдэж байна...';
   const aid='АКТ-'+new Date().getFullYear()+'-'+String(Date.now()).substr(-4);
   try{
-    e('progBar').style.width='60%';
-    e('progText').textContent='Firestore-д хадгалж байна...';
-
-    // ✅ ӨӨРЧЛӨЛТ: images → pdfs, imgCount → pdfCount
+    e('progBar').style.width='60%';e('progText').textContent='Firestore-д хадгалж байна...';
     const actData={
-      actId:aid,
-      date:new Date().toLocaleDateString('mn-MN'),
-      company:c,contract:g,work:w,
-      dateFrom:e('fd1').value,
-      dateTo:e('fd2').value,
-      amount:a,
+      actId:aid,date:new Date().toLocaleDateString('mn-MN'),
+      company:c,contract:g,work:w,dateFrom:e('fd1').value,dateTo:e('fd2').value,amount:a,
       pdfs:pdfDataList.map(d=>({name:d.name,base64:d.base64,sizeKb:d.sizeKb})),
-      pdfCount:pdfDataList.length,
-      step:0,status:'pending',
-      submittedBy:cu.email,
-      submittedByName:cu.displayName||cu.email,
+      pdfCount:pdfDataList.length,step:0,status:'pending',
+      submittedBy:cu.email,submittedByName:cu.displayName||cu.email,
       createdAt:serverTimestamp(),
-      evs:[{
-        type:'submit',
-        who:cu.displayName||cu.email,
-        whoEmail:cu.email,
+      evs:[{type:'submit',who:cu.displayName||cu.email,whoEmail:cu.email,
         title:'Акт илгээсэн',
         detail:c+' · '+g+' · ₮'+fmtN(a)+(pdfDataList.length?` · ${pdfDataList.length} PDF (~${totalKb}KB)`:' · Баримтгүй'),
-        time:ts(),hash:gh()
-      }]
+        time:ts(),hash:gh()}]
     };
     await addDoc(collection(db,'acts'),actData);
-    e('progBar').style.width='85%';
-    e('progText').textContent='Email илгээж байна...';
+    e('progBar').style.width='85%';e('progText').textContent='Email илгээж байна...';
     await sendMail(CHAIN[0].email,CHAIN[0].name,actData,cu.displayName||cu.email);
     e('progBar').style.width='100%';
     toast('✅ Акт илгээгдлээ! Координаторт email очлоо.');
     ['fc','fg','fw','fd1','fd2','fa'].forEach(id=>e(id).value='');
-    pdfDataList=[];
-    e('pdfList').innerHTML='';
-    e('compInfo').textContent='';
-    e('amtFmt').textContent='';
-  }catch(err){
-    toast('Алдаа: '+err.message,'err');
-    console.error(err);
-  }
+    pdfDataList=[];e('pdfList').innerHTML='';e('compInfo').textContent='';e('amtFmt').textContent='';
+  }catch(err){toast('Алдаа: '+err.message,'err');console.error(err);}
   btn.disabled=false;btn.textContent='Акт илгээх';
-  setTimeout(()=>{
-    e('progWrap').style.display='none';
-    e('progText').style.display='none';
-    e('progBar').style.width='0%';
-  },1500);
+  setTimeout(()=>{e('progWrap').style.display='none';e('progText').style.display='none';e('progBar').style.width='0%';},1500);
 }
 async function approve(docId){
   const a=acts.find(x=>x.id===docId);
@@ -469,9 +446,7 @@ async function approve(docId){
   if(RSTEP[role]!==a.step){toast('Та энэ актыг батлах эрхгүй!','err');return;}
   const newEvs=[...(a.evs||[]),{
     type:'approve',who:cu.displayName||cu.email,whoEmail:cu.email,
-    title:role+' батлав ✓',
-    detail:cu.email+' · Google нэвтрэлтээр баталгаажсан',
-    time:ts(),hash:gh()
+    title:role+' батлав ✓',detail:cu.email+' · Google нэвтрэлтээр баталгаажсан',time:ts(),hash:gh()
   }];
   const ns=(a.step||0)+1;const done=ns>=4;
   const upd={step:ns,evs:newEvs};
@@ -482,13 +457,8 @@ async function approve(docId){
   }
   try{
     await updateDoc(doc(db,'acts',docId),upd);
-    if(done){
-      await sendMail(CHAIN[3].email,CHAIN[3].name,a,cu.displayName||cu.email);
-      toast('🎉 Бүрэн батлагдлаа! Нягтланд email очлоо.');
-    }else{
-      await sendMail(CHAIN[ns].email,CHAIN[ns].name,a,cu.displayName||cu.email);
-      toast('✅ '+SN[ns]+' уруу илгээгдлээ. Email очлоо.');
-    }
+    if(done){await sendMail(CHAIN[3].email,CHAIN[3].name,a,cu.displayName||cu.email);toast('🎉 Бүрэн батлагдлаа! Нягтланд email очлоо.');}
+    else{await sendMail(CHAIN[ns].email,CHAIN[ns].name,a,cu.displayName||cu.email);toast('✅ '+SN[ns]+' уруу илгээгдлээ.');}
     rA();
   }catch(err){toast('Алдаа: '+err.message,'err');}
 }
@@ -509,44 +479,24 @@ function evH(ev,isLast){
   const ic=ev.type==='approve'||ev.type==='done'||ev.type==='submit'?'✓':ev.type==='reject'?'✕':'→';
   const lk=ev.type==='submit'||ev.type==='approve'||ev.type==='done'?'🔒':'🔓';
   return `<div class="tli">
-    <div class="tll">
-      <div class="dot ${dc}">${ic}</div>
-      ${!isLast?`<div class="dline ld"></div>`:''}
-    </div>
+    <div class="tll"><div class="dot ${dc}">${ic}</div>${!isLast?'<div class="dline ld"></div>':''}</div>
     <div class="tlr"><div class="tlcard">
       <div class="tlch">
-        <div>
-          <div class="tlwho">${esc(ev.who)} · ${esc(ev.whoEmail||'')}</div>
-          <div class="tltitle">${esc(ev.title)}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:4px">
-          <span style="font-size:12px">${lk}</span>
-          <div class="tltime">${ev.time||''}</div>
-        </div>
+        <div><div class="tlwho">${esc(ev.who)} · ${esc(ev.whoEmail||'')}</div><div class="tltitle">${esc(ev.title)}</div></div>
+        <div style="display:flex;align-items:center;gap:4px"><span style="font-size:12px">${lk}</span><div class="tltime">${ev.time||''}</div></div>
       </div>
       <div class="tlcb">
         <div class="tldtl">${esc(ev.detail)}</div>
-        <div class="hashrow">
-          <span style="font-size:10px">🔐</span>
-          <div class="hashval">${ev.hash||''} · ${ev.time||''}</div>
-        </div>
+        <div class="hashrow"><span style="font-size:10px">🔐</span><div class="hashval">${ev.hash||''} · ${ev.time||''}</div></div>
       </div>
     </div></div>
   </div>`;
 }
 function wevH(i,isLast){
   return `<div class="tli">
-    <div class="tll">
-      <div class="dot dw" style="font-size:10px">${i+1}</div>
-      ${!isLast?`<div class="dline lw"></div>`:''}
-    </div>
+    <div class="tll"><div class="dot dw" style="font-size:10px">${i+1}</div>${!isLast?'<div class="dline lw"></div>':''}</div>
     <div class="tlr"><div class="tlcard tlwait">
-      <div class="tlch">
-        <div>
-          <div class="tlwho">${SE[i]}</div>
-          <div class="tltitle">${SN[i]} хүлээгдэж байна...</div>
-        </div>
-      </div>
+      <div class="tlch"><div><div class="tlwho">${SE[i]}</div><div class="tltitle">${SN[i]} хүлээгдэж байна...</div></div></div>
     </div></div>
   </div>`;
 }
@@ -555,29 +505,21 @@ function detH(idx){
   const p=pct(a);const step=a.step||0;
   const canA=a.status==='pending'&&role!=='Гүйцэтгэгч'&&RSTEP[role]===step;
   const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:a.dateFrom||a.dateTo||'—';
-
-  // ✅ ӨӨРЧЛӨЛТ: PDF жагсаалт харуулах (зурагны grid биш)
   let pdfsHtml='';
   if(a.pdfs&&a.pdfs.length){
-    pdfsHtml='<div class="det-pdfs">'+
-      a.pdfs.map(pdf=>`
-        <div class="det-pdf-item">
-          <span style="font-size:18px">📄</span>
-          <span class="det-pdf-name">${esc(pdf.name)}</span>
-          <span class="det-pdf-size">${pdf.sizeKb}KB</span>
-          <a class="det-pdf-open" href="${pdf.base64}" download="${esc(pdf.name)}" onclick="event.stopPropagation()">Татах</a>
-        </div>`).join('')
-    +'</div>';
+    pdfsHtml='<div class="det-pdfs">'+a.pdfs.map(pdf=>`
+      <div class="det-pdf-item">
+        <span style="font-size:18px">📄</span>
+        <span class="det-pdf-name">${esc(pdf.name)}</span>
+        <span class="det-pdf-size">${pdf.sizeKb}KB</span>
+        <a class="det-pdf-open" href="${pdf.base64}" download="${esc(pdf.name)}" onclick="event.stopPropagation()">Татах</a>
+      </div>`).join('')+'</div>';
   }
-
   let tl=(a.evs||[]).map(ev=>evH(ev,false)).join('');
   if(a.status==='pending')for(let i=step;i<4;i++)tl+=wevH(i,i===3);
   return `<div class="card">
     <div class="ch">
-      <div>
-        <div class="cid">${esc(a.actId)} · ${esc(a.date)}</div>
-        <div class="ctitle">${esc(a.work)}</div>
-      </div>
+      <div><div class="cid">${esc(a.actId)} · ${esc(a.date)}</div><div class="ctitle">${esc(a.work)}</div></div>
       <span class="badge ${bc(a)}">${bt(a)}</span>
     </div>
     <div class="cb">
@@ -595,21 +537,14 @@ function detH(idx){
       <button class="bok" onclick="approve('${a.id}')">✓ Батлах</button>
       <button class="bno" onclick="reject('${a.id}')">✕ Буцаах</button>
     </div>`:''}
-    <div class="tl">
-      <div class="tll-label">ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ</div>
-      ${tl}
-    </div>
+    <div class="tl"><div class="tll-label">ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ</div>${tl}</div>
   </div>`;
 }
 function liH(a,idx,from){
-  const p=pct(a);
-  const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:'';
+  const p=pct(a);const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:'';
   return `<div class="li" onclick="opd(${idx},${from})">
     <div class="li-top">
-      <div>
-        <div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div>
-        <div class="li-title">${esc(a.work)}</div>
-      </div>
+      <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div>
       <span class="badge ${bc(a)}">${bt(a)}</span>
     </div>
     <div class="li-sub">${esc(a.company)} · ₮${fmtN(a.amount)}${dr?' · '+esc(dr):''}</div>
@@ -626,24 +561,18 @@ function rA(){
   const list=role==='Нягтлан'
     ?acts.filter(a=>a.status==='done')
     :acts.filter(a=>a.status==='pending'&&(a.step||0)===RSTEP[role]);
-  el.innerHTML=list.length
-    ?list.map(a=>liH(a,acts.indexOf(a),1)).join('')
-    :'<div class="empty">Таны батлах акт байхгүй байна</div>';
+  el.innerHTML=list.length?list.map(a=>liH(a,acts.indexOf(a),1)).join(''):'<div class="empty">Таны батлах акт байхгүй байна</div>';
 }
 function rL(){
   const el=e('ll');
-  el.innerHTML=acts.length
-    ?acts.map((a,i)=>liH(a,i,2)).join('')
-    :'<div class="empty">Одоогоор акт байхгүй байна</div>';
+  el.innerHTML=acts.length?acts.map((a,i)=>liH(a,i,2)).join(''):'<div class="empty">Одоогоор акт байхгүй байна</div>';
 }
 function rD(){
   e('s0').textContent=acts.length;
   e('s1').textContent=acts.filter(a=>a.status==='pending').length;
   e('s2').textContent=acts.filter(a=>a.status==='done').length;
   const el=e('dl');
-  el.innerHTML=acts.length
-    ?acts.map((a,i)=>liH(a,i,3)).join('')
-    :'<div class="empty">Акт байхгүй байна</div>';
+  el.innerHTML=acts.length?acts.map((a,i)=>liH(a,i,3)).join(''):'<div class="empty">Акт байхгүй байна</div>';
 }
 </script>
 </body>
