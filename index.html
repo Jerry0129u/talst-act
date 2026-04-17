@@ -50,7 +50,7 @@ body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
 .cid{font-size:10px;color:#bbb;margin-bottom:3px}
 .ctitle{font-size:13px;font-weight:600;line-height:1.3}
 .badge{font-size:9px;padding:3px 8px;border-radius:20px;font-weight:700;white-space:nowrap;flex-shrink:0}
-.bw{background:#faeeda;color:#7a4a0a}.bp{background:#deeeff;color:#0a3a7a}.bd{background:#dff5ec;color:#0a5a35}.br{background:#fde8e8;color:#7a0a0a}
+.bw{background:#faeeda;color:#7a4a0a}.bp{background:#deeeff;color:#0a3a7a}.bd{background:#dff5ec;color:#0a5a35}.br{background:#fde8e8;color:#7a0a0a}.b1{background:#fde8ff;color:#7a0a7a}.b2{background:#e8e0ff;color:#3a0a7a}.b3{background:#fff0e8;color:#7a3a0a}
 .cb{padding:11px 14px}
 .row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid #f5f5f5}
 .row:last-child{border:none}
@@ -327,7 +327,7 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function ts(){return new Date().toLocaleString('mn-MN')}
 function gh(){return 'sha256:'+Math.random().toString(36).substr(2,8)+'...'+Math.random().toString(36).substr(2,4)}
 function pct(a){return a.status==='done'?100:Math.round((a.step||0)/4*100)}
-function bc(a){return a.status==='done'?'bd':a.status==='rejected'?'br':(a.step||0)===0?'bw':'bp'}
+function bc(a){if(a.status==='done')return 'bd';if(a.status==='rejected')return 'br';const s=a.step||0;return ['bw','bp','b1','b2','b3'][s]||'bp';}
 function bt(a){return a.status==='done'?'✓ Батлагдсан':a.status==='rejected'?'✕ Буцаагдсан':SN[a.step||0]+' хүлээж байна'}
 function fmtN(n){return parseInt(n||0).toLocaleString('mn-MN')}
 window.fmtAmt=()=>{const v=e('fa').value;e('amtFmt').textContent=v&&!isNaN(v)?'₮ '+parseInt(v).toLocaleString():'';};
@@ -686,25 +686,48 @@ function rD(){
   e('dTotalAmt').textContent=fmtM(totalAmt);
   e('dDoneAmt').textContent=fmtM(doneAmt);
   if(typeof Chart==='undefined')return;
-  const last8=acts.slice(0,8).reverse();
-  const labels=last8.map((a,i)=>{
-    if(a.date){
+  // Сүүлийн 7 хоног — өдөр бүрт актын нийт дүн
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    days.push({
+      label:(d.getMonth()+1)+'/'+(d.getDate()),
+      dateStr:d.toLocaleDateString('mn-MN'),
+      mn:(d.getMonth()+1)+'/'+d.getDate(),
+    });
+  }
+  const dayAmts=days.map(day=>{
+    return acts.filter(a=>{
+      if(!a.date)return false;
       const p=String(a.date).replace(/\./g,'/').split('/');
-      if(p.length>=3) return p[1]+'/'+p[2];
-      if(p.length>=2) return p[0]+'/'+p[1];
-    }
-    return (i+1)+'';
+      const m=parseInt(p[1]||0),dd=parseInt(p[2]||0);
+      const [dm,ddd]=day.mn.split('/').map(Number);
+      return m===dm&&dd===ddd;
+    }).reduce((s,a)=>s+parseInt(a.amount||0),0);
+  });
+  const dayColors=days.map(day=>{
+    const dayActs=acts.filter(a=>{
+      if(!a.date)return false;
+      const p=String(a.date).replace(/\./g,'/').split('/');
+      const m=parseInt(p[1]||0),dd=parseInt(p[2]||0);
+      const [dm,ddd]=day.mn.split('/').map(Number);
+      return m===dm&&dd===ddd;
+    });
+    if(!dayActs.length)return '#e8e8e8';
+    const hasDone=dayActs.some(a=>a.status==='done');
+    const hasRej=dayActs.some(a=>a.status==='rejected');
+    if(hasDone)return '#1d9e75';
+    if(hasRej)return '#e24b4a';
+    return '#378add';
   });
   if(dbBarChart){dbBarChart.destroy();dbBarChart=null;}
   const ctx=e('dbBarChart');if(!ctx)return;
-  const barColors=last8.map(a=>a.status==='done'?'#1d9e75':a.status==='rejected'?'#e24b4a':'#378add');
-  const barData=last8.map(a=>parseInt(a.amount||0));
   dbBarChart=new Chart(ctx,{
     type:'bar',
-    data:{labels,datasets:[{
+    data:{labels:days.map(d=>d.label),datasets:[{
       label:'Дүн',
-      data:barData,
-      backgroundColor:barColors,
+      data:dayAmts,
+      backgroundColor:dayColors,
       borderRadius:6,
       borderSkipped:false,
     }]},
@@ -712,8 +735,11 @@ function rD(){
       plugins:{
         legend:{display:false},
         tooltip:{callbacks:{
-          label:ctx=>'₮'+parseInt(ctx.raw||0).toLocaleString('mn-MN'),
-          title:ctx=>{const a=last8[ctx[0].dataIndex];return a.work||labels[ctx[0].dataIndex];}
+          label:ctx=>{
+            const amt=ctx.raw||0;
+            if(!amt)return 'Акт байхгүй';
+            return '₮'+parseInt(amt).toLocaleString('mn-MN');
+          }
         }}
       },
       scales:{
