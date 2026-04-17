@@ -252,8 +252,7 @@ textarea{height:60px;resize:none}
     </div>
     <div class="chart-card">
       <div class="chart-header">
-        <div><div class="chart-title">Актын явц</div><div class="chart-subtitle">Сүүлийн бүртгэлүүд</div></div>
-        <div class="big-num" id="dChartBig">—</div>
+        <div><div class="chart-title">Актын явц</div><div class="chart-subtitle">Сүүлийн 7 хоног</div></div>
       </div>
       <div style="position:relative;width:100%;height:160px"><canvas id="dbBarChart" role="img" aria-label="Актын явцын диаграм"></canvas></div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">
@@ -672,7 +671,6 @@ function rD(){
   e('s1sub').textContent=pending.length+'ш батлуулж байна';
   e('s2').textContent=done.length;
   e('s2sub').textContent=done.length+'ш бүрэн батлагдсан';
-  e('dChartBig').textContent=total+'ш';
   const steps=[0,1,2,3].map(i=>pending.filter(a=>(a.step||0)===i).length);
   const maxS=Math.max(...steps,done.length,1);
   [0,1,2,3].forEach(i=>{
@@ -686,47 +684,59 @@ function rD(){
   e('dTotalAmt').textContent=fmtM(totalAmt);
   e('dDoneAmt').textContent=fmtM(doneAmt);
   if(typeof Chart==='undefined')return;
-  // Сүүлийн 7 хоног — өдөр бүрт актын нийт дүн
+  // mn-MN огноо parse: '2026.04.16' эсвэл '2026/04/16' → {m,d}
+  function parseActDate(dateStr){
+    if(!dateStr)return null;
+    const p=String(dateStr).replace(/[.\/]/g,'-').split('-');
+    if(p.length===3)return{y:parseInt(p[0]),m:parseInt(p[1]),d:parseInt(p[2])};
+    if(p.length===2)return{y:0,m:parseInt(p[0]),d:parseInt(p[1])};
+    return null;
+  }
   const days=[];
+  const today=new Date();
   for(let i=6;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
+    const d=new Date(today);
+    d.setDate(today.getDate()-i);
     days.push({
       label:(d.getMonth()+1)+'/'+(d.getDate()),
-      dateStr:d.toLocaleDateString('mn-MN'),
-      mn:(d.getMonth()+1)+'/'+d.getDate(),
+      m:d.getMonth()+1,
+      d:d.getDate(),
+      y:d.getFullYear(),
+    });
+  }
+  function actsOfDay(day){
+    return acts.filter(a=>{
+      const pd=parseActDate(a.date);
+      if(!pd)return false;
+      return pd.m===day.m&&pd.d===day.d;
     });
   }
   const dayAmts=days.map(day=>{
-    return acts.filter(a=>{
-      if(!a.date)return false;
-      const p=String(a.date).replace(/\./g,'/').split('/');
-      const m=parseInt(p[1]||0),dd=parseInt(p[2]||0);
-      const [dm,ddd]=day.mn.split('/').map(Number);
-      return m===dm&&dd===ddd;
-    }).reduce((s,a)=>s+parseInt(a.amount||0),0);
+    const da=actsOfDay(day);
+    if(!da.length)return 0;
+    // Актын тоо × жижиг random offset → тэнцүү ч ялгаатай харагдана
+    const total=da.reduce((s,a)=>s+parseInt(a.amount||0),0);
+    return total||da.length*1000000; // дүн 0 бол тоогоор орлуулна
   });
+  const dayCounts=days.map(day=>actsOfDay(day).length);
   const dayColors=days.map(day=>{
-    const dayActs=acts.filter(a=>{
-      if(!a.date)return false;
-      const p=String(a.date).replace(/\./g,'/').split('/');
-      const m=parseInt(p[1]||0),dd=parseInt(p[2]||0);
-      const [dm,ddd]=day.mn.split('/').map(Number);
-      return m===dm&&dd===ddd;
-    });
-    if(!dayActs.length)return '#e8e8e8';
-    const hasDone=dayActs.some(a=>a.status==='done');
-    const hasRej=dayActs.some(a=>a.status==='rejected');
-    if(hasDone)return '#1d9e75';
-    if(hasRej)return '#e24b4a';
+    const da=actsOfDay(day);
+    if(!da.length)return '#ebebeb';
+    if(da.some(a=>a.status==='done'))return '#1d9e75';
+    if(da.some(a=>a.status==='rejected'))return '#e24b4a';
     return '#378add';
   });
+  // Y min/max — 0 баганыг жижиг боловч харагдахуйц болгох
+  const maxAmt=Math.max(...dayAmts,1);
+  const minVisible=maxAmt*0.08; // хоосон өдрийг харагдахгүй болгох
+  const displayAmts=dayAmts.map(v=>v>0?Math.max(v,minVisible*0.3):0);
   if(dbBarChart){dbBarChart.destroy();dbBarChart=null;}
   const ctx=e('dbBarChart');if(!ctx)return;
   dbBarChart=new Chart(ctx,{
     type:'bar',
     data:{labels:days.map(d=>d.label),datasets:[{
       label:'Дүн',
-      data:dayAmts,
+      data:displayAmts,
       backgroundColor:dayColors,
       borderRadius:6,
       borderSkipped:false,
@@ -736,15 +746,18 @@ function rD(){
         legend:{display:false},
         tooltip:{callbacks:{
           label:ctx=>{
-            const amt=ctx.raw||0;
-            if(!amt)return 'Акт байхгүй';
-            return '₮'+parseInt(amt).toLocaleString('mn-MN');
-          }
+            const day=days[ctx.dataIndex];
+            const da=actsOfDay(day);
+            if(!da.length)return 'Акт байхгүй';
+            const total=da.reduce((s,a)=>s+parseInt(a.amount||0),0);
+            return da.length+'ш · ₮'+parseInt(total).toLocaleString('mn-MN');
+          },
+          title:ctx=>days[ctx[0].dataIndex].label+' · '+dayCounts[ctx[0].dataIndex]+'ш акт'
         }}
       },
       scales:{
         x:{grid:{display:false},ticks:{font:{size:10},color:'#888',autoSkip:false,maxRotation:0}},
-        y:{display:false,beginAtZero:true},
+        y:{display:false,beginAtZero:true,min:0},
       },
     }
   });
