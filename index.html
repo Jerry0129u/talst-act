@@ -152,6 +152,16 @@ textarea{height:60px;resize:none}
 .det-pdf-name{font-size:12px;font-weight:500;color:#333}
 .det-pdf-size{font-size:10px;color:#999;margin-left:auto}
 .det-pdf-open{font-size:11px;color:#1a5fa5;font-weight:600;cursor:pointer;text-decoration:underline;white-space:nowrap}
+.db-greeting{margin-bottom:1.2rem}
+.metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.metric-card{background:#f5f5f2;border-radius:10px;padding:13px 14px}
+.metric-label{font-size:11px;color:#888;margin-bottom:5px}
+.metric-val{font-size:24px;font-weight:600;color:#1a1a1a;line-height:1}
+.chart-card{background:#fff;border:1px solid #ebebeb;border-radius:14px;padding:14px;margin-bottom:10px}
+.chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.chart-title{font-size:13px;font-weight:600;color:#1a1a1a}
+.chart-subtitle{font-size:10px;color:#aaa;margin-top:2px}
+.big-num{font-size:24px;font-weight:600;color:#1a1a1a}
 </style>
 </head>
 <body>
@@ -234,12 +244,38 @@ textarea{height:60px;resize:none}
     <div id="ll"><div class="loading"><div class="spin"></div></div></div>
   </div>
   <div id="p3" style="display:none">
-    <div class="stats">
-      <div class="stat"><div class="stn" id="s0">—</div><div class="stl">Нийт</div></div>
-      <div class="stat"><div class="stn" id="s1">—</div><div class="stl">Явцад</div></div>
-      <div class="stat"><div class="stn" id="s2">—</div><div class="stl">Дууссан</div></div>
+    <div class="db-greeting"><strong style="font-size:18px;font-weight:600;color:#1a1a1a;display:block;margin-bottom:2px">Talst Group</strong><span style="font-size:12px;color:#888">Гүйцэтгэлийн актын дашборд</span></div>
+    <div class="metric-grid">
+      <div class="metric-card"><div class="metric-label">Нийт акт</div><div class="metric-val" id="s0">—</div><div class="metric-sub" style="color:#888;font-size:11px;margin-top:4px" id="s0sub">ачааллаж байна</div></div>
+      <div class="metric-card"><div class="metric-label">Явцад</div><div class="metric-val" id="s1">—</div><div class="metric-sub" style="color:#888;font-size:11px;margin-top:4px" id="s1sub">батлуулж байна</div></div>
+      <div class="metric-card"><div class="metric-label">Дууссан</div><div class="metric-val" id="s2" style="color:#1d9e75">—</div><div class="metric-sub up" style="font-size:11px;margin-top:4px;color:#1d9e75" id="s2sub">бүрэн батлагдсан</div></div>
     </div>
-    <div id="dl"></div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div><div class="chart-title">Актын явц</div><div class="chart-subtitle">Сүүлийн бүртгэлүүд</div></div>
+        <div class="big-num" id="dChartBig">—</div>
+      </div>
+      <div style="position:relative;width:100%;height:160px"><canvas id="dbBarChart" role="img" aria-label="Актын явцын диаграм"></canvas></div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888"><span style="width:8px;height:8px;border-radius:50%;background:#1d9e75;display:inline-block"></span>Дууссан</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888"><span style="width:8px;height:8px;border-radius:50%;background:#378add;display:inline-block"></span>Явцад</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888"><span style="width:8px;height:8px;border-radius:50%;background:#e24b4a;display:inline-block"></span>Буцаагдсан</span>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title">Батлалтын шат</div><div class="chart-subtitle">Хэдэн акт хаана байгаа</div></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px" id="dStatusList">
+        <div style="display:flex;align-items:center;gap:10px"><div style="font-size:12px;color:#888;width:90px;flex-shrink:0">Координатор</div><div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden"><div style="height:6px;border-radius:20px;background:#f59e0b;width:0%;transition:width 0.6s" id="dBar0"></div></div><div style="font-size:12px;font-weight:500;min-width:20px;text-align:right" id="dV0">—</div></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="font-size:12px;color:#888;width:90px;flex-shrink:0">Инженер</div><div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden"><div style="height:6px;border-radius:20px;background:#378add;width:0%;transition:width 0.6s" id="dBar1"></div></div><div style="font-size:12px;font-weight:500;min-width:20px;text-align:right" id="dV1">—</div></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="font-size:12px;color:#888;width:90px;flex-shrink:0">Захирал</div><div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden"><div style="height:6px;border-radius:20px;background:#8b5cf6;width:0%;transition:width 0.6s" id="dBar2"></div></div><div style="font-size:12px;font-weight:500;min-width:20px;text-align:right" id="dV2">—</div></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="font-size:12px;color:#888;width:90px;flex-shrink:0">Нягтлан</div><div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden"><div style="height:6px;border-radius:20px;background:#1d9e75;width:0%;transition:width 0.6s" id="dBar3"></div></div><div style="font-size:12px;font-weight:500;min-width:20px;text-align:right" id="dV3">—</div></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="font-size:12px;color:#1d9e75;width:90px;flex-shrink:0;font-weight:500">Дууссан</div><div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden"><div style="height:6px;border-radius:20px;background:#1d9e75;width:0%;transition:width 0.6s" id="dBarDone"></div></div><div style="font-size:12px;font-weight:500;min-width:20px;text-align:right;color:#1d9e75" id="dVDone">—</div></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="chart-card" style="margin-bottom:0"><div style="font-size:11px;color:#888;margin-bottom:6px">Нийт дүн</div><div style="font-size:18px;font-weight:600" id="dTotalAmt">—</div><div style="font-size:10px;color:#aaa;margin-top:3px">бүх актын нийлбэр</div></div>
+      <div class="chart-card" style="margin-bottom:0"><div style="font-size:11px;color:#888;margin-bottom:6px">Батлагдсан дүн</div><div style="font-size:18px;font-weight:600;color:#1d9e75" id="dDoneAmt">—</div><div style="font-size:10px;color:#aaa;margin-top:3px">дууссан актуудын дүн</div></div>
+    </div>
   </div>
   <div id="pd" style="display:none">
     <span class="back" onclick="bk()">← Буцах</span>
@@ -621,13 +657,55 @@ function rL(){
   }
   el.innerHTML=html;
 }
+function fmtM(n){
+  if(n>=1000000)return '₮'+(n/1000000).toFixed(1)+'сая';
+  if(n>=1000)return '₮'+(Math.round(n/1000))+'мян';
+  return '₮'+n;
+}
+let dbBarChart=null;
 function rD(){
-  e('s0').textContent=acts.length;
-  e('s1').textContent=acts.filter(a=>a.status==='pending').length;
-  e('s2').textContent=acts.filter(a=>a.status==='done').length;
-  const el=e('dl');
-  el.innerHTML=acts.length?acts.map((a,i)=>liH(a,i,3)).join(''):'<div class="empty">Акт байхгүй байна</div>';
+  const total=acts.length;
+  const pending=acts.filter(a=>a.status==='pending');
+  const done=acts.filter(a=>a.status==='done');
+  const rejected=acts.filter(a=>a.status==='rejected');
+  e('s0').textContent=total;
+  e('s0sub').textContent=total+'ш бүртгэгдсэн';
+  e('s1').textContent=pending.length;
+  e('s1sub').textContent=pending.length+'ш батлуулж байна';
+  e('s2').textContent=done.length;
+  e('s2sub').textContent=done.length+'ш бүрэн батлагдсан';
+  e('dChartBig').textContent=total+'ш';
+  const steps=[0,1,2,3].map(i=>pending.filter(a=>(a.step||0)===i).length);
+  const maxS=Math.max(...steps,done.length,1);
+  [0,1,2,3].forEach(i=>{
+    e('dBar'+i).style.width=Math.round(steps[i]/maxS*100)+'%';
+    e('dV'+i).textContent=steps[i];
+  });
+  e('dBarDone').style.width=Math.round(done.length/maxS*100)+'%';
+  e('dVDone').textContent=done.length;
+  const totalAmt=acts.reduce((s,a)=>s+parseInt(a.amount||0),0);
+  const doneAmt=done.reduce((s,a)=>s+parseInt(a.amount||0),0);
+  e('dTotalAmt').textContent=fmtM(totalAmt);
+  e('dDoneAmt').textContent=fmtM(doneAmt);
+  if(typeof Chart==='undefined')return;
+  const last8=acts.slice(0,8).reverse();
+  const labels=last8.map(a=>a.actId?a.actId.split('-').pop():'?');
+  if(dbBarChart){dbBarChart.destroy();dbBarChart=null;}
+  const ctx=e('dbBarChart');if(!ctx)return;
+  dbBarChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Дууссан',data:last8.map(a=>a.status==='done'?1:0),backgroundColor:'#1d9e75',borderRadius:4,borderSkipped:false},
+      {label:'Явцад',data:last8.map(a=>a.status==='pending'?1:0),backgroundColor:'#378add',borderRadius:4,borderSkipped:false},
+      {label:'Буцаагдсан',data:last8.map(a=>a.status==='rejected'?1:0),backgroundColor:'#e24b4a',borderRadius:4,borderSkipped:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#888',autoSkip:false}},y:{display:false}},
+    }
+  });
 }
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </body>
 </html>
