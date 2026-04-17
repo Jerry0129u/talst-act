@@ -31,10 +31,24 @@ body{background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 0 14px}
 .logo{width:32px;height:32px;background:#1a1a2e;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
 .appname{font-size:15px;font-weight:700;margin-left:8px}
-.user-pill{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:#fff;border:1px solid #e8e8e8;cursor:pointer}
+.user-pill{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:#fff;border:1px solid #e8e8e8;cursor:pointer;position:relative}
+.user-pill:hover{border-color:#ccc}
 .uav{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700}
 .uname{font-size:11px;font-weight:500;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .urole{font-size:9px;color:#888}
+.team-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid #e8e8e8;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,0.10);min-width:200px;z-index:999;overflow:hidden}
+.team-dropdown.open{display:block}
+.td-header{font-size:9px;color:#bbb;font-weight:700;letter-spacing:0.8px;padding:10px 14px 6px;border-bottom:1px solid #f5f5f5}
+.td-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:default;transition:background 0.15s}
+.td-item:hover{background:#f9f9f9}
+.td-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.td-info{flex:1}
+.td-name{font-size:12px;font-weight:600;color:#1a1a1a}
+.td-role{font-size:10px;color:#aaa}
+.td-you{font-size:9px;color:#1d9e75;font-weight:700;background:#dff5ec;padding:2px 6px;border-radius:10px;flex-shrink:0}
+.td-divider{height:1px;background:#f5f5f5;margin:0}
+.td-signout{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;color:#c0392b;font-size:12px;font-weight:600;transition:background 0.15s}
+.td-signout:hover{background:#fff5f5}
 .tabs{display:flex;gap:3px;margin-bottom:14px;background:#e8e8e4;padding:3px;border-radius:10px}
 .tab{flex:1;padding:7px 2px;font-size:11px;font-weight:600;border:none;background:transparent;color:#888;cursor:pointer;border-radius:8px;transition:all 0.2s}
 .tab.on{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
@@ -371,7 +385,8 @@ onAuthStateChanged(auth,u=>{
     e('loginPage').style.display='none';e('appPage').style.display='block';
     const ini=(u.displayName||u.email).split(' ').map(n=>n[0]).join('').toUpperCase().substr(0,2);
     e('uav').textContent=ini;e('uav').style.background=ROLE_COLORS[role]||'#888';
-    e('uname').textContent=u.displayName||u.email;
+    const SHORT_NAMES={'unumunkh@talstgroup.mn':'Б.Өнөмөнх','zolzaya@talstgroup.mn':'А.Золзаяа','barsbat@talstgroup.mn':'Д.Барсат','zorigoo@talstgroup.mn':'Ө.Зоригоо','bayarmaa@talstgroup.mn':'Д.Баярмаа'};
+    e('uname').textContent=SHORT_NAMES[u.email]||u.displayName||u.email;
     e('urole').textContent=role;
     e('aplbl').textContent=role+' горимд батлах актууд';
     listen();
