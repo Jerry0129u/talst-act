@@ -115,6 +115,14 @@ textarea{height:60px;resize:none}
 .li.done .li-id{color:#6dbf9a}
 .li.done .li-sub{color:#4a9a70}
 .li.done .mpct{color:#1d9e75;font-weight:700}
+.rejected-section-label{font-size:10px;font-weight:700;color:#c0392b;letter-spacing:0.8px;padding:16px 2px 8px;display:flex;align-items:center;gap:6px}
+.rejected-section-label::before{content:'';flex:1;height:1px;background:#f5b8b8}
+.rejected-section-label::after{content:'';flex:1;height:1px;background:#f5b8b8}
+.li.rejected{background:linear-gradient(135deg,#fff8f8 0%,#fde8e8 100%);border-color:#f5b8b8}
+.li.rejected .li-title{color:#7a0a0a}
+.li.rejected .li-id{color:#e08080}
+.li.rejected .li-sub{color:#a04040}
+.reject-timer{font-size:9px;color:#c0392b;margin-top:4px;opacity:0.7}
 .done-section-label{font-size:10px;font-weight:700;color:#1d9e75;letter-spacing:0.8px;padding:16px 2px 8px;display:flex;align-items:center;gap:6px}
 .done-section-label::before{content:'';flex:1;height:1px;background:#b8e8d0}
 .done-section-label::after{content:'';flex:1;height:1px;background:#b8e8d0}
@@ -445,7 +453,7 @@ async function reject(docId){
     title:role+' буцаав ✕',detail:'Шалтгаан: '+reason,time:ts(),hash:gh()
   }];
   try{
-    await updateDoc(doc(db,'acts',docId),{status:'rejected',evs:newEvs});
+    await updateDoc(doc(db,'acts',docId),{status:'rejected',evs:newEvs,rejectedAt:serverTimestamp()});
     toast('❌ Акт буцаагдлаа.');bk();
   }catch(err){toast('Алдаа: '+err.message,'err');}
 }
@@ -544,6 +552,33 @@ function liHDone(a,idx,from){
     </div>
   </div>`;
 }
+function liHRejected(a,idx,from,now,EIGHT_HOURS){
+  const dr=a.dateFrom&&a.dateTo?a.dateFrom+' — '+a.dateTo:'';
+  const rejTime=a.rejectedAt?a.rejectedAt.toMillis?.()||a.rejectedAt:null;
+  let timerHtml='';
+  if(rejTime){
+    const remaining=EIGHT_HOURS-(now-rejTime);
+    if(remaining>0){
+      const h=Math.floor(remaining/3600000);
+      const m=Math.floor((remaining%3600000)/60000);
+      timerHtml=`<div class="reject-timer">🗑 ${h} цаг ${m} минутын дараа устна</div>`;
+    }
+  } else {
+    timerHtml='<div class="reject-timer">🗑 8 цагийн дараа устна</div>';
+  }
+  return `<div class="li rejected" onclick="opd(${idx},${from})">
+    <div class="li-top">
+      <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div>
+      <span class="badge br">✕ Буцаагдсан</span>
+    </div>
+    <div class="li-sub">${esc(a.company)} · ₮${fmtN(a.amount)}${dr?' · '+esc(dr):''}</div>
+    <div style="display:flex;align-items:center;gap:7px">
+      <div class="mbwrap"><div class="mb" style="width:100%;background:#e74c3c"></div></div>
+      <span class="mpct" style="color:#e74c3c">✕</span>
+    </div>
+    ${timerHtml}
+  </div>`;
+}
 function rA(){
   const el=e('al');
   if(!acts.length){el.innerHTML='<div class="empty">Акт байхгүй байна</div>';return;}
@@ -557,9 +592,18 @@ function rA(){
 }
 function rL(){
   const el=e('ll');
+  const now=Date.now();
+  const EIGHT_HOURS=8*60*60*1000;
   const inProgress=acts.filter(a=>a.status==='pending'&&(a.step||0)>=1);
-  const done=acts.filter(a=>a.status==='done'||a.status==='rejected');
-  if(!inProgress.length&&!done.length){
+  const done=acts.filter(a=>a.status==='done');
+  const rejected=acts.filter(a=>{
+    if(a.status!=='rejected') return false;
+    // rejectedAt timestamp байвал ашиглана, эсвэл createdAt-аас тооцно
+    const rejTime=a.rejectedAt?a.rejectedAt.toMillis?.()||a.rejectedAt:null;
+    if(rejTime&&now-rejTime>EIGHT_HOURS) return false; // 8 цаг өнгөрсөн бол харуулахгүй
+    return true;
+  });
+  if(!inProgress.length&&!done.length&&!rejected.length){
     el.innerHTML='<div class="empty">Одоогоор акт байхгүй байна</div>';return;
   }
   let html='';
@@ -570,6 +614,10 @@ function rL(){
   if(done.length){
     html+='<div class="done-section-label">✓ ДУУССАН</div>';
     html+=done.map(a=>liHDone(a,acts.indexOf(a),2)).join('');
+  }
+  if(rejected.length){
+    html+='<div class="rejected-section-label">✕ БУЦААГДСАН</div>';
+    html+=rejected.map(a=>liHRejected(a,acts.indexOf(a),2,now,EIGHT_HOURS)).join('');
   }
   el.innerHTML=html;
 }
