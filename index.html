@@ -658,9 +658,7 @@ function rL(){
   el.innerHTML=html;
 }
 function fmtM(n){
-  if(n>=1000000)return '₮'+(n/1000000).toFixed(1)+'сая';
-  if(n>=1000)return '₮'+(Math.round(n/1000))+'мян';
-  return '₮'+n;
+  return '₮'+parseInt(n||0).toLocaleString('mn-MN');
 }
 let dbBarChart=null;
 function rD(){
@@ -689,7 +687,14 @@ function rD(){
   e('dDoneAmt').textContent=fmtM(doneAmt);
   if(typeof Chart==='undefined')return;
   const last8=acts.slice(0,8).reverse();
-  const labels=last8.map(a=>a.actId?a.actId.split('-').pop():'?');
+  const labels=last8.map((a,i)=>{
+    if(a.date){
+      const p=String(a.date).replace(/\./g,'/').split('/');
+      if(p.length>=3) return p[1]+'/'+p[2];
+      if(p.length>=2) return p[0]+'/'+p[1];
+    }
+    return (i+1)+'';
+  });
   if(dbBarChart){dbBarChart.destroy();dbBarChart=null;}
   const ctx=e('dbBarChart');if(!ctx)return;
   dbBarChart=new Chart(ctx,{
