@@ -17,17 +17,17 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
-    { name: 'Инженер', email: 'mimirim2828@gmail.com' },
-    { name: 'Захирал', email: 'barsbat@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'zorigoo@talstgroup.mn' },
+    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
+    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
+    { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
+    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'unumunkh@talstgroup.mn': 'Координатор',
-    'zolzaya@talstgroup.mn': 'Инженер', // Энд mimirim2828@gmail.com байх ёстой бол солиорой
-    'barsbat@talstgroup.mn': 'Захирал',
-    'zorigoo@talstgroup.mn': 'Нягтлан',
+    'zolzaya@talstgroup.mn': 'Координатор',
+    'barsbat@talstgroup.mn': 'Инженер',
+    'zorigoo@talstgroup.mn': 'Захирал',
+    'bayarmaa@talstgroup.mn': 'Нягтлан',
 };
 
 const ROLE_COLORS = {
@@ -37,7 +37,7 @@ const ROLE_COLORS = {
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-const SE = ['unumunkh@talstgroup.mn', 'zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn'];
+const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
 
 // --- FIREBASE INIT ---
 const fapp = initializeApp(cfg);
@@ -46,6 +46,7 @@ const db = getFirestore(fapp);
 
 let cu = null, role = 'Гүйцэтгэгч', acts = [], prev = 2, ctab = 0, unsub = null;
 let pdfDataList = [];
+let cachedFont = null; // Noto Sans font cache
 const e = id => document.getElementById(id);
 
 // --- ТУСЛАХ ФУНКЦҮҮД ---
@@ -92,6 +93,7 @@ window.signInGoogle = async () => {
 window.doSignOut = async () => { if (confirm('Гарах уу?')) { if (unsub) unsub(); await fbOut(auth) } };
 window.go = go; window.bk = bk; window.opd = opd;
 window.submitAct = submitAct; window.approve = approve; window.reject = reject;
+window.downloadFinalPdf = downloadFinalPdf;
 
 // --- ҮНДСЭН ЛОГИК ---
 function readPdfAsBase64(file) {
@@ -220,17 +222,34 @@ async function approve(docId) {
     }];
     const ns = (a.step || 0) + 1; const done = ns >= 4;
     const upd = { step: ns, evs: newEvs };
+    let finalEvs = newEvs;
     if (done) {
         upd.status = 'done';
-        upd.evs = [...newEvs, {
+        finalEvs = [...newEvs, {
             type: 'done', who: 'Систем', title: '🎉 Бүрэн батлагдсан',
             detail: 'Нягтланд мэдэгдэл очлоо · Гүйлгээ хийх боломжтой', time: ts(), hash: gh()
         }];
+        upd.evs = finalEvs;
     }
     try {
         await updateDoc(doc(db, 'acts', docId), upd);
-        if (done) { await sendMail(CHAIN[3].email, CHAIN[3].name, a, cu.displayName || cu.email); toast('🎉 Бүрэн батлагдлаа! Нягтланд email очлоо.'); }
-        else { await sendMail(CHAIN[ns].email, CHAIN[ns].name, a, cu.displayName || cu.email); toast('✅ ' + SN[ns] + ' уруу илгээгдлээ.'); }
+        if (done) {
+            await sendMail(CHAIN[3].email, CHAIN[3].name, a, cu.displayName || cu.email);
+            toast('🎉 Бүрэн батлагдлаа! Final PDF бэлдэж байна...');
+            // ★★★ FINAL PDF AUTO-DOWNLOAD ★★★
+            try {
+                const actWithFinal = { ...a, ...upd, evs: finalEvs };
+                await generateFinalPdf(actWithFinal);
+                toast('✅ Final PDF татагдлаа!');
+            } catch (pdfErr) {
+                console.error('Final PDF алдаа:', pdfErr);
+                toast('⚠️ PDF үүсгэхэд алдаа: ' + pdfErr.message, 'err');
+            }
+        }
+        else {
+            await sendMail(CHAIN[ns].email, CHAIN[ns].name, a, cu.displayName || cu.email);
+            toast('✅ ' + SN[ns] + ' уруу илгээгдлээ.');
+        }
         rA();
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); }
 }
@@ -246,6 +265,208 @@ async function reject(docId) {
         await updateDoc(doc(db, 'acts', docId), { status: 'rejected', evs: newEvs, rejectedAt: serverTimestamp() });
         toast('❌ Акт буцаагдлаа.'); bk();
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); }
+}
+
+// --- FINAL PDF GENERATOR (Cyrillic font embed) ---
+
+// Cyrillic дэмжлэгтэй font (Noto Sans Regular) татах + cache хийх
+async function loadCyrillicFont() {
+    if (cachedFont) return cachedFont;
+    // Google Fonts-ийн Noto Sans Regular TTF (Cyrillic бүрэн дэмжинэ)
+    const fontUrl = 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans@5.0.22/files/noto-sans-cyrillic-400-normal.woff';
+    // woff нь pdf-lib-д ашиглагддаггүй тул TTF эх үүсвэр хэрэгтэй
+    // unpkg-ээс шууд TTF татах
+    const ttfUrl = 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts/hinted/ttf/NotoSans/NotoSans-Regular.ttf';
+    const res = await fetch(ttfUrl);
+    if (!res.ok) throw new Error('Font татах алдаа: ' + res.status);
+    cachedFont = await res.arrayBuffer();
+    return cachedFont;
+}
+
+async function generateFinalPdf(act) {
+    const { PDFDocument, rgb } = PDFLib;
+    const finalDoc = await PDFDocument.create();
+
+    // Fontkit бүртгэх (custom font-ийг embed хийхэд шаардлагатай)
+    finalDoc.registerFontkit(fontkit);
+
+    // Cyrillic font татах + embed хийх
+    toast('Font татаж байна...');
+    const fontBytes = await loadCyrillicFont();
+    const font = await finalDoc.embedFont(fontBytes, { subset: true });
+
+    // --- 1-р хуудас: Хураангуй + Timeline ---
+    let page = finalDoc.addPage([595, 842]); // A4
+    let y = 800;
+    const margin = 50;
+    const lineH = 16;
+    const pageWidth = 595;
+
+    function drawText(text, x, yPos, options = {}) {
+        const { size = 11, color = rgb(0, 0, 0) } = options;
+        page.drawText(String(text || ''), { x, y: yPos, size, font, color });
+    }
+
+    function checkNewPage(needed = 30) {
+        if (y < needed + margin) {
+            page = finalDoc.addPage([595, 842]);
+            y = 800;
+        }
+    }
+
+    function drawLine(yPos, color = rgb(0.7, 0.7, 0.7)) {
+        page.drawLine({
+            start: { x: margin, y: yPos },
+            end: { x: pageWidth - margin, y: yPos },
+            thickness: 0.5, color,
+        });
+    }
+
+    // --- ГАРЧИГ ---
+    drawText('БҮРЭН БАТЛАГДСАН АКТ', margin, y, { size: 20, color: rgb(0.11, 0.62, 0.46) });
+    y -= 28;
+    drawText('Final Approved Act · Digital Signature Chain', margin, y, { size: 10, color: rgb(0.5, 0.5, 0.5) });
+    y -= 15;
+    drawLine(y);
+    y -= 20;
+
+    // --- МЕТА МЭДЭЭЛЭЛ ---
+    const metaLines = [
+        ['Акт дугаар', act.actId],
+        ['Огноо', act.date],
+        ['Компани', act.company],
+        ['Гэрээ', act.contract],
+        ['Ажил', act.work],
+        ['Хугацаа', (act.dateFrom || '—') + ' — ' + (act.dateTo || '—')],
+        ['Дүн', '₮ ' + fmtN(act.amount)],
+        ['Илгээсэн', act.submittedByName || act.submittedBy || '—'],
+        ['Төлөв', '✓ БҮРЭН БАТЛАГДСАН'],
+        ['Хавсралт', (act.pdfCount || 0) + ' PDF файл'],
+    ];
+
+    for (const [label, value] of metaLines) {
+        checkNewPage();
+        drawText(label + ':', margin, y, { size: 11, color: rgb(0.4, 0.4, 0.4) });
+        drawText(String(value), margin + 110, y, { size: 11 });
+        y -= lineH + 3;
+    }
+
+    y -= 12;
+    drawLine(y);
+    y -= 22;
+    drawText('ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ', margin, y, { size: 14, color: rgb(0.11, 0.62, 0.46) });
+    y -= 22;
+
+    // --- TIMELINE ---
+    const events = act.evs || [];
+    events.forEach((ev, i) => {
+        checkNewPage(70);
+
+        // Dot + title
+        const isApprove = ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit';
+        const isReject = ev.type === 'reject';
+        const dotColor = isApprove ? rgb(0.11, 0.62, 0.46) : isReject ? rgb(0.88, 0.29, 0.29) : rgb(0.5, 0.5, 0.5);
+        const icon = isApprove ? '✓' : isReject ? '✕' : '→';
+
+        page.drawCircle({ x: margin + 6, y: y + 4, size: 7, color: dotColor });
+        drawText(icon, margin + 3, y + 1, { size: 10, color: rgb(1, 1, 1) });
+
+        drawText(`${i + 1}. ${ev.title || ''}`, margin + 22, y, { size: 12, color: dotColor });
+        y -= lineH;
+
+        drawText(`Хэн: ${ev.who || '—'} (${ev.whoEmail || '—'})`, margin + 22, y, { size: 10, color: rgb(0.3, 0.3, 0.3) });
+        y -= lineH - 2;
+        drawText(`Хугацаа: ${ev.time || '—'}`, margin + 22, y, { size: 10, color: rgb(0.3, 0.3, 0.3) });
+        y -= lineH - 2;
+
+        // Detail (multi-line wrap)
+        const detail = String(ev.detail || '');
+        const maxCharsPerLine = 75;
+        if (detail) {
+            const words = detail.split(' ');
+            let line = '';
+            for (const w of words) {
+                if ((line + ' ' + w).length > maxCharsPerLine) {
+                    checkNewPage();
+                    drawText('  ' + line, margin + 22, y, { size: 9, color: rgb(0.25, 0.25, 0.25) });
+                    y -= lineH - 3;
+                    line = w;
+                } else {
+                    line = line ? line + ' ' + w : w;
+                }
+            }
+            if (line) {
+                checkNewPage();
+                drawText('  ' + line, margin + 22, y, { size: 9, color: rgb(0.25, 0.25, 0.25) });
+                y -= lineH - 3;
+            }
+        }
+
+        if (ev.hash) {
+            checkNewPage();
+            drawText(`  🔐 ${ev.hash}`, margin + 22, y, { size: 8, color: rgb(0.55, 0.55, 0.55) });
+            y -= lineH - 2;
+        }
+        y -= 10;
+    });
+
+    // --- ФУТЕР ---
+    checkNewPage(50);
+    y -= 10;
+    drawLine(y);
+    y -= 15;
+    drawText(`Үүсгэсэн: ${new Date().toLocaleString('mn-MN')}`, margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
+    y -= 12;
+    drawText('Talst Act System · Blockchain-style Audit Trail', margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
+    y -= 12;
+    drawText(`Нийт ${events.length} арга хэмжээ · ${act.pdfCount || 0} хавсралт`, margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
+
+    // --- ХАВСРАЛТ PDF-ууд НЭГТГЭХ ---
+    if (act.pdfs && act.pdfs.length) {
+        for (const pdf of act.pdfs) {
+            try {
+                const base64Data = (pdf.base64 || '').split(',')[1] || pdf.base64;
+                if (!base64Data) continue;
+                const pdfBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                const attachedDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+                const copiedPages = await finalDoc.copyPages(attachedDoc, attachedDoc.getPageIndices());
+                copiedPages.forEach(p => finalDoc.addPage(p));
+            } catch (err) {
+                console.error('PDF нэгтгэхэд алдаа:', pdf.name, err);
+                const errPage = finalDoc.addPage([595, 842]);
+                errPage.drawText(`[Алдаа] "${pdf.name}" хавсралтыг нэгтгэж чадсангүй.`, {
+                    x: 50, y: 400, size: 12, font, color: rgb(0.8, 0, 0)
+                });
+            }
+        }
+    }
+
+    // --- DOWNLOAD ---
+    const finalBytes = await finalDoc.save();
+    const blob = new Blob([finalBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${act.actId}_FINAL.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Гараар татах (Нягтлан detail page-аас дахин татах боломж)
+async function downloadFinalPdf(docId) {
+    const a = acts.find(x => x.id === docId);
+    if (!a) { toast('Акт олдсонгүй', 'err'); return; }
+    if (a.status !== 'done') { toast('Зөвхөн бүрэн батлагдсан актыг татах боломжтой', 'err'); return; }
+    try {
+        toast('PDF бэлдэж байна...');
+        await generateFinalPdf(a);
+        toast('✅ Татагдлаа!');
+    } catch (err) {
+        console.error(err);
+        toast('Алдаа: ' + err.message, 'err');
+    }
 }
 
 // --- RENDERING (HTML GENERATION) ---
@@ -294,6 +515,15 @@ function detH(idx) {
     }
     let tl = (a.evs || []).map(ev => evH(ev, false)).join('');
     if (a.status === 'pending') for (let i = step; i < 4; i++) tl += wevH(i, i === 3);
+
+    // Final PDF download тогч (зөвхөн done актад, Нягтлан эсвэл бусад хүн)
+    const finalBtn = a.status === 'done' ? `
+      <div class="abtns" style="margin-top:10px">
+        <button class="bok" onclick="downloadFinalPdf('${a.id}')" style="background:#1d9e75">
+          📥 Бүрэн PDF татах (Timeline + Хавсралт)
+        </button>
+      </div>` : '';
+
     return `<div class="card">
     <div class="ch">
       <div><div class="cid">${esc(a.actId)} · ${esc(a.date)}</div><div class="ctitle">${esc(a.work)}</div></div>
@@ -314,6 +544,7 @@ function detH(idx) {
       <button class="bok" onclick="approve('${a.id}')">✓ Батлах</button>
       <button class="bno" onclick="reject('${a.id}')">✕ Буцаах</button>
     </div>` : ''}
+    ${finalBtn}
     <div class="tl"><div class="tll-label">ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ</div>${tl}</div>
   </div>`;
 }
