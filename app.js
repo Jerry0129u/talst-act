@@ -21,14 +21,14 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
+    { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
     { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
     { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
     { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'zolzaya@talstgroup.mn': 'Координатор',
+    'unumunkh@talstgroup.mn': 'Координатор',
     'barsbat@talstgroup.mn': 'Инженер',
     'zorigoo@talstgroup.mn': 'Захирал',
     'bayarmaa@talstgroup.mn': 'Нягтлан',
