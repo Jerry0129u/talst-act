@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, onAuthStateChanged, signOut as fbOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // --- CAPACITOR DETECT ---
 const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
@@ -43,9 +43,6 @@ const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захира�
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
 const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
 
-// --- 8 цагийн хугацаа (rejected acts auto-delete) ---
-const EIGHT_HOURS = 8 * 60 * 60 * 1000;
-
 // --- FIREBASE INIT ---
 const fapp = initializeApp(cfg);
 const auth = getAuth(fapp);
@@ -54,7 +51,6 @@ const db = getFirestore(fapp);
 let cu = null, role = 'Гүйцэтгэгч', acts = [], prev = 2, ctab = 0, unsub = null;
 let pdfDataList = [];
 let cachedFont = null;
-let autoDeleteInterval = null;
 const e = id => document.getElementById(id);
 
 // --- ТУСЛАХ ФУНКЦҮҮД ---
@@ -70,15 +66,6 @@ function bc(a) {
 }
 function bt(a) { return a.status === 'done' ? '✓ Батлагдсан' : a.status === 'rejected' ? '✕ Буцаагдсан' : SN[a.step || 0] + ' хүлээж байна' }
 function fmtN(n) { return parseInt(n || 0).toLocaleString('mn-MN') }
-
-// --- DATE FORMAT (YYYY.MM.DD стандарт) ---
-function todayYMD() {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${y}.${m}.${dd}`;
-}
 
 window.fmtAmt = () => { const v = e('fa').value; e('amtFmt').textContent = v && !isNaN(v) ? '₮ ' + parseInt(v).toLocaleString() : ''; };
 
@@ -113,6 +100,7 @@ window.signInGoogle = async () => {
             const result = await FirebaseAuthentication.signInWithGoogle();
             console.log('✅ Native result бүхэлд:', JSON.stringify(result));
 
+            // Найдвартай байдлаар extract хийх
             const idToken = result && result.credential && result.credential.idToken;
             const accessToken = result && result.credential && result.credential.accessToken;
             console.log('🔑 idToken байгаа:', !!idToken, 'Урт:', idToken ? idToken.length : 0);
@@ -124,6 +112,7 @@ window.signInGoogle = async () => {
                 const fbResult = await signInWithCredential(auth, credential);
                 console.log('✅ Firebase sign-in амжилттай!', fbResult.user && fbResult.user.email);
 
+                // Native дээр onAuthStateChanged заримдаа ажиллахгүй тул гараар UI солино
                 if (fbResult.user) {
                     console.log('🔄 1 секундын дараа UI шалгана...');
                     setTimeout(() => {
@@ -154,7 +143,6 @@ window.signInGoogle = async () => {
 window.doSignOut = async () => {
     if (!confirm('Гарах уу?')) return;
     if (unsub) unsub();
-    if (autoDeleteInterval) { clearInterval(autoDeleteInterval); autoDeleteInterval = null; }
     try {
         if (isNative && window.Capacitor?.Plugins?.FirebaseAuthentication) {
             await window.Capacitor.Plugins.FirebaseAuthentication.signOut();
@@ -212,11 +200,9 @@ onAuthStateChanged(auth, u => {
         e('urole').textContent = role;
         e('aplbl').textContent = role + ' горимд батлах актууд';
         listen();
-        startAutoDeleteRejected();
     } else {
         cu = null; e('loginPage').style.display = 'flex'; e('appPage').style.display = 'none';
         if (unsub) { unsub(); unsub = null; }
-        if (autoDeleteInterval) { clearInterval(autoDeleteInterval); autoDeleteInterval = null; }
     }
 });
 
@@ -224,42 +210,12 @@ function listen() {
     const q = query(collection(db, 'acts'), orderBy('createdAt', 'desc'));
     unsub = onSnapshot(q, snap => {
         acts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Snapshot орж ирэх бүрд rejected acts-уудыг шалгах
-        cleanupExpiredRejected();
         if (ctab === 1) rA(); if (ctab === 2) rL(); if (ctab === 3) rD();
         if (e('pd').style.display !== 'none') {
             const idx = parseInt(e('dc').dataset.idx || '-1');
             if (idx >= 0) e('dc').innerHTML = detH(idx);
         }
     });
-}
-
-// ★★★ AUTO-DELETE: 8 цагаас илүү буцаагдсан акт-уудыг устгах ★★★
-async function cleanupExpiredRejected() {
-    const now = Date.now();
-    const expired = acts.filter(a => {
-        if (a.status !== 'rejected') return false;
-        const rejTime = a.rejectedAt ? (a.rejectedAt.toMillis?.() || a.rejectedAt) : null;
-        // Хэрэв rejectedAt байхгүй бол → хуучин данс, тэр даруй устгана
-        if (!rejTime) return true;
-        return (now - rejTime) > EIGHT_HOURS;
-    });
-    if (!expired.length) return;
-    console.log(`🗑 ${expired.length} буцаагдсан акт устгах гэж байна...`);
-    for (const a of expired) {
-        try {
-            await deleteDoc(doc(db, 'acts', a.id));
-            console.log('✅ Устгасан:', a.actId);
-        } catch (err) {
-            console.error('❌ Устгах алдаа:', a.actId, err);
-        }
-    }
-}
-
-function startAutoDeleteRejected() {
-    // 5 минут тутамд шалгана
-    if (autoDeleteInterval) clearInterval(autoDeleteInterval);
-    autoDeleteInterval = setInterval(cleanupExpiredRejected, 5 * 60 * 1000);
 }
 
 function go(n) {
@@ -292,8 +248,7 @@ async function submitAct() {
     try {
         e('progBar').style.width = '60%'; e('progText').textContent = 'Firestore-д хадгалж байна...';
         const actData = {
-            actId: aid,
-            date: todayYMD(),  // YYYY.MM.DD стандарт формат
+            actId: aid, date: new Date().toLocaleDateString('mn-MN'),
             company: c, contract: g, work: w, dateFrom: e('fd1').value, dateTo: e('fd2').value, amount: a,
             pdfs: pdfDataList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb })),
             pdfCount: pdfDataList.length, step: 0, status: 'pending',
@@ -674,7 +629,7 @@ function liHRejected(a, idx, from, now, EIGHT_HOURS) {
             const m = Math.floor((remaining % 3600000) / 60000);
             timerHtml = `<div class="reject-timer">🗑 ${h} цаг ${m} минутын дараа устна</div>`;
         }
-    } else timerHtml = '<div class="reject-timer">🗑 Удахгүй устна</div>';
+    } else timerHtml = '<div class="reject-timer">🗑 8 цагийн дараа устна</div>';
     return `<div class="li rejected" onclick="opd(${idx},${from})">
     <div class="li-top">
       <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div>
@@ -702,6 +657,7 @@ function rA() {
 function rL() {
     const el = e('ll');
     const now = Date.now();
+    const EIGHT_HOURS = 8 * 60 * 60 * 1000;
     const inProgress = acts.filter(a => a.status === 'pending' && (a.step || 0) >= 1);
     const done = acts.filter(a => a.status === 'done');
     const rejected = acts.filter(a => {
@@ -746,45 +702,13 @@ function rD() {
     e('dTotalAmt').textContent = fmtM(totalAmt);
     e('dDoneAmt').textContent = fmtM(doneAmt);
     if (typeof Chart === 'undefined') return;
-
     function parseActDate(dateStr) {
         if (!dateStr) return null;
-
-        // Firestore Timestamp object
-        if (typeof dateStr === 'object' && dateStr.seconds !== undefined) {
-            const dt = new Date(dateStr.seconds * 1000);
-            return { y: dt.getFullYear(), m: dt.getMonth() + 1, d: dt.getDate() };
-        }
-
-        const s = String(dateStr).trim();
-        const p = s.replace(/[.\/\-]/g, '-').split('-').filter(Boolean);
-
-        if (p.length === 3) {
-            const a = parseInt(p[0]);
-            const b = parseInt(p[1]);
-            const c = parseInt(p[2]);
-
-            // YYYY.MM.DD эсвэл YYYY-MM-DD (4 оронтой жил эхэнд)
-            if (a > 1900) {
-                return { y: a, m: b, d: c };
-            }
-            // M/D/YYYY эсвэл MM/DD/YYYY (4 оронтой жил эцэст)
-            if (c > 1900) {
-                return { y: c, m: a, d: b };
-            }
-            // 2 оронтой жил эцэст (e.g., 4/16/26)
-            if (c < 100) {
-                return { y: 2000 + c, m: a, d: b };
-            }
-        }
-
-        if (p.length === 2) {
-            return { y: new Date().getFullYear(), m: parseInt(p[0]), d: parseInt(p[1]) };
-        }
-
+        const p = String(dateStr).replace(/[.\/]/g, '-').split('-');
+        if (p.length === 3) return { y: parseInt(p[0]), m: parseInt(p[1]), d: parseInt(p[2]) };
+        if (p.length === 2) return { y: 0, m: parseInt(p[0]), d: parseInt(p[1]) };
         return null;
     }
-
     const days = [];
     const today = new Date();
     for (let i = 6; i >= 0; i--) {
@@ -792,14 +716,7 @@ function rD() {
         d.setDate(today.getDate() - i);
         days.push({ label: (d.getMonth() + 1) + '/' + (d.getDate()), m: d.getMonth() + 1, d: d.getDate(), y: d.getFullYear() });
     }
-    function actsOfDay(day) {
-        return acts.filter(a => {
-            const pd = parseActDate(a.date);
-            if (!pd) return false;
-            // Жил, сар, өдөр бүгдийг шалгах (зөвхөн 2026 оны акт-уудыг харуулна)
-            return pd.y === day.y && pd.m === day.m && pd.d === day.d;
-        });
-    }
+    function actsOfDay(day) { return acts.filter(a => { const pd = parseActDate(a.date); if (!pd) return false; return pd.m === day.m && pd.d === day.d; }); }
     const dayAmts = days.map(day => { const da = actsOfDay(day); if (!da.length) return 0; const total = da.reduce((s, a) => s + parseInt(a.amount || 0), 0); return total || da.length * 1000000; });
     const dayCounts = days.map(day => actsOfDay(day).length);
     const dayColors = days.map(day => { const da = actsOfDay(day); if (!da.length) return '#ebebeb'; if (da.some(a => a.status === 'done')) return '#1d9e75'; if (da.some(a => a.status === 'rejected')) return '#e24b4a'; return '#378add'; });

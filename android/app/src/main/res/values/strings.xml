@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Talst Act</string>
+    <string name="title_activity_main">Talst Act</string>
+    <string name="package_name">mn.talstgroup.act</string>
+    <string name="custom_url_scheme">mn.talstgroup.act</string>
+</resources>

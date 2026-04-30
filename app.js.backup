@@ -1,10 +1,11 @@
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, onAuthStateChanged, signOut as fbOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { signInWithCredential } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // --- CAPACITOR DETECT ---
-const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-console.log('✅ App loaded. isNative:', isNative, 'Capacitor:', !!window.Capacitor);
+const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
 
 // --- ТОХИРГОО ---
 const cfg = {
@@ -43,9 +44,6 @@ const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захира�
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
 const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
 
-// --- 8 цагийн хугацаа (rejected acts auto-delete) ---
-const EIGHT_HOURS = 8 * 60 * 60 * 1000;
-
 // --- FIREBASE INIT ---
 const fapp = initializeApp(cfg);
 const auth = getAuth(fapp);
@@ -53,8 +51,7 @@ const db = getFirestore(fapp);
 
 let cu = null, role = 'Гүйцэтгэгч', acts = [], prev = 2, ctab = 0, unsub = null;
 let pdfDataList = [];
-let cachedFont = null;
-let autoDeleteInterval = null;
+let cachedFont = null; // Noto Sans font cache
 const e = id => document.getElementById(id);
 
 // --- ТУСЛАХ ФУНКЦҮҮД ---
@@ -71,15 +68,7 @@ function bc(a) {
 function bt(a) { return a.status === 'done' ? '✓ Батлагдсан' : a.status === 'rejected' ? '✕ Буцаагдсан' : SN[a.step || 0] + ' хүлээж байна' }
 function fmtN(n) { return parseInt(n || 0).toLocaleString('mn-MN') }
 
-// --- DATE FORMAT (YYYY.MM.DD стандарт) ---
-function todayYMD() {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${y}.${m}.${dd}`;
-}
-
+// --- ГАДААД ДУУДАХ ФУНКЦҮҮД (Window object) ---
 window.fmtAmt = () => { const v = e('fa').value; e('amtFmt').textContent = v && !isNaN(v) ? '₮ ' + parseInt(v).toLocaleString() : ''; };
 
 window.addPdfs = async (input) => {
@@ -101,74 +90,32 @@ window.rmPdf = (i) => {
     e('compInfo').textContent = pdfDataList.length ? `${pdfDataList.length} PDF · ~${total}KB` : '';
 };
 
-// ★★★ GOOGLE SIGN-IN — NATIVE BRIDGE (CDN-гүй) ★★★
 window.signInGoogle = async () => {
     try {
         if (isNative) {
-            const FirebaseAuthentication = window.Capacitor?.Plugins?.FirebaseAuthentication;
-            if (!FirebaseAuthentication) {
-                throw new Error('FirebaseAuthentication plugin олдсонгүй. npx cap sync хийсэн үү?');
-            }
-            console.log('🔐 Native Google Sign-in эхэлж байна...');
+            // --- NATIVE iOS/Android ---
+            const { FirebaseAuthentication } = await import('https://cdn.jsdelivr.net/npm/@capacitor-firebase/authentication@6.1.0/dist/esm/index.js');
             const result = await FirebaseAuthentication.signInWithGoogle();
-            console.log('✅ Native result бүхэлд:', JSON.stringify(result));
-
-            const idToken = result && result.credential && result.credential.idToken;
-            const accessToken = result && result.credential && result.credential.accessToken;
-            console.log('🔑 idToken байгаа:', !!idToken, 'Урт:', idToken ? idToken.length : 0);
-            console.log('🔑 accessToken байгаа:', !!accessToken);
-
-            if (idToken) {
-                console.log('🔐 Firebase руу шилжиж байна...');
-                const credential = GoogleAuthProvider.credential(idToken, accessToken);
-                const fbResult = await signInWithCredential(auth, credential);
-                console.log('✅ Firebase sign-in амжилттай!', fbResult.user && fbResult.user.email);
-
-                if (fbResult.user) {
-                    console.log('🔄 1 секундын дараа UI шалгана...');
-                    setTimeout(() => {
-                        const loginPage = e('loginPage');
-                        if (loginPage && loginPage.style.display !== 'none') {
-                            console.log('⚠️ onAuthStateChanged ажиллаагүй — гараар reload хийнэ');
-                            location.reload();
-                        } else {
-                            console.log('✅ UI аль хэдийн шилжсэн');
-                        }
-                    }, 1000);
-                }
-            } else {
-                console.error('❌ idToken ирсэнгүй. Result:', result);
-                alert('❌ idToken ирсэнгүй!\n\nResult: ' + JSON.stringify(result).substring(0, 500));
-                toast('Google-аас хариу ирсэнгүй', 'err');
+            if (result.credential?.idToken) {
+                const credential = GoogleAuthProvider.credential(result.credential.idToken);
+                await signInWithCredential(auth, credential);
             }
         } else {
+            // --- BROWSER ---
             await signInWithPopup(auth, new GoogleAuthProvider());
         }
     } catch (err) {
-        console.error('❌ SIGN-IN ERROR:', err);
-        alert('Алдаа:\n' + (err?.message || err?.code || JSON.stringify(err) || 'Тодорхойгүй'));
-        toast('Алдаа: ' + (err?.message || err?.code || 'Тодорхойгүй'), 'err');
+        console.error('Sign-in error:', err);
+        toast('Нэвтрэхэд алдаа гарлаа: ' + (err.message || err), 'err');
     }
 };
 
-window.doSignOut = async () => {
-    if (!confirm('Гарах уу?')) return;
-    if (unsub) unsub();
-    if (autoDeleteInterval) { clearInterval(autoDeleteInterval); autoDeleteInterval = null; }
-    try {
-        if (isNative && window.Capacitor?.Plugins?.FirebaseAuthentication) {
-            await window.Capacitor.Plugins.FirebaseAuthentication.signOut();
-        }
-        await fbOut(auth);
-    } catch (err) {
-        console.error('Sign-out error:', err);
-    }
-};
-
+window.doSignOut = async () => { if (confirm('Гарах уу?')) { if (unsub) unsub(); await fbOut(auth) } };
 window.go = go; window.bk = bk; window.opd = opd;
 window.submitAct = submitAct; window.approve = approve; window.reject = reject;
 window.downloadFinalPdf = downloadFinalPdf;
 
+// --- ҮНДСЭН ЛОГИК ---
 function readPdfAsBase64(file) {
     return new Promise(resolve => {
         const reader = new FileReader();
@@ -212,11 +159,9 @@ onAuthStateChanged(auth, u => {
         e('urole').textContent = role;
         e('aplbl').textContent = role + ' горимд батлах актууд';
         listen();
-        startAutoDeleteRejected();
     } else {
         cu = null; e('loginPage').style.display = 'flex'; e('appPage').style.display = 'none';
         if (unsub) { unsub(); unsub = null; }
-        if (autoDeleteInterval) { clearInterval(autoDeleteInterval); autoDeleteInterval = null; }
     }
 });
 
@@ -224,42 +169,12 @@ function listen() {
     const q = query(collection(db, 'acts'), orderBy('createdAt', 'desc'));
     unsub = onSnapshot(q, snap => {
         acts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Snapshot орж ирэх бүрд rejected acts-уудыг шалгах
-        cleanupExpiredRejected();
         if (ctab === 1) rA(); if (ctab === 2) rL(); if (ctab === 3) rD();
         if (e('pd').style.display !== 'none') {
             const idx = parseInt(e('dc').dataset.idx || '-1');
             if (idx >= 0) e('dc').innerHTML = detH(idx);
         }
     });
-}
-
-// ★★★ AUTO-DELETE: 8 цагаас илүү буцаагдсан акт-уудыг устгах ★★★
-async function cleanupExpiredRejected() {
-    const now = Date.now();
-    const expired = acts.filter(a => {
-        if (a.status !== 'rejected') return false;
-        const rejTime = a.rejectedAt ? (a.rejectedAt.toMillis?.() || a.rejectedAt) : null;
-        // Хэрэв rejectedAt байхгүй бол → хуучин данс, тэр даруй устгана
-        if (!rejTime) return true;
-        return (now - rejTime) > EIGHT_HOURS;
-    });
-    if (!expired.length) return;
-    console.log(`🗑 ${expired.length} буцаагдсан акт устгах гэж байна...`);
-    for (const a of expired) {
-        try {
-            await deleteDoc(doc(db, 'acts', a.id));
-            console.log('✅ Устгасан:', a.actId);
-        } catch (err) {
-            console.error('❌ Устгах алдаа:', a.actId, err);
-        }
-    }
-}
-
-function startAutoDeleteRejected() {
-    // 5 минут тутамд шалгана
-    if (autoDeleteInterval) clearInterval(autoDeleteInterval);
-    autoDeleteInterval = setInterval(cleanupExpiredRejected, 5 * 60 * 1000);
 }
 
 function go(n) {
@@ -292,8 +207,7 @@ async function submitAct() {
     try {
         e('progBar').style.width = '60%'; e('progText').textContent = 'Firestore-д хадгалж байна...';
         const actData = {
-            actId: aid,
-            date: todayYMD(),  // YYYY.MM.DD стандарт формат
+            actId: aid, date: new Date().toLocaleDateString('mn-MN'),
             company: c, contract: g, work: w, dateFrom: e('fd1').value, dateTo: e('fd2').value, amount: a,
             pdfs: pdfDataList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb })),
             pdfCount: pdfDataList.length, step: 0, status: 'pending',
@@ -342,10 +256,11 @@ async function approve(docId) {
         if (done) {
             await sendMail(CHAIN[3].email, CHAIN[3].name, a, cu.displayName || cu.email);
             toast('🎉 Бүрэн батлагдлаа! Final PDF бэлдэж байна...');
+            // ★★★ FINAL PDF AUTO-DOWNLOAD ★★★
             try {
                 const actWithFinal = { ...a, ...upd, evs: finalEvs };
                 await generateFinalPdf(actWithFinal);
-                toast('✅ Final PDF бэлэн!');
+                toast('✅ Final PDF татагдлаа!');
             } catch (pdfErr) {
                 console.error('Final PDF алдаа:', pdfErr);
                 toast('⚠️ PDF үүсгэхэд алдаа: ' + pdfErr.message, 'err');
@@ -372,8 +287,15 @@ async function reject(docId) {
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); }
 }
 
+// --- FINAL PDF GENERATOR (Cyrillic font embed) ---
+
+// Cyrillic дэмжлэгтэй font (Noto Sans Regular) татах + cache хийх
 async function loadCyrillicFont() {
     if (cachedFont) return cachedFont;
+    // Google Fonts-ийн Noto Sans Regular TTF (Cyrillic бүрэн дэмжинэ)
+    const fontUrl = 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans@5.0.22/files/noto-sans-cyrillic-400-normal.woff';
+    // woff нь pdf-lib-д ашиглагддаггүй тул TTF эх үүсвэр хэрэгтэй
+    // unpkg-ээс шууд TTF татах
     const ttfUrl = 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts/hinted/ttf/NotoSans/NotoSans-Regular.ttf';
     const res = await fetch(ttfUrl);
     if (!res.ok) throw new Error('Font татах алдаа: ' + res.status);
@@ -384,12 +306,17 @@ async function loadCyrillicFont() {
 async function generateFinalPdf(act) {
     const { PDFDocument, rgb } = PDFLib;
     const finalDoc = await PDFDocument.create();
+
+    // Fontkit бүртгэх (custom font-ийг embed хийхэд шаардлагатай)
     finalDoc.registerFontkit(fontkit);
+
+    // Cyrillic font татах + embed хийх
     toast('Font татаж байна...');
     const fontBytes = await loadCyrillicFont();
     const font = await finalDoc.embedFont(fontBytes, { subset: true });
 
-    let page = finalDoc.addPage([595, 842]);
+    // --- 1-р хуудас: Хураангуй + Timeline ---
+    let page = finalDoc.addPage([595, 842]); // A4
     let y = 800;
     const margin = 50;
     const lineH = 16;
@@ -399,19 +326,31 @@ async function generateFinalPdf(act) {
         const { size = 11, color = rgb(0, 0, 0) } = options;
         page.drawText(String(text || ''), { x, y: yPos, size, font, color });
     }
+
     function checkNewPage(needed = 30) {
-        if (y < needed + margin) { page = finalDoc.addPage([595, 842]); y = 800; }
-    }
-    function drawLine(yPos, color = rgb(0.7, 0.7, 0.7)) {
-        page.drawLine({ start: { x: margin, y: yPos }, end: { x: pageWidth - margin, y: yPos }, thickness: 0.5, color });
+        if (y < needed + margin) {
+            page = finalDoc.addPage([595, 842]);
+            y = 800;
+        }
     }
 
+    function drawLine(yPos, color = rgb(0.7, 0.7, 0.7)) {
+        page.drawLine({
+            start: { x: margin, y: yPos },
+            end: { x: pageWidth - margin, y: yPos },
+            thickness: 0.5, color,
+        });
+    }
+
+    // --- ГАРЧИГ ---
     drawText('БҮРЭН БАТЛАГДСАН АКТ', margin, y, { size: 20, color: rgb(0.11, 0.62, 0.46) });
     y -= 28;
     drawText('Final Approved Act · Digital Signature Chain', margin, y, { size: 10, color: rgb(0.5, 0.5, 0.5) });
     y -= 15;
-    drawLine(y); y -= 20;
+    drawLine(y);
+    y -= 20;
 
+    // --- МЕТА МЭДЭЭЛЭЛ ---
     const metaLines = [
         ['Акт дугаар', act.actId],
         ['Огноо', act.date],
@@ -424,31 +363,43 @@ async function generateFinalPdf(act) {
         ['Төлөв', '✓ БҮРЭН БАТЛАГДСАН'],
         ['Хавсралт', (act.pdfCount || 0) + ' PDF файл'],
     ];
+
     for (const [label, value] of metaLines) {
         checkNewPage();
         drawText(label + ':', margin, y, { size: 11, color: rgb(0.4, 0.4, 0.4) });
         drawText(String(value), margin + 110, y, { size: 11 });
         y -= lineH + 3;
     }
-    y -= 12; drawLine(y); y -= 22;
+
+    y -= 12;
+    drawLine(y);
+    y -= 22;
     drawText('ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ', margin, y, { size: 14, color: rgb(0.11, 0.62, 0.46) });
     y -= 22;
 
+    // --- TIMELINE ---
     const events = act.evs || [];
     events.forEach((ev, i) => {
         checkNewPage(70);
+
+        // Dot + title
         const isApprove = ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit';
         const isReject = ev.type === 'reject';
         const dotColor = isApprove ? rgb(0.11, 0.62, 0.46) : isReject ? rgb(0.88, 0.29, 0.29) : rgb(0.5, 0.5, 0.5);
         const icon = isApprove ? '✓' : isReject ? '✕' : '→';
+
         page.drawCircle({ x: margin + 6, y: y + 4, size: 7, color: dotColor });
         drawText(icon, margin + 3, y + 1, { size: 10, color: rgb(1, 1, 1) });
+
         drawText(`${i + 1}. ${ev.title || ''}`, margin + 22, y, { size: 12, color: dotColor });
         y -= lineH;
+
         drawText(`Хэн: ${ev.who || '—'} (${ev.whoEmail || '—'})`, margin + 22, y, { size: 10, color: rgb(0.3, 0.3, 0.3) });
         y -= lineH - 2;
         drawText(`Хугацаа: ${ev.time || '—'}`, margin + 22, y, { size: 10, color: rgb(0.3, 0.3, 0.3) });
         y -= lineH - 2;
+
+        // Detail (multi-line wrap)
         const detail = String(ev.detail || '');
         const maxCharsPerLine = 75;
         if (detail) {
@@ -458,8 +409,11 @@ async function generateFinalPdf(act) {
                 if ((line + ' ' + w).length > maxCharsPerLine) {
                     checkNewPage();
                     drawText('  ' + line, margin + 22, y, { size: 9, color: rgb(0.25, 0.25, 0.25) });
-                    y -= lineH - 3; line = w;
-                } else line = line ? line + ' ' + w : w;
+                    y -= lineH - 3;
+                    line = w;
+                } else {
+                    line = line ? line + ' ' + w : w;
+                }
             }
             if (line) {
                 checkNewPage();
@@ -467,6 +421,7 @@ async function generateFinalPdf(act) {
                 y -= lineH - 3;
             }
         }
+
         if (ev.hash) {
             checkNewPage();
             drawText(`  🔐 ${ev.hash}`, margin + 22, y, { size: 8, color: rgb(0.55, 0.55, 0.55) });
@@ -475,14 +430,18 @@ async function generateFinalPdf(act) {
         y -= 10;
     });
 
+    // --- ФУТЕР ---
     checkNewPage(50);
-    y -= 10; drawLine(y); y -= 15;
+    y -= 10;
+    drawLine(y);
+    y -= 15;
     drawText(`Үүсгэсэн: ${new Date().toLocaleString('mn-MN')}`, margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
     y -= 12;
     drawText('Talst Act System · Blockchain-style Audit Trail', margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
     y -= 12;
     drawText(`Нийт ${events.length} арга хэмжээ · ${act.pdfCount || 0} хавсралт`, margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
 
+    // --- ХАВСРАЛТ PDF-ууд НЭГТГЭХ ---
     if (act.pdfs && act.pdfs.length) {
         for (const pdf of act.pdfs) {
             try {
@@ -502,46 +461,20 @@ async function generateFinalPdf(act) {
         }
     }
 
+    // --- DOWNLOAD ---
     const finalBytes = await finalDoc.save();
-    const fileName = `${act.actId}_FINAL.pdf`;
-
-    if (isNative) {
-        try {
-            const Filesystem = window.Capacitor?.Plugins?.Filesystem;
-            const Share = window.Capacitor?.Plugins?.Share;
-            if (!Filesystem) throw new Error('Filesystem plugin олдсонгүй');
-            let binary = '';
-            const bytes = new Uint8Array(finalBytes);
-            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-            const base64 = btoa(binary);
-            const result = await Filesystem.writeFile({
-                path: fileName, data: base64, directory: 'DOCUMENTS', recursive: true
-            });
-            if (Share) {
-                try {
-                    await Share.share({
-                        title: 'Батлагдсан акт',
-                        text: `${act.actId} — Бүрэн батлагдсан акт`,
-                        url: result.uri,
-                        dialogTitle: 'Актыг хуваалцах'
-                    });
-                } catch (shareErr) { console.log('Share cancelled:', shareErr); }
-            }
-        } catch (err) {
-            console.error('Native save error:', err);
-            toast('PDF хадгалахад алдаа: ' + err.message, 'err');
-        }
-    } else {
-        const blob = new Blob([finalBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = fileName;
-        document.body.appendChild(a); a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+    const blob = new Blob([finalBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${act.actId}_FINAL.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// Гараар татах (Нягтлан detail page-аас дахин татах боломж)
 async function downloadFinalPdf(docId) {
     const a = acts.find(x => x.id === docId);
     if (!a) { toast('Акт олдсонгүй', 'err'); return; }
@@ -556,6 +489,7 @@ async function downloadFinalPdf(docId) {
     }
 }
 
+// --- RENDERING (HTML GENERATION) ---
 function evH(ev, isLast) {
     const dc = ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit' ? 'dd' : ev.type === 'reject' ? 'dj' : 'da';
     const ic = ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit' ? '✓' : ev.type === 'reject' ? '✕' : '→';
@@ -601,12 +535,15 @@ function detH(idx) {
     }
     let tl = (a.evs || []).map(ev => evH(ev, false)).join('');
     if (a.status === 'pending') for (let i = step; i < 4; i++) tl += wevH(i, i === 3);
+
+    // Final PDF download тогч (зөвхөн done актад, Нягтлан эсвэл бусад хүн)
     const finalBtn = a.status === 'done' ? `
       <div class="abtns" style="margin-top:10px">
         <button class="bok" onclick="downloadFinalPdf('${a.id}')" style="background:#1d9e75">
           📥 Бүрэн PDF татах (Timeline + Хавсралт)
         </button>
       </div>` : '';
+
     return `<div class="card">
     <div class="ch">
       <div><div class="cid">${esc(a.actId)} · ${esc(a.date)}</div><div class="ctitle">${esc(a.work)}</div></div>
@@ -674,7 +611,9 @@ function liHRejected(a, idx, from, now, EIGHT_HOURS) {
             const m = Math.floor((remaining % 3600000) / 60000);
             timerHtml = `<div class="reject-timer">🗑 ${h} цаг ${m} минутын дараа устна</div>`;
         }
-    } else timerHtml = '<div class="reject-timer">🗑 Удахгүй устна</div>';
+    } else {
+        timerHtml = '<div class="reject-timer">🗑 8 цагийн дараа устна</div>';
+    }
     return `<div class="li rejected" onclick="opd(${idx},${from})">
     <div class="li-top">
       <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div>
@@ -702,6 +641,7 @@ function rA() {
 function rL() {
     const el = e('ll');
     const now = Date.now();
+    const EIGHT_HOURS = 8 * 60 * 60 * 1000;
     const inProgress = acts.filter(a => a.status === 'pending' && (a.step || 0) >= 1);
     const done = acts.filter(a => a.status === 'done');
     const rejected = acts.filter(a => {
@@ -714,9 +654,18 @@ function rL() {
         el.innerHTML = '<div class="empty">Одоогоор акт байхгүй байна</div>'; return;
     }
     let html = '';
-    if (inProgress.length) { html += '<div class="in-progress-label">ЯВЦАД</div>'; html += inProgress.map(a => liH(a, acts.indexOf(a), 2)).join(''); }
-    if (done.length) { html += '<div class="done-section-label">✓ ДУУССАН</div>'; html += done.map(a => liHDone(a, acts.indexOf(a), 2)).join(''); }
-    if (rejected.length) { html += '<div class="rejected-section-label">✕ БУЦААГДСАН</div>'; html += rejected.map(a => liHRejected(a, acts.indexOf(a), 2, now, EIGHT_HOURS)).join(''); }
+    if (inProgress.length) {
+        html += '<div class="in-progress-label">ЯВЦАД</div>';
+        html += inProgress.map(a => liH(a, acts.indexOf(a), 2)).join('');
+    }
+    if (done.length) {
+        html += '<div class="done-section-label">✓ ДУУССАН</div>';
+        html += done.map(a => liHDone(a, acts.indexOf(a), 2)).join('');
+    }
+    if (rejected.length) {
+        html += '<div class="rejected-section-label">✕ БУЦААГДСАН</div>';
+        html += rejected.map(a => liHRejected(a, acts.indexOf(a), 2, now, EIGHT_HOURS)).join('');
+    }
     el.innerHTML = html;
 }
 
@@ -727,6 +676,7 @@ function rD() {
     const total = acts.length;
     const pending = acts.filter(a => a.status === 'pending');
     const done = acts.filter(a => a.status === 'done');
+    const rejected = acts.filter(a => a.status === 'rejected');
     e('s0').textContent = total;
     e('s0sub').textContent = total + 'ш бүртгэгдсэн';
     e('s1').textContent = pending.length;
@@ -749,60 +699,44 @@ function rD() {
 
     function parseActDate(dateStr) {
         if (!dateStr) return null;
-
-        // Firestore Timestamp object
-        if (typeof dateStr === 'object' && dateStr.seconds !== undefined) {
-            const dt = new Date(dateStr.seconds * 1000);
-            return { y: dt.getFullYear(), m: dt.getMonth() + 1, d: dt.getDate() };
-        }
-
-        const s = String(dateStr).trim();
-        const p = s.replace(/[.\/\-]/g, '-').split('-').filter(Boolean);
-
-        if (p.length === 3) {
-            const a = parseInt(p[0]);
-            const b = parseInt(p[1]);
-            const c = parseInt(p[2]);
-
-            // YYYY.MM.DD эсвэл YYYY-MM-DD (4 оронтой жил эхэнд)
-            if (a > 1900) {
-                return { y: a, m: b, d: c };
-            }
-            // M/D/YYYY эсвэл MM/DD/YYYY (4 оронтой жил эцэст)
-            if (c > 1900) {
-                return { y: c, m: a, d: b };
-            }
-            // 2 оронтой жил эцэст (e.g., 4/16/26)
-            if (c < 100) {
-                return { y: 2000 + c, m: a, d: b };
-            }
-        }
-
-        if (p.length === 2) {
-            return { y: new Date().getFullYear(), m: parseInt(p[0]), d: parseInt(p[1]) };
-        }
-
+        const p = String(dateStr).replace(/[.\/]/g, '-').split('-');
+        if (p.length === 3) return { y: parseInt(p[0]), m: parseInt(p[1]), d: parseInt(p[2]) };
+        if (p.length === 2) return { y: 0, m: parseInt(p[0]), d: parseInt(p[1]) };
         return null;
     }
-
     const days = [];
     const today = new Date();
     for (let i = 6; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(today.getDate() - i);
-        days.push({ label: (d.getMonth() + 1) + '/' + (d.getDate()), m: d.getMonth() + 1, d: d.getDate(), y: d.getFullYear() });
+        days.push({
+            label: (d.getMonth() + 1) + '/' + (d.getDate()),
+            m: d.getMonth() + 1,
+            d: d.getDate(),
+            y: d.getFullYear(),
+        });
     }
     function actsOfDay(day) {
         return acts.filter(a => {
             const pd = parseActDate(a.date);
             if (!pd) return false;
-            // Жил, сар, өдөр бүгдийг шалгах (зөвхөн 2026 оны акт-уудыг харуулна)
-            return pd.y === day.y && pd.m === day.m && pd.d === day.d;
+            return pd.m === day.m && pd.d === day.d;
         });
     }
-    const dayAmts = days.map(day => { const da = actsOfDay(day); if (!da.length) return 0; const total = da.reduce((s, a) => s + parseInt(a.amount || 0), 0); return total || da.length * 1000000; });
+    const dayAmts = days.map(day => {
+        const da = actsOfDay(day);
+        if (!da.length) return 0;
+        const total = da.reduce((s, a) => s + parseInt(a.amount || 0), 0);
+        return total || da.length * 1000000;
+    });
     const dayCounts = days.map(day => actsOfDay(day).length);
-    const dayColors = days.map(day => { const da = actsOfDay(day); if (!da.length) return '#ebebeb'; if (da.some(a => a.status === 'done')) return '#1d9e75'; if (da.some(a => a.status === 'rejected')) return '#e24b4a'; return '#378add'; });
+    const dayColors = days.map(day => {
+        const da = actsOfDay(day);
+        if (!da.length) return '#ebebeb';
+        if (da.some(a => a.status === 'done')) return '#1d9e75';
+        if (da.some(a => a.status === 'rejected')) return '#e24b4a';
+        return '#378add';
+    });
     const maxAmt = Math.max(...dayAmts, 1);
     const minVisible = maxAmt * 0.08;
     const displayAmts = dayAmts.map(v => v > 0 ? Math.max(v, minVisible * 0.3) : 0);
@@ -810,19 +744,36 @@ function rD() {
     const ctx = e('dbBarChart'); if (!ctx) return;
     dbBarChart = new Chart(ctx, {
         type: 'bar',
-        data: { labels: days.map(d => d.label), datasets: [{ label: 'Дүн', data: displayAmts, backgroundColor: dayColors, borderRadius: 6, borderSkipped: false }] },
+        data: {
+            labels: days.map(d => d.label), datasets: [{
+                label: 'Дүн',
+                data: displayAmts,
+                backgroundColor: dayColors,
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: ctx => { const day = days[ctx.dataIndex]; const da = actsOfDay(day); if (!da.length) return 'Акт байхгүй'; const total = da.reduce((s, a) => s + parseInt(a.amount || 0), 0); return da.length + 'ш · ₮' + parseInt(total).toLocaleString('mn-MN'); },
+                        label: ctx => {
+                            const day = days[ctx.dataIndex];
+                            const da = actsOfDay(day);
+                            if (!da.length) return 'Акт байхгүй';
+                            const total = da.reduce((s, a) => s + parseInt(a.amount || 0), 0);
+                            return da.length + 'ш · ₮' + parseInt(total).toLocaleString('mn-MN');
+                        },
                         title: ctx => days[ctx[0].dataIndex].label + ' · ' + dayCounts[ctx[0].dataIndex] + 'ш акт'
                     }
                 }
             },
-            scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#888', autoSkip: false, maxRotation: 0 } }, y: { display: false, beginAtZero: true, min: 0 } },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#888', autoSkip: false, maxRotation: 0 } },
+                y: { display: false, beginAtZero: true, min: 0 },
+            },
         }
     });
 }

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Гүйцэтгэлийн Акт — Talst Group</title>
+  <!-- PWA Configuration -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1d9e75">
+
+  <!-- iOS PWA Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Талст Акт">
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="/images/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+  <link rel="shortcut icon" href="/favicon.ico">
+
+  <!-- Android Chrome Support -->
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- Meta -->
+  <meta name="description" content="Гүйцэтгэлийн акт баталгаажуулах систем">
+  <!-- ====== STYLES ====== -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- ====== EXTERNAL LIBRARIES ====== -->
+  <!-- EmailJS: email илгээх -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <!-- Chart.js: дашбордын диаграм -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  cd ~/Desktop/Projects/talst-act
+  cp www/app.js app.js  # backup хийх
+  npx cap sync ios
+  <!-- PDF-lib + Fontkit: Final PDF үүсгэх, кирилл font embed -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+</head>
+
+<body>
+
+<!-- ========================================================== -->
+<!-- ============== 1. НЭВТРЭХ ХУУДАС (LOGIN PAGE) =========== -->
+<!-- ========================================================== -->
+<div class="login-wrap" id="loginPage">
+  <div class="login-card">
+    <img src="images/TGmn2-removebg-preview.png"
+         style="height:52px;width:auto;object-fit:contain;margin:0 auto 16px;display:block"
+         alt="Talst Group">
+
+    <div class="login-sub">
+      Гүйцэтгэлийн акт баталгаажуулах систем.<br>
+      Google имэйлээрээ нэвтэрнэ үү.
+    </div>
+
+    <button class="google-btn" onclick="signInGoogle()">
+      <svg width="20" height="20" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Google-р нэвтрэх
+    </button>
+
+    <div class="login-note">
+      Координатор, Инженер, Захирал, Нягтлан нар talstgroup.mn имэйлээрээ нэвтэрнэ.<br>
+      Гүйцэтгэгч компаниуд ч Gmail-р нэвтэрч болно.
+    </div>
+  </div>
+</div>
+
+
+<!-- ========================================================== -->
+<!-- ================ 2. ҮНДСЭН АПП (APP PAGE) =============== -->
+<!-- ========================================================== -->
+<div class="app" id="appPage">
+
+  <!-- ==== 2.1 TOPBAR: Logo + Хэрэглэгч ==== -->
+  <div class="topbar">
+    <img src="images/TGmn2-removebg-preview.png"
+         style="height:32px;width:auto;object-fit:contain"
+         alt="Talst Group">
+
+    <div class="user-pill" onclick="doSignOut()">
+      <div class="uav" id="uav">?</div>
+      <div>
+        <div class="uname" id="uname">...</div>
+        <div class="urole" id="urole">...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==== Toast мэдэгдэл ==== -->
+  <div id="toast" class="toast"></div>
+
+  <!-- ==== 2.2 TAB NAVIGATION ==== -->
+  <div class="tabs">
+    <button class="tab on" id="tb0" onclick="go(0)">Илгээх</button>
+    <button class="tab"    id="tb1" onclick="go(1)">Батлах</button>
+    <button class="tab"    id="tb2" onclick="go(2)">Актууд</button>
+    <button class="tab"    id="tb3" onclick="go(3)">Дашборд</button>
+  </div>
+
+
+  <!-- ====================================================== -->
+  <!-- ====== TAB 0: ШИНЭ АКТ ИЛГЭЭХ ФОРМ ================= -->
+  <!-- ====================================================== -->
+  <div id="p0">
+    <div class="form-card">
+      <div class="ftitle">Шинэ акт илгээх</div>
+
+      <!-- Компани -->
+      <div class="fl">Компанийн нэр</div>
+      <input type="text" id="fc" placeholder="Модун Констракшн ХХК">
+
+      <!-- Гэрээ -->
+      <div class="fl">Гэрээний дугаар</div>
+      <input type="text" id="fg" placeholder="ГЭР-2026-14">
+
+      <!-- Ажил -->
+      <div class="fl">Ажлын тайлбар</div>
+      <textarea id="fw" placeholder="Хийсэн ажлын дэлгэрэнгүй..."></textarea>
+
+      <!-- Хугацаа -->
+      <div class="fl">Ажлын хугацаа (эхлэх — дуусах)</div>
+      <div class="date-row">
+        <input type="date" id="fd1">
+        <span class="date-sep">—</span>
+        <input type="date" id="fd2">
+      </div>
+
+      <!-- Дүн -->
+      <div class="fl">Дүн (₮)</div>
+      <div class="amount-wrap">
+        <input type="number" id="fa" placeholder="48500000" oninput="fmtAmt()">
+        <div class="amt-fmt" id="amtFmt"></div>
+      </div>
+
+      <!-- PDF upload -->
+      <div class="fl">Ажлын баримт бичгүүд (PDF)</div>
+      <label class="file-upload-btn" for="fpdfs">📄 PDF файл сонгох</label>
+      <input type="file"
+             id="fpdfs"
+             class="file-input"
+             multiple
+             accept="application/pdf"
+             onchange="addPdfs(this)">
+      <div class="pdf-list" id="pdfList"></div>
+      <div class="compress-info" id="compInfo"></div>
+
+      <!-- Progress bar -->
+      <div class="prog-bar-wrap" id="progWrap">
+        <div class="prog-bar" id="progBar"></div>
+      </div>
+      <div class="prog-text" id="progText"></div>
+
+      <!-- Submit -->
+      <button class="sbtn" id="sbtn" onclick="submitAct()">Акт илгээх</button>
+    </div>
+  </div>
+
+
+  <!-- ====================================================== -->
+  <!-- ====== TAB 1: БАТЛАХ АКТУУД ======================== -->
+  <!-- ====================================================== -->
+  <div id="p1" style="display:none">
+    <div class="seclbl" id="aplbl">Батлах боломжтой актууд</div>
+    <div id="al">
+      <div class="loading"><div class="spin"></div></div>
+    </div>
+  </div>
+
+
+  <!-- ====================================================== -->
+  <!-- ====== TAB 2: БҮХ АКТУУД ЖАГСААЛТ ================= -->
+  <!-- ====================================================== -->
+  <div id="p2" style="display:none">
+    <div id="ll">
+      <div class="loading"><div class="spin"></div></div>
+    </div>
+  </div>
+
+
+  <!-- ====================================================== -->
+  <!-- ====== TAB 3: ДАШБОРД ============================== -->
+  <!-- ====================================================== -->
+  <div id="p3" style="display:none">
+
+    <!-- Greeting -->
+    <div class="db-greeting">
+      <span style="font-size:12px;color:#888">Гүйцэтгэлийн актын дашборд</span>
+    </div>
+
+    <!-- Top metric cards -->
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-label">Нийт акт</div>
+        <div class="metric-val" id="s0">—</div>
+        <div class="metric-sub" style="color:#888;font-size:11px;margin-top:4px" id="s0sub">ачааллаж байна</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Явцад</div>
+        <div class="metric-val" id="s1">—</div>
+        <div class="metric-sub" style="color:#888;font-size:11px;margin-top:4px" id="s1sub">батлуулж байна</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Дууссан</div>
+        <div class="metric-val" id="s2" style="color:#1d9e75">—</div>
+        <div class="metric-sub up" style="font-size:11px;margin-top:4px;color:#1d9e75" id="s2sub">бүрэн батлагдсан</div>
+      </div>
+    </div>
+
+    <!-- Chart: 7 хоногийн явц -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Актын явц</div>
+          <div class="chart-subtitle">Сүүлийн 7 хоног</div>
+        </div>
+      </div>
+
+      <div style="position:relative;width:100%;height:160px">
+        <canvas id="dbBarChart" role="img" aria-label="Актын явцын диаграм"></canvas>
+      </div>
+
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">
+          <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888">
+            <span style="width:8px;height:8px;border-radius:50%;background:#1d9e75;display:inline-block"></span>Дууссан
+          </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888">
+            <span style="width:8px;height:8px;border-radius:50%;background:#378add;display:inline-block"></span>Явцад
+          </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888">
+            <span style="width:8px;height:8px;border-radius:50%;background:#e24b4a;display:inline-block"></span>Буцаагдсан
+          </span>
+      </div>
+    </div>
+
+    <!-- Chart: Батлалтын шат -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Батлалтын шат</div>
+          <div class="chart-subtitle">Хэдэн акт хаана байгаа</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px" id="dStatusList">
+
+        <!-- Координатор -->
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:12px;color:#888;width:90px;flex-shrink:0">Координатор</div>
+          <div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden">
+            <div style="height:6px;border-radius:20px;background:#f59e0b;width:0%;transition:width 0.6s" id="dBar0"></div>
+          </div>
+          <div style="font-size:12px;font-weight:500;min-width:20px;text-align:right" id="dV0">—</div>
+        </div>
+
+        <!-- Инженер -->
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:12px;color:#888;width:90px;flex-shrink:0">Инженер</div>
+          <div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden">
+            <div style="height:6px;border-radius:20px;background:#378add;width:0%;transition:width 0.6s" id="dBar1"></div>
+          </div>
+          <div style="font-size:12px;font-weight:500;min-width:20px;text-align:right" id="dV1">—</div>
+        </div>
+
+        <!-- Захирал -->
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:12px;color:#888;width:90px;flex-shrink:0">Захирал</div>
+          <div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden">
+            <div style="height:6px;border-radius:20px;background:#8b5cf6;width:0%;transition:width 0.6s" id="dBar2"></div>
+          </div>
+          <div style="font-size:12px;font-weight:500;min-width:20px;text-align:right" id="dV2">—</div>
+        </div>
+
+        <!-- Нягтлан -->
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:12px;color:#888;width:90px;flex-shrink:0">Нягтлан</div>
+          <div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden">
+            <div style="height:6px;border-radius:20px;background:#1d9e75;width:0%;transition:width 0.6s" id="dBar3"></div>
+          </div>
+          <div style="font-size:12px;font-weight:500;min-width:20px;text-align:right" id="dV3">—</div>
+        </div>
+
+        <!-- Дууссан -->
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:12px;color:#1d9e75;width:90px;flex-shrink:0;font-weight:500">Дууссан</div>
+          <div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden">
+            <div style="height:6px;border-radius:20px;background:#1d9e75;width:0%;transition:width 0.6s" id="dBarDone"></div>
+          </div>
+          <div style="font-size:12px;font-weight:500;min-width:20px;text-align:right;color:#1d9e75" id="dVDone">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom amount cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="metric-card">
+        <div class="metric-label">Нийт дүн</div>
+        <div style="font-size:13px;font-weight:500;color:#1a1a1a;margin-top:4px;word-break:break-all" id="dTotalAmt">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Батлагдсан</div>
+        <div style="font-size:13px;font-weight:500;color:#1d9e75;margin-top:4px;word-break:break-all" id="dDoneAmt">—</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ====================================================== -->
+  <!-- ====== DETAIL PAGE: АКТЫН ДЭЛГЭРЭНГҮЙ =============== -->
+  <!-- ====================================================== -->
+  <div id="pd" style="display:none">
+    <span class="back" onclick="bk()">← Буцах</span>
+    <div id="dc"></div>
+  </div>
+
+</div>
+<!-- ==================== END APP PAGE ==================== -->
+
+
+<!-- ====== MAIN APPLICATION SCRIPT ====== -->
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>306368853099-udhoko37f3d524n5pvel95nfrmtlcqip.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.306368853099-udhoko37f3d524n5pvel95nfrmtlcqip</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBPQjNCjXOg7uVJW46hCIPhFwVrUiiOY2A</string>
+	<key>GCM_SENDER_ID</key>
+	<string>306368853099</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>mn.talstgroup.act</string>
+	<key>PROJECT_ID</key>
+	<string>talst-act</string>
+	<key>STORAGE_BUCKET</key>
+	<string>talst-act.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:306368853099:ios:c445172e9ae78822f72d2e</string>
+</dict>
+</plist>
