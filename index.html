@@ -108,9 +108,9 @@
       <!-- Хугацаа -->
       <div class="fl">Ажлын хугацаа (эхлэх — дуусах)</div>
       <div class="date-row">
-        <input type="date" id="fd1">
+        <input type="date" id="fd1" placeholder="Эхлэх">
         <span class="date-sep">—</span>
-        <input type="date" id="fd2">
+        <input type="date" id="fd2" placeholder="Дуусах">
       </div>
 
       <!-- Дүн -->
@@ -215,6 +215,9 @@
             <span style="width:8px;height:8px;border-radius:50%;background:#378add;display:inline-block"></span>Явцад
           </span>
         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888">
+            <span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Хэсэгчлэн
+          </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#888">
             <span style="width:8px;height:8px;border-radius:50%;background:#e24b4a;display:inline-block"></span>Буцаагдсан
           </span>
       </div>
@@ -267,6 +270,15 @@
           <div style="font-size:12px;font-weight:500;min-width:20px;text-align:right" id="dV3">—</div>
         </div>
 
+        <!-- Хэсэгчлэн -->
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:12px;color:#f59e0b;width:90px;flex-shrink:0;font-weight:500">Хэсэгчлэн</div>
+          <div style="flex:1;background:#f0f0ec;border-radius:20px;height:6px;overflow:hidden">
+            <div style="height:6px;border-radius:20px;background:#f59e0b;width:0%;transition:width 0.6s" id="dBarPartial"></div>
+          </div>
+          <div style="font-size:12px;font-weight:500;min-width:20px;text-align:right;color:#f59e0b" id="dVPartial">—</div>
+        </div>
+
         <!-- Дууссан -->
         <div style="display:flex;align-items:center;gap:10px">
           <div style="font-size:12px;color:#1d9e75;width:90px;flex-shrink:0;font-weight:500">Дууссан</div>
@@ -302,6 +314,150 @@
 
 </div>
 <!-- ==================== END APP PAGE ==================== -->
+
+
+<!-- ========================================================== -->
+<!-- ==== ХЭСЭГЧЛЭН БАТЛАХ MODAL (зөвхөн Координаторт) ===== -->
+<!-- ========================================================== -->
+<div class="modal-overlay" id="partialModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Хэсэгчлэн батлах</div>
+        <div class="modal-subtitle" id="pmActId">АКТ-2026-XXXX</div>
+      </div>
+      <button class="modal-close" onclick="closePartialModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Анхны дүн -->
+      <div class="pm-original">
+        <div class="pm-original-label">Нийт ажлын дүн</div>
+        <div class="pm-original-value" id="pmOriginalAmt">0₮</div>
+      </div>
+
+      <!-- Slider -->
+      <div class="pm-slider-section">
+        <div class="pm-slider-header">
+          <span class="pm-slider-label">Батлах хувь</span>
+          <span class="pm-slider-value" id="pmPercentVal">85%</span>
+        </div>
+
+        <input type="range" id="pmSlider" class="pm-slider" min="1" max="99" value="85" oninput="updatePartialPreview()">
+
+        <div class="pm-slider-marks">
+          <span>1%</span>
+          <span>25%</span>
+          <span>50%</span>
+          <span>75%</span>
+          <span>99%</span>
+        </div>
+      </div>
+
+      <!-- Тооцоолол -->
+      <div class="pm-breakdown">
+        <div class="pm-breakdown-row pm-approved">
+          <div class="pm-bd-icon">✓</div>
+          <div class="pm-bd-text">
+            <div class="pm-bd-label">Батлагдах дүн</div>
+            <div class="pm-bd-sub" id="pmApprovedPct">85% батлагдана</div>
+          </div>
+          <div class="pm-bd-amount" id="pmApprovedAmt">0₮</div>
+        </div>
+
+        <div class="pm-breakdown-row pm-remaining">
+          <div class="pm-bd-icon">⏳</div>
+          <div class="pm-bd-text">
+            <div class="pm-bd-label">Үлдэгдэл</div>
+            <div class="pm-bd-sub" id="pmRemainingPct">15% гүйцэтгэгчид буцна</div>
+          </div>
+          <div class="pm-bd-amount" id="pmRemainingAmt">0₮</div>
+        </div>
+      </div>
+
+      <!-- Шалтгаан -->
+      <div class="pm-reason-section">
+        <label class="pm-reason-label">Шалтгаан <span style="color:#dc2626">*</span></label>
+        <textarea id="pmReason" class="pm-reason-input"
+                  placeholder="Жишээ: Барилгын талбайн цэвэрлэгээ дутуу хийгдсэн. Үлдсэн ажлыг гүйцээж шинэчлэн илгээнэ үү."></textarea>
+        <div class="pm-reason-hint">Гүйцэтгэгчид яагаад үлдэгдэл буцаагдсан тухай тайлбарлана уу.</div>
+      </div>
+
+      <!-- Info -->
+      <div class="pm-info-box">
+        <div class="pm-info-icon">ℹ️</div>
+        <div class="pm-info-text">
+          Батласан дүн (<strong id="pmInfoApproved">0₮</strong>) шууд Инженер→Захирал→Нягтлан явцыг үргэлжлүүлнэ. Үлдэгдэл (<strong id="pmInfoRemaining">0₮</strong>) гүйцэтгэгчид буцаж, ажлыг дуусгасны дараа нэмж илгээх боломжтой.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closePartialModal()">Цуцлах</button>
+      <button class="modal-btn modal-btn-confirm" id="pmConfirmBtn" onclick="confirmPartialApprove()">
+        ✓ Хэсэгчлэн батлах
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ========================================================== -->
+<!-- ==== ҮЛДЭГДЭЛ ГҮЙЦЭЭХ MODAL (Гүйцэтгэгчид) ============ -->
+<!-- ========================================================== -->
+<div class="modal-overlay" id="remainingModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Үлдэгдэл гүйцээж илгээх</div>
+        <div class="modal-subtitle" id="rmActId">АКТ-2026-XXXX</div>
+      </div>
+      <button class="modal-close" onclick="closeRemainingModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Анхны мэдээлэл -->
+      <div class="pm-original">
+        <div class="pm-original-label">Үлдэгдэл дүн</div>
+        <div class="pm-original-value" id="rmAmount" style="color:#f59e0b">0₮</div>
+      </div>
+
+      <!-- Шалтгаан харуулах -->
+      <div class="rm-prev-reason">
+        <div class="rm-prev-label">Координаторын тэмдэглэл:</div>
+        <div class="rm-prev-text" id="rmPrevReason">—</div>
+      </div>
+
+      <!-- Гүйцээсэн ажил -->
+      <div class="pm-reason-section">
+        <label class="pm-reason-label">Гүйцээсэн ажлын тайлбар <span style="color:#dc2626">*</span></label>
+        <textarea id="rmCompletionNote" class="pm-reason-input"
+                  placeholder="Жишээ: Барилгын талбайг бүрэн цэвэрлэж дуусгасан. Бүх материалыг хадгалах газраа авч очсон."></textarea>
+      </div>
+
+      <!-- PDF upload -->
+      <div class="pm-reason-label" style="margin-top:14px">Шинэ баримт бичгүүд (заавал биш)</div>
+      <label class="file-upload-btn" for="rmPdfs" style="margin-top:6px">📄 PDF файл сонгох</label>
+      <input type="file" id="rmPdfs" class="file-input" multiple accept="application/pdf" onchange="addRemainingPdfs(this)">
+      <div class="pdf-list" id="rmPdfList"></div>
+
+      <!-- Info -->
+      <div class="pm-info-box">
+        <div class="pm-info-icon">ℹ️</div>
+        <div class="pm-info-text">
+          Илгээсний дараа Координатор дахин шалгана. Батлагдвал ажлын акт <strong>100% бүрэн</strong> болно.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeRemainingModal()">Цуцлах</button>
+      <button class="modal-btn modal-btn-confirm" id="rmConfirmBtn" onclick="confirmSubmitRemaining()">
+        📤 Илгээх
+      </button>
+    </div>
+  </div>
+</div>
 
 
 <!-- ====== MAIN APPLICATION SCRIPT ====== -->
