@@ -21,17 +21,17 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
-    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
-    { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
+    { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
+    { name: 'Инженер', email: 'unursaikhan@talstgroup.mn' },
+    { name: 'Захирал', email: 'enkhtuul@talstgroup.mn' },
+    { name: 'Нягтлан', email: 'naranzul@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'zolzaya@talstgroup.mn': 'Координатор',
-    'barsbat@talstgroup.mn': 'Инженер',
-    'zorigoo@talstgroup.mn': 'Захирал',
-    'bayarmaa@talstgroup.mn': 'Нягтлан',
+    'unumunkh@talstgroup.mn': 'Координатор',
+    'unursaikhan@talstgroup.mn': 'Инженер',
+    'enkhtuul@talstgroup.mn': 'Захирал',
+    'naranzul@talstgroup.mn': 'Нягтлан',
 };
 
 const ROLE_COLORS = {
@@ -41,7 +41,7 @@ const ROLE_COLORS = {
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
+const SE = ['unumunkh@talstgroup.mn', 'unursaikhan@talstgroup.mn', 'enkhtuul@talstgroup.mn', 'naranzul@talstgroup.mn'];
 
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
@@ -250,7 +250,12 @@ onAuthStateChanged(auth, u => {
         e('loginPage').style.display = 'none'; e('appPage').style.display = 'block';
         const ini = (u.displayName || u.email).split(' ').map(n => n[0]).join('').toUpperCase().substr(0, 2);
         e('uav').textContent = ini; e('uav').style.background = ROLE_COLORS[role] || '#888';
-        const SHORT_NAMES = { 'unumunkh@talstgroup.mn': 'Б.Өнөмөнх', 'zolzaya@talstgroup.mn': 'А.Золзаяа', 'barsbat@talstgroup.mn': 'Д.Барсат', 'zorigoo@talstgroup.mn': 'Ө.Зоригоо', 'bayarmaa@talstgroup.mn': 'Д.Баярмаа' };
+        const SHORT_NAMES = {
+            'unumunkh@talstgroup.mn': 'Б.Өнөмөнх',
+            'unursaikhan@talstgroup.mn': 'Инженер',
+            'enkhtuul@talstgroup.mn': 'Захирал',
+            'naranzul@talstgroup.mn': 'Нягтлан'
+        };
         e('uname').textContent = SHORT_NAMES[u.email] || u.displayName || u.email;
         e('urole').textContent = role;
         e('aplbl').textContent = role + ' горимд батлах актууд';
@@ -477,19 +482,37 @@ async function approve(docId) {
                     // Эх актыг бүтэн PDF үүсгэх
                     const parentAct = acts.find(x => x.id === a.parentDocId);
                     if (parentAct) {
+                        // Үлдэгдэл актын events-г "Үлдэгдэл цикл" гэж нэрлэх
+                        const remainingEvents = (a.evs || []).map(ev => ({
+                            ...ev,
+                            title: '⏳ ' + (ev.title || ''),
+                            detail: '[Үлдэгдэл цикл] ' + (ev.detail || '')
+                        }));
+
+                        // Эх актын events + үлдэгдэл актын events + одоогийн approve events
+                        const mergedEvents = [
+                            ...(parentAct.evs || []),
+                            {
+                                type: 'cycle_separator', who: 'Систем',
+                                title: '═══════ ҮЛДЭГДЭЛ ЦИКЛ ЭХЭЛЛЭЭ ═══════',
+                                detail: `Үлдэгдэл акт: ${a.actId} · ₮${fmtN(a.amount)}`,
+                                time: ts(), hash: gh()
+                            },
+                            ...remainingEvents
+                        ];
+
                         const mergedAct = {
                             ...parentAct,
                             status: 'done',
                             completedViaRemaining: true,
                             remainingActId: a.actId,
-                            // Бүх PDF хослуулах
+                            // Бүх PDF хослуулах (эх + үлдэгдэл)
                             pdfs: [...(parentAct.pdfs || []), ...(a.pdfs || [])],
                             pdfCount: (parentAct.pdfCount || 0) + (a.pdfCount || 0),
-                            // Бүх event хослуулах
-                            evs: [...(parentAct.evs || []), ...newEvs.slice((a.evs || []).length - newEvs.length).filter(Boolean)]
+                            evs: mergedEvents
                         };
                         await generateFinalPdf(mergedAct);
-                        toast('✅ Final PDF (нэгтгэсэн) бэлэн!');
+                        toast('✅ 100% НЭГДСЭН PDF бэлэн!');
                     }
                 } catch (pdfErr) {
                     console.error('Merged PDF алдаа:', pdfErr);
@@ -793,47 +816,224 @@ async function generateFinalPdf(act) {
         page.drawLine({ start: { x: margin, y: yPos }, end: { x: pageWidth - margin, y: yPos }, thickness: 0.5, color });
     }
 
-    drawText('БҮРЭН БАТЛАГДСАН АКТ', margin, y, { size: 20, color: rgb(0.11, 0.62, 0.46) });
+    // ═══════════════════════════════════════════════════════════
+    // HEADER — Минимал, орчин үеийн дизайн
+    // ═══════════════════════════════════════════════════════════
+
+    // Title (зөвхөн TALST · ACT)
+    drawText('TALST · ACT', margin, y, { size: 11, color: rgb(0.42, 0.45, 0.5) });
+    y -= 4;
+    page.drawLine({
+        start: { x: margin, y: y - 2 },
+        end: { x: margin + 50, y: y - 2 },
+        thickness: 1.5,
+        color: rgb(0.06, 0.73, 0.51) // emerald
+    });
+    y -= 24;
+
+    // Том акт дугаар
+    drawText(act.actId, margin, y, { size: 26, color: rgb(0.06, 0.09, 0.16) });
+    y -= 22;
+
+    // Date · Company (subtitle)
+    const subtitleParts = [act.date];
+    if (act.company) subtitleParts.push(act.company);
+    drawText(subtitleParts.join('  ·  '), margin, y, { size: 11, color: rgb(0.42, 0.45, 0.5) });
+    y -= 14;
+
+    // Status badge (хэсэгчлэн эсвэл бүрэн)
+    const isPartial = act.approvedPercent && act.approvedPercent < 100;
+    const isMerged = act.completedViaRemaining;
+    const statusText = isPartial
+        ? `ХЭСЭГЧЛЭН ${act.approvedPercent}%`
+        : isMerged
+            ? '100% БҮРЭН (НЭГДСЭН)'
+            : 'БҮРЭН БАТЛАГДСАН';
+    const statusColor = isPartial
+        ? rgb(0.96, 0.62, 0.04)
+        : rgb(0.06, 0.73, 0.51);
+
+    // Жижиг хайрцаг (badge маягтай)
+    const badgeWidth = statusText.length * 5.5 + 16;
+    page.drawRectangle({
+        x: margin,
+        y: y - 4,
+        width: badgeWidth,
+        height: 18,
+        color: isPartial ? rgb(1, 0.95, 0.85) : rgb(0.86, 0.96, 0.91),
+        borderColor: statusColor,
+        borderWidth: 0.8,
+    });
+    drawText(statusText, margin + 8, y + 1, { size: 9, color: statusColor });
     y -= 28;
-    drawText('Final Approved Act · Digital Signature Chain', margin, y, { size: 10, color: rgb(0.5, 0.5, 0.5) });
-    y -= 15;
-    drawLine(y); y -= 20;
 
-    const metaLines = [
-        ['Акт дугаар', act.actId],
-        ['Огноо', act.date],
-        ['Компани', act.company],
-        ['Гэрээ', act.contract],
-        ['Ажил', act.work],
-        ['Хугацаа', (act.dateFrom || '—') + ' — ' + (act.dateTo || '—')],
-        ['Дүн', '₮ ' + fmtN(act.approvedAmount || act.amount)],
-        ['Илгээсэн', act.submittedByName || act.submittedBy || '—'],
-        ['Төлөв', act.approvedPercent ? `✓ ХЭСЭГЧЛЭН БАТЛАГДСАН (${act.approvedPercent}%)` : '✓ БҮРЭН БАТЛАГДСАН'],
-        ['Хавсралт', (act.pdfCount || 0) + ' PDF файл'],
-    ];
-    if (act.parentActId) metaLines.push(['Эх акт', act.parentActId]);
-    if (act.partialReason) metaLines.push(['Тайлбар', act.partialReason]);
+    // Линий тусгаарлагч
+    drawLine(y, rgb(0.9, 0.92, 0.94));
+    y -= 18;
 
-    for (const [label, value] of metaLines) {
+    // ═══════════════════════════════════════════════════════════
+    // META — 2 баганатай grid layout
+    // ═══════════════════════════════════════════════════════════
+
+    function drawMetaRow(label, value, valueColor = rgb(0.06, 0.09, 0.16), valueSize = 10.5) {
         checkNewPage();
-        drawText(label + ':', margin, y, { size: 11, color: rgb(0.4, 0.4, 0.4) });
-        drawText(String(value), margin + 110, y, { size: 11 });
-        y -= lineH + 3;
+        drawText(label, margin, y, { size: 9, color: rgb(0.55, 0.6, 0.65) });
+        drawText(String(value || '—'), margin + 130, y, { size: valueSize, color: valueColor });
+        y -= 17;
     }
-    y -= 12; drawLine(y); y -= 22;
-    drawText('ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ', margin, y, { size: 14, color: rgb(0.11, 0.62, 0.46) });
+
+    function drawMetaSeparator() {
+        page.drawLine({
+            start: { x: margin, y: y + 6 },
+            end: { x: pageWidth - margin, y: y + 6 },
+            thickness: 0.3,
+            color: rgb(0.92, 0.94, 0.96)
+        });
+        y -= 6;
+    }
+
+    // Баганаар зохион байгуулсан мэдээлэл
+    drawMetaRow('Гэрээний дугаар', act.contract);
+    drawMetaRow('Ажлын хугацаа', (act.dateFrom || '—') + ' — ' + (act.dateTo || '—'));
+    drawMetaRow('Илгээсэн', act.submittedByName || act.submittedBy);
+
+    drawMetaSeparator();
+    y -= 4;
+
+    // Дүн — онцолсон байдалтай
+    if (isMerged) {
+        // 100% НЭГДСЭН — Анхны + Батлагдсан + Үлдэгдэл бүгдийг харуулах
+        const approvedPart = parseInt(act.approvedAmount || 0);
+        const remainingPart = parseInt(act.amount) - approvedPart;
+        drawMetaRow('Анхны нийт дүн', '₮ ' + fmtN(act.amount), rgb(0.42, 0.45, 0.5), 10.5);
+        drawMetaRow(`Эхний цикл (${act.approvedPercent}%)`, '₮ ' + fmtN(approvedPart), rgb(0.06, 0.4, 0.27), 11);
+        drawMetaRow(`Үлдэгдэл цикл (${100 - act.approvedPercent}%)`, '₮ ' + fmtN(remainingPart), rgb(0.06, 0.4, 0.27), 11);
+        drawMetaSeparator();
+        drawMetaRow('Нийт батлагдсан', '₮ ' + fmtN(act.amount), rgb(0.06, 0.4, 0.27), 14);
+    } else if (isPartial) {
+        // Хэсэгчилсэн дүн — задралт харуулах
+        const remainingPart = parseInt(act.amount) - parseInt(act.approvedAmount);
+        drawMetaRow('Анхны нийт дүн', '₮ ' + fmtN(act.amount), rgb(0.42, 0.45, 0.5), 10.5);
+        drawMetaRow(`Батлагдсан дүн (${act.approvedPercent}%)`, '₮ ' + fmtN(act.approvedAmount), rgb(0.06, 0.4, 0.27), 13);
+        drawMetaRow(`Үлдэгдэл (${100 - act.approvedPercent}%)`, '₮ ' + fmtN(remainingPart), rgb(0.85, 0.55, 0.04), 11);
+    } else if (act.parentApprovedPercent && act.originalAmount) {
+        // ҮЛДЭГДЭЛ АКТ — Анхны нийт + Батлагдсан + Үлдэгдэл
+        const approvedPart = parseInt(act.originalAmount) - parseInt(act.amount);
+        drawMetaRow('Анхны нийт дүн', '₮ ' + fmtN(act.originalAmount), rgb(0.42, 0.45, 0.5), 10.5);
+        drawMetaRow(`Өмнө батлагдсан (${act.parentApprovedPercent}%)`, '₮ ' + fmtN(approvedPart), rgb(0.42, 0.45, 0.5), 10.5);
+        drawMetaRow(`Үлдэгдэл дүн (${act.remainingPercent || (100 - act.parentApprovedPercent)}%)`, '₮ ' + fmtN(act.amount), rgb(0.06, 0.4, 0.27), 13);
+    } else {
+        drawMetaRow('Батлагдсан дүн', '₮ ' + fmtN(act.approvedAmount || act.amount), rgb(0.06, 0.4, 0.27), 13);
+    }
+
+    drawMetaSeparator();
+    y -= 4;
+
+    // Ажлын тайлбар
+    if (act.work) {
+        drawText('Ажил', margin, y, { size: 9, color: rgb(0.55, 0.6, 0.65) });
+        y -= 12;
+        // Урт текстийг хуваах
+        const workWords = String(act.work).split(' ');
+        let workLine = '';
+        const maxWorkChars = 70;
+        for (const w of workWords) {
+            if ((workLine + ' ' + w).length > maxWorkChars) {
+                checkNewPage();
+                drawText(workLine, margin, y, { size: 11, color: rgb(0.06, 0.09, 0.16) });
+                y -= 14;
+                workLine = w;
+            } else workLine = workLine ? workLine + ' ' + w : w;
+        }
+        if (workLine) {
+            checkNewPage();
+            drawText(workLine, margin, y, { size: 11, color: rgb(0.06, 0.09, 0.16) });
+            y -= 14;
+        }
+        y -= 4;
+    }
+
+    if (act.pdfCount) {
+        drawMetaRow('Хавсралт', act.pdfCount + ' PDF файл', rgb(0.42, 0.45, 0.5));
+    }
+
+    // Холбогдсон акт (хэсэгчилсэн / үлдэгдэлийн хувьд)
+    if (act.parentActId) {
+        drawMetaRow('Эх акт', act.parentActId, rgb(0.42, 0.45, 0.5));
+    }
+
+    // Хэсэгчилсэн шалтгаан
+    if (act.partialReason) {
+        y -= 6;
+        // Шалтгааны хайрцаг
+        page.drawRectangle({
+            x: margin,
+            y: y - 30,
+            width: pageWidth - margin * 2,
+            height: 38,
+            color: rgb(1, 0.97, 0.91),
+            borderColor: rgb(0.96, 0.62, 0.04),
+            borderWidth: 0.6,
+            borderOpacity: 0.4,
+        });
+        // Зүүн талын тэмдэг
+        page.drawRectangle({
+            x: margin,
+            y: y - 30,
+            width: 3,
+            height: 38,
+            color: rgb(0.96, 0.62, 0.04),
+        });
+        drawText('ХЭСЭГЧЛЭН БАТЛАХ ШАЛТГААН', margin + 12, y - 4, { size: 8, color: rgb(0.58, 0.31, 0.04) });
+        drawText(String(act.partialReason).substring(0, 80), margin + 12, y - 18, { size: 10, color: rgb(0.47, 0.21, 0.05) });
+        y -= 44;
+    }
+
+    y -= 20;
+    drawLine(y, rgb(0.9, 0.92, 0.94));
+    y -= 22;
+
+    // Title for events section
+    drawText('ЯВЦЫН ТҮҮХ', margin, y, { size: 11, color: rgb(0.42, 0.45, 0.5) });
+    drawText('АУДИТ ЛОГ', pageWidth - margin - 60, y, { size: 9, color: rgb(0.65, 0.7, 0.75) });
     y -= 22;
 
     const events = act.evs || [];
     events.forEach((ev, i) => {
+        // Цикл тусгаарлагч (нэгдсэн PDF дээр)
+        if (ev.type === 'cycle_separator') {
+            checkNewPage(50);
+            y -= 8;
+            page.drawLine({
+                start: { x: margin, y: y + 4 },
+                end: { x: pageWidth - margin, y: y + 4 },
+                thickness: 1.5,
+                color: rgb(0.96, 0.62, 0.04)
+            });
+            y -= 12;
+            drawText('⏳ ҮЛДЭГДЭЛ ЦИКЛ', margin, y, { size: 11, color: rgb(0.85, 0.45, 0.04) });
+            y -= 14;
+            drawText(String(ev.detail || ''), margin, y, { size: 9, color: rgb(0.55, 0.6, 0.65) });
+            y -= 10;
+            page.drawLine({
+                start: { x: margin, y: y + 4 },
+                end: { x: pageWidth - margin, y: y + 4 },
+                thickness: 0.5,
+                color: rgb(0.96, 0.62, 0.04),
+                opacity: 0.4
+            });
+            y -= 16;
+            return;
+        }
+
         checkNewPage(70);
         const isApprove = ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit';
         const isReject = ev.type === 'reject';
         const isPartial = ev.type === 'partial' || ev.type === 'remaining_created';
         const dotColor = isApprove ? rgb(0.11, 0.62, 0.46)
             : isReject ? rgb(0.88, 0.29, 0.29)
-            : isPartial ? rgb(0.96, 0.62, 0.04)
-            : rgb(0.5, 0.5, 0.5);
+                : isPartial ? rgb(0.96, 0.62, 0.04)
+                    : rgb(0.5, 0.5, 0.5);
         const icon = isApprove ? '✓' : isReject ? '✕' : isPartial ? '⚠' : '→';
         page.drawCircle({ x: margin + 6, y: y + 4, size: 7, color: dotColor });
         drawText(icon, margin + 3, y + 1, { size: 10, color: rgb(1, 1, 1) });
@@ -947,6 +1147,16 @@ async function downloadFinalPdf(docId) {
 }
 
 function evH(ev, isLast) {
+    // Тусгай cycle separator event
+    if (ev.type === 'cycle_separator') {
+        return `<div class="cycle-sep">
+            <div class="cycle-sep-line"></div>
+            <div class="cycle-sep-text">${esc(ev.title)}</div>
+            <div class="cycle-sep-detail">${esc(ev.detail)}</div>
+            <div class="cycle-sep-line"></div>
+        </div>`;
+    }
+
     let dc, ic, lk;
     if (ev.type === 'partial' || ev.type === 'remaining_created') {
         dc = 'dpartial'; ic = '⚠'; lk = '🔓';
@@ -985,8 +1195,8 @@ function detH(idx) {
     const a = acts[idx]; if (!a) return '';
     const p = pct(a); const step = a.step || 0;
 
-    // Бүрэн батлах boломжтой эсэх
-    const canApprove = a.status === 'pending' && role !== 'Гүйцэтгэгч' && RSTEP[role] === step;
+    // Бүрэн батлах boломжтой эсэх (pending эсвэл partial хоёулаа)
+    const canApprove = (a.status === 'pending' || a.status === 'partial') && role !== 'Гүйцэтгэгч' && RSTEP[role] === step;
     // Хэсэгчлэн батлах боломжтой эсэх (зөвхөн Координатор + анх pending)
     const canPartial = a.status === 'pending' && role === 'Координатор' && step === 0;
     // Үлдэгдэл гүйцээх боломжтой эсэх (гүйцэтгэгч өөрөө)
@@ -1004,7 +1214,7 @@ function detH(idx) {
       </div>`).join('') + '</div>';
     }
     let tl = (a.evs || []).map(ev => evH(ev, false)).join('');
-    if (a.status === 'pending') for (let i = step; i < 4; i++) tl += wevH(i, i === 3);
+    if (a.status === 'pending' || a.status === 'partial') for (let i = step; i < 4; i++) tl += wevH(i, i === 3);
 
     const finalBtn = a.status === 'done' ? `
       <div class="abtns" style="margin-top:10px">
@@ -1042,14 +1252,24 @@ function detH(idx) {
         </div>`;
     }
 
-    // Үлдсэн дүн харуулах (хэсэгчлэн актын хувьд)
-    const amountDisplay = a.approvedAmount && a.approvedAmount !== a.amount
-        ? `<div class="row"><span class="rl">Анхны дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
-           <div class="row"><span class="rl">Батлагдах дүн (${a.approvedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(a.approvedAmount)}</span></div>`
-        : a.originalAmount
-        ? `<div class="row"><span class="rl">Эх дүн</span><span class="rv">₮ ${fmtN(a.originalAmount)}</span></div>
-           <div class="row"><span class="rl">Үлдэгдэл дүн</span><span class="rv" style="color:#d97706;font-weight:700">₮ ${fmtN(a.amount)}</span></div>`
-        : `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
+    // Үлдсэн дүн харуулах (хэсэгчлэн / үлдэгдэл актын хувьд)
+    let amountDisplay;
+    if (a.originalAmount && a.parentApprovedPercent) {
+        // ҮЛДЭГДЭЛ АКТ — Анхны дүн + Батлагдсан + Үлдэгдэл бүгдийг харуулах
+        const approvedPart = parseInt(a.originalAmount) - parseInt(a.amount);
+        amountDisplay = `<div class="row"><span class="rl">Анхны нийт дүн</span><span class="rv amt">₮ ${fmtN(a.originalAmount)}</span></div>
+           <div class="row"><span class="rl">Батлагдсан (${a.parentApprovedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(approvedPart)}</span></div>
+           <div class="row"><span class="rl">Үлдэгдэл (${a.remainingPercent || (100 - a.parentApprovedPercent)}%)</span><span class="rv" style="color:#d97706;font-weight:700">₮ ${fmtN(a.amount)}</span></div>`;
+    } else if (a.approvedAmount && a.approvedAmount !== a.amount) {
+        // ХЭСЭГЧИЛСЭН АКТ — Анхны + Батлагдсан
+        const remainingPart = parseInt(a.amount) - parseInt(a.approvedAmount);
+        amountDisplay = `<div class="row"><span class="rl">Анхны дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
+           <div class="row"><span class="rl">Батлагдсан дүн (${a.approvedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(a.approvedAmount)}</span></div>
+           <div class="row"><span class="rl">Үлдэгдэл (${100 - a.approvedPercent}%)</span><span class="rv" style="color:#d97706;font-weight:600">₮ ${fmtN(remainingPart)}</span></div>`;
+    } else {
+        // ЭНГИЙН АКТ
+        amountDisplay = `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
+    }
 
     return `<div class="card">
     <div class="ch">
@@ -1169,48 +1389,176 @@ function rA() {
     el.innerHTML = list.length ? list.map(a => liH(a, acts.indexOf(a), 1)).join('') : '<div class="empty">Таны батлах акт байхгүй байна</div>';
 }
 
+// ════════════════════════════════════════════════════════
+// АКТУУД ТАБ — Хайлт, Filter, Pagination
+// ════════════════════════════════════════════════════════
+
+let listFilter = 'all';   // all, in_progress, partial, partial_done, remaining, done, rejected
+let listSearch = '';      // хайлтын утга
+let listLimit = 10;       // pagination хязгаар
+
+window.setListFilter = (f) => {
+    listFilter = f;
+    listLimit = 10;
+    rL();
+};
+window.setListSearch = (val) => {
+    listSearch = (val || '').toLowerCase().trim();
+    listLimit = 10;
+    rL();
+};
+window.clearListSearch = () => {
+    listSearch = '';
+    listLimit = 10;
+    const inp = e('listSearchInput');
+    if (inp) inp.value = '';
+    rL();
+};
+window.showMoreActs = () => {
+    listLimit += 10;
+    rL();
+};
+
 function rL() {
     const el = e('ll');
     const now = Date.now();
-    const inProgress = acts.filter(a =>
-        (a.status === 'pending' && (a.step || 0) >= 1) ||
-        a.status === 'partial'
-    );
-    const partialDone = acts.filter(a => a.status === 'partial_done');
-    const done = acts.filter(a => a.status === 'done');
-    const remaining = acts.filter(a => a.status === 'remaining');
-    const rejected = acts.filter(a => {
-        if (a.status !== 'rejected') return false;
-        const rejTime = a.rejectedAt ? a.rejectedAt.toMillis?.() || a.rejectedAt : null;
-        if (rejTime && now - rejTime > EIGHT_HOURS) return false;
-        return true;
-    });
 
-    if (!inProgress.length && !done.length && !rejected.length && !remaining.length && !partialDone.length) {
-        el.innerHTML = '<div class="empty">Одоогоор акт байхгүй байна</div>'; return;
+    // Бүх категорийг тоолох
+    const allLists = {
+        in_progress: acts.filter(a => (a.status === 'pending' && (a.step || 0) >= 1) || a.status === 'partial'),
+        remaining: acts.filter(a => a.status === 'remaining'),
+        partial_done: acts.filter(a => a.status === 'partial_done'),
+        done: acts.filter(a => a.status === 'done'),
+        rejected: acts.filter(a => {
+            if (a.status !== 'rejected') return false;
+            const rejTime = a.rejectedAt ? a.rejectedAt.toMillis?.() || a.rejectedAt : null;
+            if (rejTime && now - rejTime > EIGHT_HOURS) return false;
+            return true;
+        }),
+    };
+
+    const counts = {
+        all: allLists.in_progress.length + allLists.remaining.length + allLists.partial_done.length + allLists.done.length + allLists.rejected.length,
+        in_progress: allLists.in_progress.length,
+        remaining: allLists.remaining.length,
+        partial_done: allLists.partial_done.length,
+        done: allLists.done.length,
+        rejected: allLists.rejected.length,
+    };
+
+    // ─── HEADER (хайлт + filter chips) ───
+    const headerHtml = `
+        <div class="list-header">
+            <div class="list-search-wrap">
+                <span class="list-search-icon">🔍</span>
+                <input type="text" id="listSearchInput" class="list-search-input"
+                    placeholder="Гэрээ, акт, компани, ажлаар хайх..."
+                    value="${esc(listSearch)}"
+                    oninput="setListSearch(this.value)">
+                ${listSearch ? '<button class="list-search-clear" onclick="clearListSearch()">✕</button>' : ''}
+            </div>
+            <div class="list-filter-chips">
+                <button class="filter-chip ${listFilter === 'all' ? 'active' : ''}" onclick="setListFilter('all')">
+                    Бүгд <span class="chip-count">${counts.all}</span>
+                </button>
+                ${counts.in_progress > 0 ? `<button class="filter-chip ${listFilter === 'in_progress' ? 'active' : ''}" onclick="setListFilter('in_progress')">
+                    Явцад <span class="chip-count">${counts.in_progress}</span>
+                </button>` : ''}
+                ${counts.remaining > 0 ? `<button class="filter-chip filter-chip-orange ${listFilter === 'remaining' ? 'active' : ''}" onclick="setListFilter('remaining')">
+                    ⏳ Үлдэгдэл <span class="chip-count">${counts.remaining}</span>
+                </button>` : ''}
+                ${counts.partial_done > 0 ? `<button class="filter-chip filter-chip-amber ${listFilter === 'partial_done' ? 'active' : ''}" onclick="setListFilter('partial_done')">
+                    ⚠ Хэсэгчлэн <span class="chip-count">${counts.partial_done}</span>
+                </button>` : ''}
+                ${counts.done > 0 ? `<button class="filter-chip filter-chip-green ${listFilter === 'done' ? 'active' : ''}" onclick="setListFilter('done')">
+                    ✓ Дууссан <span class="chip-count">${counts.done}</span>
+                </button>` : ''}
+                ${counts.rejected > 0 ? `<button class="filter-chip filter-chip-red ${listFilter === 'rejected' ? 'active' : ''}" onclick="setListFilter('rejected')">
+                    ✕ Буцаагдсан <span class="chip-count">${counts.rejected}</span>
+                </button>` : ''}
+            </div>
+        </div>
+    `;
+
+    if (counts.all === 0) {
+        el.innerHTML = headerHtml + '<div class="empty">Одоогоор акт байхгүй байна</div>';
+        return;
     }
 
-    let html = '';
-    if (inProgress.length) {
-        html += '<div class="in-progress-label">ЯВЦАД</div>';
-        html += inProgress.map(a => liH(a, acts.indexOf(a), 2)).join('');
+    // ─── ШҮҮЛТ ───
+    function matchSearch(a) {
+        if (!listSearch) return true;
+        const q = listSearch;
+        return (a.actId || '').toLowerCase().includes(q)
+            || (a.contract || '').toLowerCase().includes(q)
+            || (a.company || '').toLowerCase().includes(q)
+            || (a.work || '').toLowerCase().includes(q)
+            || (a.submittedByName || '').toLowerCase().includes(q)
+            || (a.submittedBy || '').toLowerCase().includes(q);
     }
-    if (remaining.length) {
-        html += '<div class="remaining-section-label">⏳ ҮЛДЭГДЭЛ ГҮЙЦЭЭХ</div>';
-        html += remaining.map(a => liHRemaining(a, acts.indexOf(a), 2)).join('');
+
+    let groups = [];
+    if (listFilter === 'all') {
+        if (allLists.in_progress.length) groups.push({ key: 'in_progress', label: 'ЯВЦАД', cls: 'in-progress-label', items: allLists.in_progress, render: liH });
+        if (allLists.remaining.length) groups.push({ key: 'remaining', label: '⏳ ҮЛДЭГДЭЛ ГҮЙЦЭЭХ', cls: 'remaining-section-label', items: allLists.remaining, render: liHRemaining });
+        if (allLists.partial_done.length) groups.push({ key: 'partial_done', label: '⚠ ХЭСЭГЧЛЭН ДУУССАН', cls: 'partial-done-section-label', items: allLists.partial_done, render: liHPartialDone });
+        if (allLists.done.length) groups.push({ key: 'done', label: '✓ БҮРЭН ДУУССАН', cls: 'done-section-label', items: allLists.done, render: liHDone });
+        if (allLists.rejected.length) groups.push({ key: 'rejected', label: '✕ БУЦААГДСАН', cls: 'rejected-section-label', items: allLists.rejected, render: (a, idx, from) => liHRejected(a, idx, from, now, EIGHT_HOURS) });
+    } else {
+        const labels = {
+            'in_progress': { label: 'ЯВЦАД', cls: 'in-progress-label', render: liH },
+            'remaining': { label: '⏳ ҮЛДЭГДЭЛ ГҮЙЦЭЭХ', cls: 'remaining-section-label', render: liHRemaining },
+            'partial_done': { label: '⚠ ХЭСЭГЧЛЭН ДУУССАН', cls: 'partial-done-section-label', render: liHPartialDone },
+            'done': { label: '✓ БҮРЭН ДУУССАН', cls: 'done-section-label', render: liHDone },
+            'rejected': { label: '✕ БУЦААГДСАН', cls: 'rejected-section-label', render: (a, idx, from) => liHRejected(a, idx, from, now, EIGHT_HOURS) },
+        };
+        const conf = labels[listFilter];
+        if (conf && allLists[listFilter] && allLists[listFilter].length) {
+            groups.push({ key: listFilter, label: conf.label, cls: conf.cls, items: allLists[listFilter], render: conf.render });
+        }
     }
-    if (partialDone.length) {
-        html += '<div class="partial-done-section-label">⚠ ХЭСЭГЧЛЭН ДУУССАН</div>';
-        html += partialDone.map(a => liHPartialDone(a, acts.indexOf(a), 2)).join('');
+
+    // Хайлт хийгээд, нийт хүчинтэй акт-уудыг тоолох
+    let totalMatched = 0;
+    groups = groups.map(g => {
+        const filtered = g.items.filter(matchSearch);
+        totalMatched += filtered.length;
+        return { ...g, items: filtered };
+    }).filter(g => g.items.length > 0);
+
+    // Pagination — нийт limit-р тооцоолох
+    let shown = 0;
+    let html = headerHtml;
+
+    if (totalMatched === 0) {
+        html += `<div class="empty">
+            ${listSearch ? `🔍 "<strong>${esc(listSearch)}</strong>" хайлтад тохирох акт олдсонгүй` : 'Энэ ангилалд акт байхгүй байна'}
+        </div>`;
+    } else {
+        // Хайлтын тоо мэдэгдэл
+        if (listSearch) {
+            html += `<div class="search-result-hint">🔍 "<strong>${esc(listSearch)}</strong>" — ${totalMatched}ш олдов</div>`;
+        }
+
+        for (const g of groups) {
+            if (shown >= listLimit) break;
+            html += `<div class="${g.cls}">${g.label} <span class="section-count">(${g.items.length})</span></div>`;
+            for (const a of g.items) {
+                if (shown >= listLimit) break;
+                html += g.render(a, acts.indexOf(a), 2);
+                shown++;
+            }
+        }
+
+        // Pagination товч
+        if (totalMatched > listLimit) {
+            const remaining = totalMatched - listLimit;
+            html += `<button class="show-more-btn" onclick="showMoreActs()">
+                ▼ Дараагийн ${Math.min(remaining, 10)} акт харах <span style="opacity:0.7">(${remaining} үлдсэн)</span>
+            </button>`;
+        }
     }
-    if (done.length) {
-        html += '<div class="done-section-label">✓ БҮРЭН ДУУССАН</div>';
-        html += done.map(a => liHDone(a, acts.indexOf(a), 2)).join('');
-    }
-    if (rejected.length) {
-        html += '<div class="rejected-section-label">✕ БУЦААГДСАН</div>';
-        html += rejected.map(a => liHRejected(a, acts.indexOf(a), 2, now, EIGHT_HOURS)).join('');
-    }
+
     el.innerHTML = html;
 }
 
