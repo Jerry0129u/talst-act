@@ -1390,176 +1390,204 @@ function rA() {
 }
 
 // ════════════════════════════════════════════════════════
-// АКТУУД ТАБ — Хайлт, Filter, Pagination
+// АКТУУД ТАБ — Минимал, focus-friendly
 // ════════════════════════════════════════════════════════
 
-let listFilter = 'all';   // all, in_progress, partial, partial_done, remaining, done, rejected
-let listSearch = '';      // хайлтын утга
-let listLimit = 10;       // pagination хязгаар
+let listFilter = null;          // null = home screen, аль эсвэл step нэр
+let listSearch = '';
+let listLimit = 10;
+
+// SVG icons (минимал, монохром)
+const ICONS = {
+    search: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+    close: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+    arrowLeft: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>',
+    coordinator: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M3 21v-2a7 7 0 0 1 14 0v2"></path><circle cx="18" cy="6" r="2.5" fill="currentColor" stroke="none" opacity="0.4"></circle></svg>',
+    engineer: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
+    director: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-3-3"></path><path d="M19 14V6"></path></svg>',
+    accountant: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
+};
 
 window.setListFilter = (f) => {
     listFilter = f;
     listLimit = 10;
     rL();
+    // Шинэ rendering-н дараа input-д focus буцаах
+    setTimeout(() => {
+        const inp = e('listSearchInput');
+        if (inp && document.activeElement !== inp && listSearch) inp.focus();
+    }, 0);
 };
-window.setListSearch = (val) => {
-    listSearch = (val || '').toLowerCase().trim();
-    listLimit = 10;
-    rL();
-};
+
 window.clearListSearch = () => {
     listSearch = '';
     listLimit = 10;
     const inp = e('listSearchInput');
-    if (inp) inp.value = '';
+    if (inp) {
+        inp.value = '';
+        inp.focus();
+    }
     rL();
 };
+
 window.showMoreActs = () => {
     listLimit += 10;
     rL();
 };
 
+// IMPORTANT: Search-д realtime onkeyup ажиллахгүй — focus алдагдана
+// Зөвхөн Enter дарах эсвэл blur үед update хийнэ
+// Гэхдээ хэрэглэгчид амар байхын тулд debounce ашиглая
+let searchDebounceTimer = null;
+window.handleSearchInput = (val) => {
+    listSearch = (val || '').toLowerCase().trim();
+    listLimit = 10;
+    // Зөвхөн жагсаалтыг дахин зурна (input-ыг бус)
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        renderListBody();
+    }, 150);
+};
+
 function rL() {
     const el = e('ll');
-    const now = Date.now();
+    el.innerHTML = renderListHeader() + '<div id="listBody">' + renderListBodyHtml() + '</div>';
+}
 
-    // Бүх категорийг тоолох
-    const allLists = {
-        in_progress: acts.filter(a => (a.status === 'pending' && (a.step || 0) >= 1) || a.status === 'partial'),
-        remaining: acts.filter(a => a.status === 'remaining'),
-        partial_done: acts.filter(a => a.status === 'partial_done'),
-        done: acts.filter(a => a.status === 'done'),
-        rejected: acts.filter(a => {
-            if (a.status !== 'rejected') return false;
-            const rejTime = a.rejectedAt ? a.rejectedAt.toMillis?.() || a.rejectedAt : null;
-            if (rejTime && now - rejTime > EIGHT_HOURS) return false;
-            return true;
-        }),
-    };
-
-    const counts = {
-        all: allLists.in_progress.length + allLists.remaining.length + allLists.partial_done.length + allLists.done.length + allLists.rejected.length,
-        in_progress: allLists.in_progress.length,
-        remaining: allLists.remaining.length,
-        partial_done: allLists.partial_done.length,
-        done: allLists.done.length,
-        rejected: allLists.rejected.length,
-    };
-
-    // ─── HEADER (хайлт + filter chips) ───
-    const headerHtml = `
+function renderListHeader() {
+    return `
         <div class="list-header">
             <div class="list-search-wrap">
-                <span class="list-search-icon">🔍</span>
                 <input type="text" id="listSearchInput" class="list-search-input"
-                    placeholder="Гэрээ, акт, компани, ажлаар хайх..."
                     value="${esc(listSearch)}"
-                    oninput="setListSearch(this.value)">
-                ${listSearch ? '<button class="list-search-clear" onclick="clearListSearch()">✕</button>' : ''}
-            </div>
-            <div class="list-filter-chips">
-                <button class="filter-chip ${listFilter === 'all' ? 'active' : ''}" onclick="setListFilter('all')">
-                    Бүгд <span class="chip-count">${counts.all}</span>
-                </button>
-                ${counts.in_progress > 0 ? `<button class="filter-chip ${listFilter === 'in_progress' ? 'active' : ''}" onclick="setListFilter('in_progress')">
-                    Явцад <span class="chip-count">${counts.in_progress}</span>
-                </button>` : ''}
-                ${counts.remaining > 0 ? `<button class="filter-chip filter-chip-orange ${listFilter === 'remaining' ? 'active' : ''}" onclick="setListFilter('remaining')">
-                    ⏳ Үлдэгдэл <span class="chip-count">${counts.remaining}</span>
-                </button>` : ''}
-                ${counts.partial_done > 0 ? `<button class="filter-chip filter-chip-amber ${listFilter === 'partial_done' ? 'active' : ''}" onclick="setListFilter('partial_done')">
-                    ⚠ Хэсэгчлэн <span class="chip-count">${counts.partial_done}</span>
-                </button>` : ''}
-                ${counts.done > 0 ? `<button class="filter-chip filter-chip-green ${listFilter === 'done' ? 'active' : ''}" onclick="setListFilter('done')">
-                    ✓ Дууссан <span class="chip-count">${counts.done}</span>
-                </button>` : ''}
-                ${counts.rejected > 0 ? `<button class="filter-chip filter-chip-red ${listFilter === 'rejected' ? 'active' : ''}" onclick="setListFilter('rejected')">
-                    ✕ Буцаагдсан <span class="chip-count">${counts.rejected}</span>
-                </button>` : ''}
+                    autocomplete="off"
+                    oninput="handleSearchInput(this.value)">
+                ${listSearch
+        ? `<button class="list-search-clear" onclick="clearListSearch()">${ICONS.close}</button>`
+        : `<span class="list-search-icon">${ICONS.search}</span>`}
             </div>
         </div>
     `;
+}
 
-    if (counts.all === 0) {
-        el.innerHTML = headerHtml + '<div class="empty">Одоогоор акт байхгүй байна</div>';
-        return;
+function renderListBody() {
+    const body = e('listBody');
+    if (body) body.innerHTML = renderListBodyHtml();
+}
+
+function renderListBodyHtml() {
+    // Хүлээж буй акт-уудыг шатаар нь авах
+    function actsAtStep(step) {
+        return acts.filter(a =>
+            (a.status === 'pending' || a.status === 'partial') &&
+            (a.step || 0) === step
+        );
     }
 
-    // ─── ШҮҮЛТ ───
+    const stepLists = {
+        coordinator: actsAtStep(0),
+        engineer: actsAtStep(1),
+        director: actsAtStep(2),
+        accountant: actsAtStep(3),
+    };
+
+    const stepLabels = {
+        coordinator: 'Координатор',
+        engineer: 'Инженер',
+        director: 'Захирал',
+        accountant: 'Нягтлан',
+    };
+
+    const stepDescriptions = {
+        coordinator: 'Анхны шалгалт хийгдэж байгаа',
+        engineer: 'Инженерийн баталгаажуулалт',
+        director: 'Захирлын батламж',
+        accountant: 'Гүйлгээ хийгдэх гэж байгаа',
+    };
+
+    // ─── ХАЙЛТ ─── (зөвхөн гэрээний дугаараар)
     function matchSearch(a) {
         if (!listSearch) return true;
-        const q = listSearch;
-        return (a.actId || '').toLowerCase().includes(q)
-            || (a.contract || '').toLowerCase().includes(q)
-            || (a.company || '').toLowerCase().includes(q)
-            || (a.work || '').toLowerCase().includes(q)
-            || (a.submittedByName || '').toLowerCase().includes(q)
-            || (a.submittedBy || '').toLowerCase().includes(q);
+        return (a.contract || '').toLowerCase().includes(listSearch);
     }
 
-    let groups = [];
-    if (listFilter === 'all') {
-        if (allLists.in_progress.length) groups.push({ key: 'in_progress', label: 'ЯВЦАД', cls: 'in-progress-label', items: allLists.in_progress, render: liH });
-        if (allLists.remaining.length) groups.push({ key: 'remaining', label: '⏳ ҮЛДЭГДЭЛ ГҮЙЦЭЭХ', cls: 'remaining-section-label', items: allLists.remaining, render: liHRemaining });
-        if (allLists.partial_done.length) groups.push({ key: 'partial_done', label: '⚠ ХЭСЭГЧЛЭН ДУУССАН', cls: 'partial-done-section-label', items: allLists.partial_done, render: liHPartialDone });
-        if (allLists.done.length) groups.push({ key: 'done', label: '✓ БҮРЭН ДУУССАН', cls: 'done-section-label', items: allLists.done, render: liHDone });
-        if (allLists.rejected.length) groups.push({ key: 'rejected', label: '✕ БУЦААГДСАН', cls: 'rejected-section-label', items: allLists.rejected, render: (a, idx, from) => liHRejected(a, idx, from, now, EIGHT_HOURS) });
-    } else {
-        const labels = {
-            'in_progress': { label: 'ЯВЦАД', cls: 'in-progress-label', render: liH },
-            'remaining': { label: '⏳ ҮЛДЭГДЭЛ ГҮЙЦЭЭХ', cls: 'remaining-section-label', render: liHRemaining },
-            'partial_done': { label: '⚠ ХЭСЭГЧЛЭН ДУУССАН', cls: 'partial-done-section-label', render: liHPartialDone },
-            'done': { label: '✓ БҮРЭН ДУУССАН', cls: 'done-section-label', render: liHDone },
-            'rejected': { label: '✕ БУЦААГДСАН', cls: 'rejected-section-label', render: (a, idx, from) => liHRejected(a, idx, from, now, EIGHT_HOURS) },
-        };
-        const conf = labels[listFilter];
-        if (conf && allLists[listFilter] && allLists[listFilter].length) {
-            groups.push({ key: listFilter, label: conf.label, cls: conf.cls, items: allLists[listFilter], render: conf.render });
+    // Хайлт хийгдсэн бол: бүх акт-уудаас хайна
+    if (listSearch) {
+        const found = acts.filter(matchSearch);
+        if (found.length === 0) {
+            return `<div class="empty" style="padding: 40px 20px">
+                ${ICONS.search} "<strong>${esc(listSearch)}</strong>" гэрээний дугаараар олдсонгүй
+            </div>`;
         }
-    }
-
-    // Хайлт хийгээд, нийт хүчинтэй акт-уудыг тоолох
-    let totalMatched = 0;
-    groups = groups.map(g => {
-        const filtered = g.items.filter(matchSearch);
-        totalMatched += filtered.length;
-        return { ...g, items: filtered };
-    }).filter(g => g.items.length > 0);
-
-    // Pagination — нийт limit-р тооцоолох
-    let shown = 0;
-    let html = headerHtml;
-
-    if (totalMatched === 0) {
-        html += `<div class="empty">
-            ${listSearch ? `🔍 "<strong>${esc(listSearch)}</strong>" хайлтад тохирох акт олдсонгүй` : 'Энэ ангилалд акт байхгүй байна'}
-        </div>`;
-    } else {
-        // Хайлтын тоо мэдэгдэл
-        if (listSearch) {
-            html += `<div class="search-result-hint">🔍 "<strong>${esc(listSearch)}</strong>" — ${totalMatched}ш олдов</div>`;
-        }
-
-        for (const g of groups) {
-            if (shown >= listLimit) break;
-            html += `<div class="${g.cls}">${g.label} <span class="section-count">(${g.items.length})</span></div>`;
-            for (const a of g.items) {
-                if (shown >= listLimit) break;
-                html += g.render(a, acts.indexOf(a), 2);
-                shown++;
-            }
-        }
-
-        // Pagination товч
-        if (totalMatched > listLimit) {
-            const remaining = totalMatched - listLimit;
+        const shown = found.slice(0, listLimit);
+        const remaining = found.length - shown.length;
+        let html = `<div class="search-result-hint">"${esc(listSearch)}" — ${found.length}ш олдов</div>`;
+        html += shown.map(a => liH(a, acts.indexOf(a), 2)).join('');
+        if (remaining > 0) {
             html += `<button class="show-more-btn" onclick="showMoreActs()">
-                ▼ Дараагийн ${Math.min(remaining, 10)} акт харах <span style="opacity:0.7">(${remaining} үлдсэн)</span>
+                Дараагийн ${Math.min(remaining, 10)} акт <span style="opacity:0.7">(${remaining} үлдсэн)</span>
             </button>`;
         }
+        return html;
     }
 
-    el.innerHTML = html;
+    // ─── HOME SCREEN — 4 карт ───
+    if (!listFilter) {
+        const cards = ['coordinator', 'engineer', 'director', 'accountant'];
+        const colors = {
+            coordinator: { bg: 'rgba(239, 68, 68, 0.06)', border: 'rgba(239, 68, 68, 0.2)', accent: '#dc2626' },
+            engineer:    { bg: 'rgba(59, 130, 246, 0.06)', border: 'rgba(59, 130, 246, 0.2)', accent: '#2563eb' },
+            director:    { bg: 'rgba(139, 92, 246, 0.06)', border: 'rgba(139, 92, 246, 0.2)', accent: '#7c3aed' },
+            accountant:  { bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.2)', accent: '#059669' },
+        };
+
+        return `<div class="role-cards">
+            ${cards.map(key => {
+            const list = stepLists[key];
+            const c = colors[key];
+            const isEmpty = list.length === 0;
+            return `<div class="role-card ${isEmpty ? 'empty' : ''}" 
+                    style="--c-bg: ${c.bg}; --c-border: ${c.border}; --c-accent: ${c.accent}"
+                    onclick="${isEmpty ? '' : `setListFilter('${key}')`}">
+                    <div class="role-card-icon" style="color: ${c.accent}">${ICONS[key]}</div>
+                    <div class="role-card-body">
+                        <div class="role-card-title">${stepLabels[key]}</div>
+                        <div class="role-card-desc">${stepDescriptions[key]}</div>
+                    </div>
+                    <div class="role-card-count" style="color: ${c.accent}">${list.length}</div>
+                </div>`;
+        }).join('')}
+        </div>`;
+    }
+
+    // ─── DETAIL SCREEN — нэг шатын актууд ───
+    const list = stepLists[listFilter] || [];
+
+    let html = `<div class="role-detail-header">
+        <button class="back-to-roles" onclick="setListFilter(null)">
+            ${ICONS.arrowLeft} <span>Бүх үүрэг</span>
+        </button>
+        <div class="role-detail-title">${stepLabels[listFilter]} <span class="role-detail-count">${list.length}</span></div>
+    </div>`;
+
+    if (list.length === 0) {
+        html += `<div class="empty" style="padding: 40px 20px">
+            <div style="font-size: 14px;">${stepLabels[listFilter]} дээр хүлээгдэж буй акт байхгүй</div>
+        </div>`;
+        return html;
+    }
+
+    const shown = list.slice(0, listLimit);
+    const remaining = list.length - shown.length;
+    html += shown.map(a => liH(a, acts.indexOf(a), 2)).join('');
+
+    if (remaining > 0) {
+        html += `<button class="show-more-btn" onclick="showMoreActs()">
+            Дараагийн ${Math.min(remaining, 10)} акт <span style="opacity:0.7">(${remaining} үлдсэн)</span>
+        </button>`;
+    }
+
+    return html;
 }
 
 function liHPartialDone(a, idx, from) {

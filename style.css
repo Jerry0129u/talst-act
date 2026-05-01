@@ -823,70 +823,223 @@ body {
     transform: translateY(-50%) scale(1.1);
 }
 
-/* Filter chips */
-.list-filter-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+/* ════════════════════════════════════════════════
+   АКТУУД ТАБ — Role Cards & Search
+   ════════════════════════════════════════════════ */
+
+/* Search input — баруун талд icon */
+.list-search-wrap {
+    position: relative;
+    margin-bottom: 14px;
 }
 
-.filter-chip {
+.list-search-input {
+    width: 100%;
+    padding: 11px 40px 11px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.list-search-input:focus {
+    border-color: var(--brand-primary);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
+}
+
+.list-search-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.list-search-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.list-search-input:focus + .list-search-icon {
+    color: var(--brand-primary);
+}
+
+.list-search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: rgba(15, 23, 42, 0.06);
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s var(--ease);
+}
+
+.list-search-clear:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* ─── Role Cards (4 том карт) ─── */
+.role-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 4px 0;
+}
+
+.role-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--c-bg, rgba(255, 255, 255, 0.6));
+    border: 1.5px solid var(--c-border, var(--border-subtle));
+    border-radius: var(--r-md);
+    cursor: pointer;
+    transition: all 0.25s var(--ease);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: roleCardIn 0.4s var(--ease) backwards;
+}
+
+.role-card:nth-child(1) { animation-delay: 0s; }
+.role-card:nth-child(2) { animation-delay: 0.05s; }
+.role-card:nth-child(3) { animation-delay: 0.1s; }
+.role-card:nth-child(4) { animation-delay: 0.15s; }
+
+@keyframes roleCardIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.role-card:hover:not(.empty) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    border-color: var(--c-accent, var(--border-default));
+}
+
+.role-card:active:not(.empty) {
+    transform: translateY(0);
+}
+
+.role-card.empty {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.role-card-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.role-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.role-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+}
+
+.role-card-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.role-card-count {
+    font-size: 28px;
+    font-weight: 800;
+    font-feature-settings: 'tnum';
+    letter-spacing: -0.04em;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.role-card.empty .role-card-count {
+    color: var(--text-tertiary) !important;
+    font-weight: 600;
+}
+
+/* ─── Detail screen (нэг шатны акт-уудыг харуулах) ─── */
+.role-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 14px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.back-to-roles {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 6px 11px;
-    border: 1.5px solid var(--border-subtle);
+    gap: 6px;
+    padding: 6px 10px 6px 6px;
+    border: none;
+    background: rgba(15, 23, 42, 0.05);
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.7);
     font-family: inherit;
     font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s var(--ease);
-    white-space: nowrap;
 }
 
-.filter-chip:hover {
-    border-color: var(--border-default);
+.back-to-roles:hover {
+    background: rgba(15, 23, 42, 0.1);
     color: var(--text-primary);
-    transform: translateY(-1px);
+    transform: translateX(-2px);
 }
 
-.filter-chip.active {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    border-color: #0f172a;
-    color: #fff;
-    box-shadow: var(--shadow-sm);
+.role-detail-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.filter-chip.active .chip-count {
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
-}
-
-.chip-count {
-    background: rgba(15, 23, 42, 0.08);
-    padding: 1px 7px;
-    border-radius: 10px;
-    font-size: 10px;
+.role-detail-count {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--brand-primary-dark);
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 11px;
     font-weight: 700;
     font-feature-settings: 'tnum';
-    color: var(--text-tertiary);
 }
-
-/* Filter chip variations (өнгөтэй) */
-.filter-chip-orange:not(.active) { color: #c2410c; border-color: rgba(249, 115, 22, 0.3); background: rgba(255, 237, 213, 0.5); }
-.filter-chip-orange.active { background: linear-gradient(135deg, #ea580c, #c2410c); border-color: #ea580c; }
-
-.filter-chip-amber:not(.active) { color: #92400e; border-color: rgba(245, 158, 11, 0.3); background: rgba(254, 243, 199, 0.5); }
-.filter-chip-amber.active { background: linear-gradient(135deg, #d97706, #b45309); border-color: #d97706; }
-
-.filter-chip-green:not(.active) { color: #065f46; border-color: rgba(16, 185, 129, 0.3); background: rgba(209, 250, 229, 0.5); }
-.filter-chip-green.active { background: linear-gradient(135deg, #10b981, #059669); border-color: #10b981; }
-
-.filter-chip-red:not(.active) { color: #991b1b; border-color: rgba(239, 68, 68, 0.3); background: rgba(254, 226, 226, 0.5); }
-.filter-chip-red.active { background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; }
 
 /* Хайлтын үр дүнгийн hint */
 .search-result-hint {
