@@ -506,6 +506,14 @@ body {
     animation: pulseBadge 2s ease-in-out infinite;
 }
 
+/* Хэсэгчлэн дууссан badge — өвөрмөц байдал */
+.bpartial-done {
+    background: linear-gradient(135deg, #fed7aa, #fdba74);
+    color: #7c2d12;
+    box-shadow: 0 0 0 1.5px rgba(234, 88, 12, 0.4);
+    font-weight: 800;
+}
+
 @keyframes pulseBadge {
     0%, 100% { box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.3); }
     50% { box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2); }
@@ -1326,6 +1334,52 @@ textarea {
 .li.partial .li-title { color: #7c2d12; }
 .li.partial .li-id    { color: #ea580c; }
 
+/* ХЭСЭГЧЛЭН ДУУССАН — өвөрмөц шар стайл */
+.li.partial-done {
+    background: linear-gradient(135deg, rgba(254, 215, 170, 0.7), rgba(253, 186, 116, 0.5));
+    border: 2px solid rgba(234, 88, 12, 0.4);
+    border-left: 5px solid #ea580c;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.1);
+}
+
+.li.partial-done:hover {
+    box-shadow: 0 8px 20px rgba(234, 88, 12, 0.18);
+    border-color: rgba(234, 88, 12, 0.6);
+}
+
+.li.partial-done .li-title { color: #7c2d12; font-weight: 700; }
+.li.partial-done .li-id    { color: #c2410c; }
+.li.partial-done .li-sub   { color: #9a3412; }
+
+.partial-done-hint {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    font-size: 10px;
+    color: #9a3412;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* Нэгдсэн (хэсэгчлэн+үлдэгдэл) акт — алтан tinge */
+.li.done.merged {
+    background: linear-gradient(135deg, rgba(209, 250, 229, 0.7), rgba(254, 243, 199, 0.5));
+    border: 2px solid rgba(16, 185, 129, 0.4);
+    border-left: 5px solid #10b981;
+    position: relative;
+    overflow: hidden;
+}
+
+.li.done.merged::before {
+    content: '✨';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 14px;
+    opacity: 0.4;
+}
+
 .reject-timer {
     font-size: 10px;
     color: #dc2626;
@@ -1359,7 +1413,8 @@ textarea {
 .in-progress-label,
 .done-section-label,
 .rejected-section-label,
-.remaining-section-label {
+.remaining-section-label,
+.partial-done-section-label {
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.8px;
@@ -1373,6 +1428,7 @@ textarea {
 .done-section-label     { color: var(--brand-primary); padding: 18px 2px 10px; }
 .rejected-section-label { color: #dc2626;              padding: 18px 2px 10px; }
 .remaining-section-label{ color: #d97706;              padding: 18px 2px 10px; }
+.partial-done-section-label{ color: #ea580c;           padding: 18px 2px 10px; }
 
 .in-progress-label::before,
 .in-progress-label::after {
@@ -1404,6 +1460,14 @@ textarea {
     flex: 1;
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.4), transparent);
+}
+
+.partial-done-section-label::before,
+.partial-done-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(234, 88, 12, 0.4), transparent);
 }
 
 .seclbl {

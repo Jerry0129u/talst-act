@@ -22,16 +22,16 @@ emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
     { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
-    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
-    { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
+    { name: 'Инженер', email: 'unursaikhan@talstgroup.mn' },
+    { name: 'Захирал', email: 'enkhtuul@talstgroup.mn' },
+    { name: 'Нягтлан', email: 'naranzul@talstgroup.mn' },
 ];
 
 const ROLES = {
     'unumunkh@talstgroup.mn': 'Координатор',
-    'barsbat@talstgroup.mn': 'Инженер',
-    'zorigoo@talstgroup.mn': 'Захирал',
-    'bayarmaa@talstgroup.mn': 'Нягтлан',
+    'unursaikhan@talstgroup.mn': 'Инженер',
+    'enkhtuul@talstgroup.mn': 'Захирал',
+    'naranzul@talstgroup.mn': 'Нягтлан',
 };
 
 const ROLE_COLORS = {
@@ -41,7 +41,7 @@ const ROLE_COLORS = {
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
+const SE = ['unumunkh@talstgroup.mn', 'unursaikhan@talstgroup.mn', 'enkhtuul@talstgroup.mn', 'naranzul@talstgroup.mn'];
 
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
@@ -70,14 +70,16 @@ function gh() { return 'sha256:' + Math.random().toString(36).substr(2, 8) + '..
 // Прогресс хувь — partial болон remaining-ийг бас тооцно
 function pct(a) {
     if (a.status === 'done') return 100;
-    if (a.status === 'partial') return Math.round(((a.step || 0) / 4 * 100) * (a.approvedPercent || 100) / 100);
-    if (a.status === 'remaining') return 0; // үлдэгдэл — гүйцээгээгүй
+    if (a.status === 'partial_done') return a.approvedPercent || 100;
+    if (a.status === 'partial') return Math.round(((a.step || 0) / 4 * 100));
+    if (a.status === 'remaining') return 0;
     return Math.round((a.step || 0) / 4 * 100);
 }
 
 // Badge класс
 function bc(a) {
     if (a.status === 'done') return 'bd';
+    if (a.status === 'partial_done') return 'bpartial-done';
     if (a.status === 'rejected') return 'br';
     if (a.status === 'partial') return 'bpartial';
     if (a.status === 'remaining') return 'bremaining';
@@ -87,9 +89,13 @@ function bc(a) {
 
 // Badge текст
 function bt(a) {
-    if (a.status === 'done') return '✓ Батлагдсан';
+    if (a.status === 'done') {
+        if (a.completedViaRemaining) return '✓ 100% дууссан (Нэгдсэн)';
+        return '✓ Батлагдсан';
+    }
+    if (a.status === 'partial_done') return '⚠ Хэсэгчлэн дууссан (' + (a.approvedPercent || 0) + '%)';
     if (a.status === 'rejected') return '✕ Буцаагдсан';
-    if (a.status === 'partial') return '⚠ Хэсэгчлэн (' + (a.approvedPercent || 0) + '%)';
+    if (a.status === 'partial') return '⚠ Хэсэгчлэн (' + (a.approvedPercent || 0) + '%) · ' + SN[a.step || 0];
     if (a.status === 'remaining') return '⏳ Үлдэгдэл гүйцээх';
     return SN[a.step || 0] + ' хүлээж байна';
 }
@@ -385,40 +391,119 @@ async function submitAct() {
     setTimeout(() => { e('progWrap').style.display = 'none'; e('progText').style.display = 'none'; e('progBar').style.width = '0%'; }, 1500);
 }
 
-// ★★★ APPROVE — энгийн бүтэн батлах ★★★
+// ★★★ APPROVE — бүтэн болон хэсэгчлэн актыг батлах ★★★
 async function approve(docId) {
     const a = acts.find(x => x.id === docId);
     if (!a || (a.status !== 'pending' && a.status !== 'partial')) { toast('Батлах боломжгүй!', 'err'); return; }
     if (RSTEP[role] !== a.step) { toast('Та энэ актыг батлах эрхгүй!', 'err'); return; }
+
+    const isPartialAct = a.status === 'partial' || a.approvedPercent;
+    const isRemainingAct = !!a.parentDocId; // үлдэгдэл актыг гүйцээж илгээсэн
+
     const newEvs = [...(a.evs || []), {
         type: 'approve', who: cu.displayName || cu.email, whoEmail: cu.email,
         title: role + ' батлав ✓',
-        detail: cu.email + ' · Google нэвтрэлтээр баталгаажсан' + (a.status === 'partial' ? ` · Хэсэгчилсэн дүн ₮${fmtN(a.approvedAmount || a.amount)}` : ''),
+        detail: cu.email + ' · Google нэвтрэлтээр баталгаажсан'
+            + (isPartialAct ? ` · Хэсэгчилсэн дүн ₮${fmtN(a.approvedAmount || a.amount)} (${a.approvedPercent}%)` : '')
+            + (isRemainingAct ? ` · Үлдэгдэл ₮${fmtN(a.amount)} (${100 - (a.parentApprovedPercent || 0)}%)` : ''),
         time: ts(), hash: gh()
     }];
-    const ns = (a.step || 0) + 1; const done = ns >= 4;
+    const ns = (a.step || 0) + 1;
+    const finishedAllSteps = ns >= 4;
     const upd = { step: ns, evs: newEvs };
     let finalEvs = newEvs;
-    if (done) {
-        upd.status = 'done';
-        finalEvs = [...newEvs, {
-            type: 'done', who: 'Систем', title: '🎉 Бүрэн батлагдсан',
-            detail: 'Нягтланд мэдэгдэл очлоо · Гүйлгээ хийх боломжтой', time: ts(), hash: gh()
-        }];
-        upd.evs = finalEvs;
+
+    if (finishedAllSteps) {
+        if (isPartialAct) {
+            // Хэсэгчлэн акт нь бүх шатыг давсан → "partial_done" status
+            upd.status = 'partial_done';
+            finalEvs = [...newEvs, {
+                type: 'partial_done', who: 'Систем',
+                title: `⚠ Хэсэгчлэн дууссан (${a.approvedPercent}%)`,
+                detail: `${a.approvedPercent}% (₮${fmtN(a.approvedAmount)}) бүрэн батлагдсан · Үлдэгдэл (${100 - a.approvedPercent}%) гүйцээгдэхийг хүлээж байна`,
+                time: ts(), hash: gh()
+            }];
+            upd.evs = finalEvs;
+        } else if (isRemainingAct) {
+            // Үлдэгдэл акт бүх шатыг давсан → Эх актыг ХАЙГАД "done" болгох
+            upd.status = 'done';
+            finalEvs = [...newEvs, {
+                type: 'done', who: 'Систем',
+                title: '🎉 Үлдэгдэл бүрэн батлагдсан',
+                detail: `Үлдэгдэл ажил гүйцээгдэж бүрэн батлагдлаа · Эх акт ${a.parentActId} 100% болж дууссан`,
+                time: ts(), hash: gh()
+            }];
+            upd.evs = finalEvs;
+
+            // Эх актыг "done" болгох
+            const parentAct = acts.find(x => x.id === a.parentDocId);
+            if (parentAct && parentAct.status === 'partial_done') {
+                const parentEvs = [...(parentAct.evs || []), {
+                    type: 'merged_done', who: 'Систем',
+                    title: '🎉 100% бүрэн дууссан (Хэсэгчлэн + Үлдэгдэл)',
+                    detail: `Үлдэгдэл акт ${a.actId} (₮${fmtN(a.amount)}) гүйцээгдэн бүрэн батлагдлаа · Нийт дүн ₮${fmtN(parentAct.amount)} 100% батлагдсан`,
+                    time: ts(), hash: gh()
+                }];
+                try {
+                    await updateDoc(doc(db, 'acts', a.parentDocId), {
+                        status: 'done',
+                        completedViaRemaining: true,
+                        remainingActId: a.actId,
+                        evs: parentEvs
+                    });
+                } catch (e) { console.error('Parent update error:', e); }
+            }
+        } else {
+            // Энгийн 100% акт
+            upd.status = 'done';
+            finalEvs = [...newEvs, {
+                type: 'done', who: 'Систем', title: '🎉 Бүрэн батлагдсан',
+                detail: 'Нягтланд мэдэгдэл очлоо · Гүйлгээ хийх боломжтой', time: ts(), hash: gh()
+            }];
+            upd.evs = finalEvs;
+        }
     }
+
     try {
         await updateDoc(doc(db, 'acts', docId), upd);
-        if (done) {
+        if (finishedAllSteps) {
             await sendMail(CHAIN[3].email, CHAIN[3].name, a, cu.displayName || cu.email);
-            toast('🎉 Бүрэн батлагдлаа! Final PDF бэлдэж байна...');
-            try {
-                const actWithFinal = { ...a, ...upd, evs: finalEvs };
-                await generateFinalPdf(actWithFinal);
-                toast('✅ Final PDF бэлэн!');
-            } catch (pdfErr) {
-                console.error('Final PDF алдаа:', pdfErr);
-                toast('⚠️ PDF үүсгэхэд алдаа: ' + pdfErr.message, 'err');
+
+            if (isPartialAct) {
+                toast(`⚠ Хэсэгчлэн дууслаа (${a.approvedPercent}%)! Үлдэгдэл хүлээгдэж байна.`);
+            } else if (isRemainingAct) {
+                toast('🎉 Үлдэгдэл батлагдан акт 100% болж дууслаа!');
+                try {
+                    // Эх актыг бүтэн PDF үүсгэх
+                    const parentAct = acts.find(x => x.id === a.parentDocId);
+                    if (parentAct) {
+                        const mergedAct = {
+                            ...parentAct,
+                            status: 'done',
+                            completedViaRemaining: true,
+                            remainingActId: a.actId,
+                            // Бүх PDF хослуулах
+                            pdfs: [...(parentAct.pdfs || []), ...(a.pdfs || [])],
+                            pdfCount: (parentAct.pdfCount || 0) + (a.pdfCount || 0),
+                            // Бүх event хослуулах
+                            evs: [...(parentAct.evs || []), ...newEvs.slice((a.evs || []).length - newEvs.length).filter(Boolean)]
+                        };
+                        await generateFinalPdf(mergedAct);
+                        toast('✅ Final PDF (нэгтгэсэн) бэлэн!');
+                    }
+                } catch (pdfErr) {
+                    console.error('Merged PDF алдаа:', pdfErr);
+                }
+            } else {
+                toast('🎉 Бүрэн батлагдлаа! Final PDF бэлдэж байна...');
+                try {
+                    const actWithFinal = { ...a, ...upd, evs: finalEvs };
+                    await generateFinalPdf(actWithFinal);
+                    toast('✅ Final PDF бэлэн!');
+                } catch (pdfErr) {
+                    console.error('Final PDF алдаа:', pdfErr);
+                    toast('⚠️ PDF алдаа: ' + pdfErr.message, 'err');
+                }
             }
         } else {
             await sendMail(CHAIN[ns].email, CHAIN[ns].name, a, cu.displayName || cu.email);
@@ -538,13 +623,15 @@ async function confirmPartialApprove() {
             date: todayYMD(),
             company: a.company,
             contract: a.contract,
-            work: a.work + ' (Үлдэгдэл)',
+            work: a.work + ' (Үлдэгдэл ' + (100 - pct) + '%)',
             dateFrom: a.dateFrom || '',
             dateTo: a.dateTo || '',
             amount: String(remainingAmount),
             originalAmount: String(total),
             parentActId: a.actId,
             parentDocId: currentPartialActId,
+            parentApprovedPercent: pct,
+            remainingPercent: 100 - pct,
             partialReason: reason,
             pdfs: [],
             pdfCount: 0,
@@ -555,8 +642,8 @@ async function confirmPartialApprove() {
             createdAt: serverTimestamp(),
             evs: [{
                 type: 'remaining_created', who: cu.displayName || cu.email, whoEmail: cu.email,
-                title: '⏳ Үлдэгдэл үүсгэв',
-                detail: `Эх акт: ${a.actId} · Үлдэгдэл дүн: ₮${fmtN(remainingAmount)} · Шалтгаан: ${reason}`,
+                title: '⏳ Үлдэгдэл үүсгэв (' + (100 - pct) + '%)',
+                detail: `Эх акт: ${a.actId} · Үлдэгдэл дүн: ₮${fmtN(remainingAmount)} (${100 - pct}%) · Шалтгаан: ${reason}`,
                 time: ts(), hash: gh()
             }]
         };
@@ -745,8 +832,8 @@ async function generateFinalPdf(act) {
         const isPartial = ev.type === 'partial' || ev.type === 'remaining_created';
         const dotColor = isApprove ? rgb(0.11, 0.62, 0.46)
             : isReject ? rgb(0.88, 0.29, 0.29)
-                : isPartial ? rgb(0.96, 0.62, 0.04)
-                    : rgb(0.5, 0.5, 0.5);
+            : isPartial ? rgb(0.96, 0.62, 0.04)
+            : rgb(0.5, 0.5, 0.5);
         const icon = isApprove ? '✓' : isReject ? '✕' : isPartial ? '⚠' : '→';
         page.drawCircle({ x: margin + 6, y: y + 4, size: 7, color: dotColor });
         drawText(icon, margin + 3, y + 1, { size: 10, color: rgb(1, 1, 1) });
@@ -960,9 +1047,9 @@ function detH(idx) {
         ? `<div class="row"><span class="rl">Анхны дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
            <div class="row"><span class="rl">Батлагдах дүн (${a.approvedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(a.approvedAmount)}</span></div>`
         : a.originalAmount
-            ? `<div class="row"><span class="rl">Эх дүн</span><span class="rv">₮ ${fmtN(a.originalAmount)}</span></div>
+        ? `<div class="row"><span class="rl">Эх дүн</span><span class="rv">₮ ${fmtN(a.originalAmount)}</span></div>
            <div class="row"><span class="rl">Үлдэгдэл дүн</span><span class="rv" style="color:#d97706;font-weight:700">₮ ${fmtN(a.amount)}</span></div>`
-            : `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
+        : `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
 
     return `<div class="card">
     <div class="ch">
@@ -1007,12 +1094,13 @@ function liH(a, idx, from) {
 function liHDone(a, idx, from) {
     const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : '';
     const isDone = a.status === 'done';
-    return `<div class="li done" onclick="opd(${idx},${from})">
+    const isMerged = a.completedViaRemaining;
+    return `<div class="li done${isMerged ? ' merged' : ''}" onclick="opd(${idx},${from})">
     <div class="li-top">
       <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div>
-      <span class="badge ${isDone ? 'bd' : 'br'}">${isDone ? '✓ Батлагдсан' : '✕ Буцаагдсан'}</span>
+      <span class="badge ${isDone ? 'bd' : 'br'}">${isMerged ? '✓ 100% (Нэгдсэн)' : (isDone ? '✓ Батлагдсан' : '✕ Буцаагдсан')}</span>
     </div>
-    <div class="li-sub">${esc(a.company)} · ₮${fmtN(a.approvedAmount || a.amount)}${dr ? ' · ' + esc(dr) : ''}</div>
+    <div class="li-sub">${esc(a.company)} · ₮${fmtN(a.amount)}${dr ? ' · ' + esc(dr) : ''}${isMerged ? ' · <span style="color:#059669;font-weight:600">Хэсэгчлэн+Үлдэгдэл нэгдсэн</span>' : ''}</div>
     <div style="display:flex;align-items:center;gap:7px">
       <div class="mbwrap"><div class="mb" style="width:100%;background:${isDone ? '#1d9e75' : '#e74c3c'}"></div></div>
       <span class="mpct" style="color:${isDone ? '#1d9e75' : '#e74c3c'}">${isDone ? '100%' : '✕'}</span>
@@ -1065,14 +1153,14 @@ function rA() {
 
     let list;
     if (role === 'Нягтлан') {
-        list = acts.filter(a => a.status === 'done');
+        list = acts.filter(a => a.status === 'done' || a.status === 'partial_done');
     } else if (role === 'Координатор') {
-        // Координатор: pending дээр step=0 эсвэл partial step нь түүн дээр ирсэн
+        // Координатор: pending + remaining нь дахин илгээгдсэн (re-pending)
         list = acts.filter(a =>
             (a.status === 'pending' && (a.step || 0) === 0)
         );
     } else {
-        // Инженер, Захирал — pending болон partial хоёуланг харах
+        // Инженер, Захирал — pending болон partial хоёуланг харах (өөрийн step дээр)
         list = acts.filter(a =>
             (a.status === 'pending' || a.status === 'partial') &&
             (a.step || 0) === RSTEP[role]
@@ -1088,6 +1176,7 @@ function rL() {
         (a.status === 'pending' && (a.step || 0) >= 1) ||
         a.status === 'partial'
     );
+    const partialDone = acts.filter(a => a.status === 'partial_done');
     const done = acts.filter(a => a.status === 'done');
     const remaining = acts.filter(a => a.status === 'remaining');
     const rejected = acts.filter(a => {
@@ -1097,7 +1186,7 @@ function rL() {
         return true;
     });
 
-    if (!inProgress.length && !done.length && !rejected.length && !remaining.length) {
+    if (!inProgress.length && !done.length && !rejected.length && !remaining.length && !partialDone.length) {
         el.innerHTML = '<div class="empty">Одоогоор акт байхгүй байна</div>'; return;
     }
 
@@ -1107,11 +1196,15 @@ function rL() {
         html += inProgress.map(a => liH(a, acts.indexOf(a), 2)).join('');
     }
     if (remaining.length) {
-        html += '<div class="remaining-section-label">⏳ ҮЛДЭГДЭЛ</div>';
+        html += '<div class="remaining-section-label">⏳ ҮЛДЭГДЭЛ ГҮЙЦЭЭХ</div>';
         html += remaining.map(a => liHRemaining(a, acts.indexOf(a), 2)).join('');
     }
+    if (partialDone.length) {
+        html += '<div class="partial-done-section-label">⚠ ХЭСЭГЧЛЭН ДУУССАН</div>';
+        html += partialDone.map(a => liHPartialDone(a, acts.indexOf(a), 2)).join('');
+    }
     if (done.length) {
-        html += '<div class="done-section-label">✓ ДУУССАН</div>';
+        html += '<div class="done-section-label">✓ БҮРЭН ДУУССАН</div>';
         html += done.map(a => liHDone(a, acts.indexOf(a), 2)).join('');
     }
     if (rejected.length) {
@@ -1119,6 +1212,22 @@ function rL() {
         html += rejected.map(a => liHRejected(a, acts.indexOf(a), 2, now, EIGHT_HOURS)).join('');
     }
     el.innerHTML = html;
+}
+
+function liHPartialDone(a, idx, from) {
+    const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : '';
+    return `<div class="li partial-done" onclick="opd(${idx},${from})">
+    <div class="li-top">
+      <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div>
+      <span class="badge bpartial-done">⚠ ${a.approvedPercent}% батлагдсан</span>
+    </div>
+    <div class="li-sub">${esc(a.company)} · <strong style="color:#d97706">₮${fmtN(a.approvedAmount)}</strong> / ₮${fmtN(a.amount)}${dr ? ' · ' + esc(dr) : ''}</div>
+    <div style="display:flex;align-items:center;gap:7px">
+      <div class="mbwrap"><div class="mb" style="width:${a.approvedPercent}%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+      <span class="mpct" style="color:#d97706;font-weight:700">${a.approvedPercent}%</span>
+    </div>
+    <div class="partial-done-hint">⏳ Үлдэгдэл ${100 - a.approvedPercent}% (₮${fmtN(parseInt(a.amount) - parseInt(a.approvedAmount))}) гүйцээгдэхийг хүлээж байна</div>
+  </div>`;
 }
 
 function fmtM(n) { return '₮' + parseInt(n || 0).toLocaleString('mn-MN'); }
