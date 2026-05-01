@@ -21,17 +21,17 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
-    { name: 'Инженер', email: 'unursaikhan@talstgroup.mn' },
-    { name: 'Захирал', email: 'enkhtuul@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'naranzul@talstgroup.mn' },
+    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
+    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
+    { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
+    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'unumunkh@talstgroup.mn': 'Координатор',
-    'unursaikhan@talstgroup.mn': 'Инженер',
-    'enkhtuul@talstgroup.mn': 'Захирал',
-    'naranzul@talstgroup.mn': 'Нягтлан',
+    'zolzaya@talstgroup.mn': 'Координатор',
+    'barsbat@talstgroup.mn': 'Инженер',
+    'zorigoo@talstgroup.mn': 'Захирал',
+    'bayarmaa@talstgroup.mn': 'Нягтлан',
 };
 
 const ROLE_COLORS = {
@@ -41,7 +41,7 @@ const ROLE_COLORS = {
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-const SE = ['unumunkh@talstgroup.mn', 'unursaikhan@talstgroup.mn', 'enkhtuul@talstgroup.mn', 'naranzul@talstgroup.mn'];
+const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
 
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
@@ -832,8 +832,8 @@ async function generateFinalPdf(act) {
         const isPartial = ev.type === 'partial' || ev.type === 'remaining_created';
         const dotColor = isApprove ? rgb(0.11, 0.62, 0.46)
             : isReject ? rgb(0.88, 0.29, 0.29)
-            : isPartial ? rgb(0.96, 0.62, 0.04)
-            : rgb(0.5, 0.5, 0.5);
+                : isPartial ? rgb(0.96, 0.62, 0.04)
+                    : rgb(0.5, 0.5, 0.5);
         const icon = isApprove ? '✓' : isReject ? '✕' : isPartial ? '⚠' : '→';
         page.drawCircle({ x: margin + 6, y: y + 4, size: 7, color: dotColor });
         drawText(icon, margin + 3, y + 1, { size: 10, color: rgb(1, 1, 1) });
@@ -985,8 +985,8 @@ function detH(idx) {
     const a = acts[idx]; if (!a) return '';
     const p = pct(a); const step = a.step || 0;
 
-    // Бүрэн батлах boломжтой эсэх
-    const canApprove = a.status === 'pending' && role !== 'Гүйцэтгэгч' && RSTEP[role] === step;
+    // Бүрэн батлах boломжтой эсэх (pending эсвэл partial хоёулаа)
+    const canApprove = (a.status === 'pending' || a.status === 'partial') && role !== 'Гүйцэтгэгч' && RSTEP[role] === step;
     // Хэсэгчлэн батлах боломжтой эсэх (зөвхөн Координатор + анх pending)
     const canPartial = a.status === 'pending' && role === 'Координатор' && step === 0;
     // Үлдэгдэл гүйцээх боломжтой эсэх (гүйцэтгэгч өөрөө)
@@ -1004,7 +1004,7 @@ function detH(idx) {
       </div>`).join('') + '</div>';
     }
     let tl = (a.evs || []).map(ev => evH(ev, false)).join('');
-    if (a.status === 'pending') for (let i = step; i < 4; i++) tl += wevH(i, i === 3);
+    if (a.status === 'pending' || a.status === 'partial') for (let i = step; i < 4; i++) tl += wevH(i, i === 3);
 
     const finalBtn = a.status === 'done' ? `
       <div class="abtns" style="margin-top:10px">
@@ -1042,14 +1042,24 @@ function detH(idx) {
         </div>`;
     }
 
-    // Үлдсэн дүн харуулах (хэсэгчлэн актын хувьд)
-    const amountDisplay = a.approvedAmount && a.approvedAmount !== a.amount
-        ? `<div class="row"><span class="rl">Анхны дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
-           <div class="row"><span class="rl">Батлагдах дүн (${a.approvedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(a.approvedAmount)}</span></div>`
-        : a.originalAmount
-        ? `<div class="row"><span class="rl">Эх дүн</span><span class="rv">₮ ${fmtN(a.originalAmount)}</span></div>
-           <div class="row"><span class="rl">Үлдэгдэл дүн</span><span class="rv" style="color:#d97706;font-weight:700">₮ ${fmtN(a.amount)}</span></div>`
-        : `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
+    // Үлдсэн дүн харуулах (хэсэгчлэн / үлдэгдэл актын хувьд)
+    let amountDisplay;
+    if (a.originalAmount && a.parentApprovedPercent) {
+        // ҮЛДЭГДЭЛ АКТ — Анхны дүн + Батлагдсан + Үлдэгдэл бүгдийг харуулах
+        const approvedPart = parseInt(a.originalAmount) - parseInt(a.amount);
+        amountDisplay = `<div class="row"><span class="rl">Анхны нийт дүн</span><span class="rv amt">₮ ${fmtN(a.originalAmount)}</span></div>
+           <div class="row"><span class="rl">Батлагдсан (${a.parentApprovedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(approvedPart)}</span></div>
+           <div class="row"><span class="rl">Үлдэгдэл (${a.remainingPercent || (100 - a.parentApprovedPercent)}%)</span><span class="rv" style="color:#d97706;font-weight:700">₮ ${fmtN(a.amount)}</span></div>`;
+    } else if (a.approvedAmount && a.approvedAmount !== a.amount) {
+        // ХЭСЭГЧИЛСЭН АКТ — Анхны + Батлагдсан
+        const remainingPart = parseInt(a.amount) - parseInt(a.approvedAmount);
+        amountDisplay = `<div class="row"><span class="rl">Анхны дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
+           <div class="row"><span class="rl">Батлагдсан дүн (${a.approvedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(a.approvedAmount)}</span></div>
+           <div class="row"><span class="rl">Үлдэгдэл (${100 - a.approvedPercent}%)</span><span class="rv" style="color:#d97706;font-weight:600">₮ ${fmtN(remainingPart)}</span></div>`;
+    } else {
+        // ЭНГИЙН АКТ
+        amountDisplay = `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
+    }
 
     return `<div class="card">
     <div class="ch">
