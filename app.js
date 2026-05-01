@@ -21,17 +21,17 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
-    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
-    { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
+    { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
+    { name: 'Инженер', email: 'unursaikhan@talstgroup.mn' },
+    { name: 'Захирал', email: 'enkhtuul@talstgroup.mn' },
+    { name: 'Нягтлан', email: 'naranzul@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'zolzaya@talstgroup.mn': 'Координатор',
-    'barsbat@talstgroup.mn': 'Инженер',
-    'zorigoo@talstgroup.mn': 'Захирал',
-    'bayarmaa@talstgroup.mn': 'Нягтлан',
+    'unumunkh@talstgroup.mn': 'Координатор',
+    'unursaikhan@talstgroup.mn': 'Инженер',
+    'enkhtuul@talstgroup.mn': 'Захирал',
+    'naranzul@talstgroup.mn': 'Нягтлан',
 };
 
 const ROLE_COLORS = {
@@ -41,7 +41,7 @@ const ROLE_COLORS = {
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
+const SE = ['unumunkh@talstgroup.mn', 'unursaikhan@talstgroup.mn', 'enkhtuul@talstgroup.mn', 'naranzul@talstgroup.mn'];
 
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
