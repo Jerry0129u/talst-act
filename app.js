@@ -21,17 +21,17 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
-    { name: 'Инженер', email: 'unursaikhan@talstgroup.mn' },
-    { name: 'Захирал', email: 'enkhtuul@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'naranzul@talstgroup.mn' },
+    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
+    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
+    { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
+    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'unumunkh@talstgroup.mn': 'Координатор',
-    'unursaikhan@talstgroup.mn': 'Инженер',
-    'enkhtuul@talstgroup.mn': 'Захирал',
-    'naranzul@talstgroup.mn': 'Нягтлан',
+    'zolzaya@talstgroup.mn': 'Координатор',
+    'barsbat@talstgroup.mn': 'Инженер',
+    'zorigoo@talstgroup.mn': 'Захирал',
+    'bayarmaa@talstgroup.mn': 'Нягтлан',
 };
 
 const ROLE_COLORS = {
@@ -41,7 +41,7 @@ const ROLE_COLORS = {
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-const SE = ['unumunkh@talstgroup.mn', 'unursaikhan@talstgroup.mn', 'enkhtuul@talstgroup.mn', 'naranzul@talstgroup.mn'];
+const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
 
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
@@ -54,6 +54,7 @@ let cu = null, role = 'Гүйцэтгэгч', acts = [], prev = 2, ctab = 0, uns
 let pdfDataList = [];
 let cachedFont = null;
 let autoDeleteInterval = null;
+let rejectedCountdownInterval = null; // ★ ШИНЭ: Countdown timer-д
 
 // Modal state
 let currentPartialActId = null;
@@ -191,6 +192,7 @@ window.doSignOut = async () => {
     if (!confirm('Гарах уу?')) return;
     if (unsub) unsub();
     if (autoDeleteInterval) { clearInterval(autoDeleteInterval); autoDeleteInterval = null; }
+    if (rejectedCountdownInterval) { clearInterval(rejectedCountdownInterval); rejectedCountdownInterval = null; }
     try {
         if (isNative && window.Capacitor?.Plugins?.FirebaseAuthentication) {
             await window.Capacitor.Plugins.FirebaseAuthentication.signOut();
@@ -237,11 +239,86 @@ function toast(m, t = 'ok') {
     el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 4000);
 }
 
-function sendMail(toEmail, toName, act, fromName) {
-    return emailjs.send(EJS_SVC, EJS_TPL, {
-        to_email: toEmail, to_name: toName, company: act.company, contract: act.contract,
-        work: act.work, amount: fmtN(act.amount), from_name: fromName, email: toEmail, name: fromName,
-    }).then(r => console.log('✅', r)).catch(err => { console.error('❌', err); throw err; });
+// ════════════════════════════════════════════════════════════
+// ★★★ EMAIL SENDING — Шинэчилсэн ★★★
+// ════════════════════════════════════════════════════════════
+// Үндсэн илгээх функц (батлах chain-д явах энгийн email)
+function sendMail(toEmail, toName, act, fromName, opts = {}) {
+    const params = {
+        to_email: toEmail,
+        to_name: toName,
+        company: act.company || '',
+        contract: act.contract || '',
+        work: act.work || '',
+        amount: fmtN(act.amount),
+        from_name: fromName,
+        email: toEmail,
+        name: fromName,
+        // Шинэ нэмэлт талбарууд (template-д ашиглагдана)
+        subject: opts.subject || `Шинэ акт: ${act.actId || ''}`,
+        message: opts.message || `${fromName} танд акт илгээлээ. Батлуулна уу.`,
+        notification_type: opts.type || 'approval_request',
+        act_id: act.actId || '',
+        reason: opts.reason || '',
+        approved_percent: opts.approvedPercent || '',
+        approved_amount: opts.approvedAmount || '',
+        remaining_amount: opts.remainingAmount || '',
+    };
+    return emailjs.send(EJS_SVC, EJS_TPL, params)
+        .then(r => console.log('✅ Email sent:', r))
+        .catch(err => { console.error('❌ Email error:', err); throw err; });
+}
+
+// ★ ШИНЭ: Гүйцэтгэгчид буцаах мэдэгдэл
+function sendRejectionMail(act, reason, rejectorName, rejectorRole) {
+    if (!act.submittedBy) return Promise.resolve();
+    const subject = `❌ Таны акт буцаагдлаа: ${act.actId}`;
+    const message = `Хүндэт ${act.submittedByName || 'гүйцэтгэгч'},\n\n`
+        + `Таны илгээсэн акт буцаагдлаа.\n\n`
+        + `АКТ: ${act.actId}\n`
+        + `Компани: ${act.company}\n`
+        + `Гэрээ: ${act.contract}\n`
+        + `Ажил: ${act.work}\n`
+        + `Дүн: ₮${fmtN(act.amount)}\n\n`
+        + `Буцаасан: ${rejectorName} (${rejectorRole})\n`
+        + `ШАЛТГААН: ${reason}\n\n`
+        + `Та шалтгааныг нягталж дахин илгээнэ үү.`;
+    return sendMail(act.submittedBy, act.submittedByName || 'Гүйцэтгэгч', act, rejectorName, {
+        subject,
+        message,
+        type: 'rejection',
+        reason: reason,
+    });
+}
+
+// ★ ШИНЭ: Гүйцэтгэгчид хэсэгчлэн батласан мэдэгдэл
+function sendPartialMail(act, approvedPct, approvedAmt, remainingAmt, reason, coordinatorName) {
+    if (!act.submittedBy) return Promise.resolve();
+    const subject = `⚠ Таны акт хэсэгчлэн батлагдлаа: ${act.actId} (${approvedPct}%)`;
+    const message = `Хүндэт ${act.submittedByName || 'гүйцэтгэгч'},\n\n`
+        + `Таны илгээсэн акт ХЭСЭГЧЛЭН батлагдлаа.\n\n`
+        + `АКТ: ${act.actId}\n`
+        + `Компани: ${act.company}\n`
+        + `Гэрээ: ${act.contract}\n`
+        + `Ажил: ${act.work}\n`
+        + `Анхны нийт дүн: ₮${fmtN(act.amount)}\n\n`
+        + `═══════════════════════════════════\n`
+        + `✓ БАТЛАГДСАН: ${approvedPct}% (₮${fmtN(approvedAmt)})\n`
+        + `⏳ ҮЛДЭГДЭЛ: ${100 - approvedPct}% (₮${fmtN(remainingAmt)})\n`
+        + `═══════════════════════════════════\n\n`
+        + `ХЭСЭГЧЛЭН БАТЛАСАН ШАЛТГААН:\n${reason}\n\n`
+        + `Координатор: ${coordinatorName}\n\n`
+        + `Үлдэгдэл ажлаа гүйцээгээд шинэ актаар дахин илгээнэ үү. `
+        + `"Илгээх" таб-д "Үлдэгдэл гүйцээх" хэсэг үүссэн байгаа.`;
+    return sendMail(act.submittedBy, act.submittedByName || 'Гүйцэтгэгч', act, coordinatorName, {
+        subject,
+        message,
+        type: 'partial_approval',
+        reason: reason,
+        approvedPercent: approvedPct + '%',
+        approvedAmount: '₮' + fmtN(approvedAmt),
+        remainingAmount: '₮' + fmtN(remainingAmt),
+    });
 }
 
 onAuthStateChanged(auth, u => {
@@ -261,10 +338,12 @@ onAuthStateChanged(auth, u => {
         e('aplbl').textContent = role + ' горимд батлах актууд';
         listen();
         startAutoDeleteRejected();
+        startRejectedCountdownRefresh(); // ★ ШИНЭ
     } else {
         cu = null; e('loginPage').style.display = 'flex'; e('appPage').style.display = 'none';
         if (unsub) { unsub(); unsub = null; }
         if (autoDeleteInterval) { clearInterval(autoDeleteInterval); autoDeleteInterval = null; }
+        if (rejectedCountdownInterval) { clearInterval(rejectedCountdownInterval); rejectedCountdownInterval = null; }
     }
 });
 
@@ -273,7 +352,7 @@ function listen() {
     unsub = onSnapshot(q, snap => {
         acts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         cleanupExpiredRejected();
-        if (ctab === 0) rA0(); // Илгээх таб дээр remaining харуулах
+        if (ctab === 0) rA0();
         if (ctab === 1) rA();
         if (ctab === 2) rL();
         if (ctab === 3) rD();
@@ -306,6 +385,20 @@ function startAutoDeleteRejected() {
     autoDeleteInterval = setInterval(cleanupExpiredRejected, 5 * 60 * 1000);
 }
 
+// ★ ШИНЭ: Буцаагдсан карт дээрх countdown timer-ыг 30 секунд тутамд шинэчлэх
+function startRejectedCountdownRefresh() {
+    if (rejectedCountdownInterval) clearInterval(rejectedCountdownInterval);
+    rejectedCountdownInterval = setInterval(() => {
+        // Зөвхөн "Актууд" таб дээр + буцаагдсан role идэвхтэй үед шинэчлэх
+        if (ctab === 2) {
+            // Хэрвээ буцаагдсан role card сонгогдсон бол body-г refresh хийнэ
+            if (listFilter === 'rejected') renderListBody();
+            // Эсвэл home screen дээр бол card-ийн тоог шинэчилнэ
+            else if (!listFilter) renderListBody();
+        }
+    }, 30 * 1000); // 30 секунд тутамд
+}
+
 function go(n) {
     [0, 1, 2, 3].forEach(i => { e('p' + i).style.display = 'none'; e('tb' + i).classList.remove('on') });
     e('pd').style.display = 'none';
@@ -327,7 +420,6 @@ function opd(idx, from) {
     e('pd').style.display = 'block'; e('dc').dataset.idx = idx; e('dc').innerHTML = detH(idx);
 }
 
-// ★★★ rA0: Илгээх таб дээр гүйцэтгэгчид remaining acts харуулах ★★★
 function rA0() {
     if (role !== 'Гүйцэтгэгч') return;
     const myRemaining = acts.filter(a =>
@@ -396,14 +488,13 @@ async function submitAct() {
     setTimeout(() => { e('progWrap').style.display = 'none'; e('progText').style.display = 'none'; e('progBar').style.width = '0%'; }, 1500);
 }
 
-// ★★★ APPROVE — бүтэн болон хэсэгчлэн актыг батлах ★★★
 async function approve(docId) {
     const a = acts.find(x => x.id === docId);
     if (!a || (a.status !== 'pending' && a.status !== 'partial')) { toast('Батлах боломжгүй!', 'err'); return; }
     if (RSTEP[role] !== a.step) { toast('Та энэ актыг батлах эрхгүй!', 'err'); return; }
 
     const isPartialAct = a.status === 'partial' || a.approvedPercent;
-    const isRemainingAct = !!a.parentDocId; // үлдэгдэл актыг гүйцээж илгээсэн
+    const isRemainingAct = !!a.parentDocId;
 
     const newEvs = [...(a.evs || []), {
         type: 'approve', who: cu.displayName || cu.email, whoEmail: cu.email,
@@ -420,7 +511,6 @@ async function approve(docId) {
 
     if (finishedAllSteps) {
         if (isPartialAct) {
-            // Хэсэгчлэн акт нь бүх шатыг давсан → "partial_done" status
             upd.status = 'partial_done';
             finalEvs = [...newEvs, {
                 type: 'partial_done', who: 'Систем',
@@ -430,7 +520,6 @@ async function approve(docId) {
             }];
             upd.evs = finalEvs;
         } else if (isRemainingAct) {
-            // Үлдэгдэл акт бүх шатыг давсан → Эх актыг ХАЙГАД "done" болгох
             upd.status = 'done';
             finalEvs = [...newEvs, {
                 type: 'done', who: 'Систем',
@@ -440,7 +529,6 @@ async function approve(docId) {
             }];
             upd.evs = finalEvs;
 
-            // Эх актыг "done" болгох
             const parentAct = acts.find(x => x.id === a.parentDocId);
             if (parentAct && parentAct.status === 'partial_done') {
                 const parentEvs = [...(parentAct.evs || []), {
@@ -459,7 +547,6 @@ async function approve(docId) {
                 } catch (e) { console.error('Parent update error:', e); }
             }
         } else {
-            // Энгийн 100% акт
             upd.status = 'done';
             finalEvs = [...newEvs, {
                 type: 'done', who: 'Систем', title: '🎉 Бүрэн батлагдсан',
@@ -479,17 +566,14 @@ async function approve(docId) {
             } else if (isRemainingAct) {
                 toast('🎉 Үлдэгдэл батлагдан акт 100% болж дууслаа!');
                 try {
-                    // Эх актыг бүтэн PDF үүсгэх
                     const parentAct = acts.find(x => x.id === a.parentDocId);
                     if (parentAct) {
-                        // Үлдэгдэл актын events-г "Үлдэгдэл цикл" гэж нэрлэх
                         const remainingEvents = (a.evs || []).map(ev => ({
                             ...ev,
                             title: '⏳ ' + (ev.title || ''),
                             detail: '[Үлдэгдэл цикл] ' + (ev.detail || '')
                         }));
 
-                        // Эх актын events + үлдэгдэл актын events + одоогийн approve events
                         const mergedEvents = [
                             ...(parentAct.evs || []),
                             {
@@ -506,7 +590,6 @@ async function approve(docId) {
                             status: 'done',
                             completedViaRemaining: true,
                             remainingActId: a.actId,
-                            // Бүх PDF хослуулах (эх + үлдэгдэл)
                             pdfs: [...(parentAct.pdfs || []), ...(a.pdfs || [])],
                             pdfCount: (parentAct.pdfCount || 0) + (a.pdfCount || 0),
                             evs: mergedEvents
@@ -536,6 +619,7 @@ async function approve(docId) {
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); }
 }
 
+// ★★★ REJECT — Гүйцэтгэгчид мэдэгдэл явуулах нэмэлттэй ★★★
 async function reject(docId) {
     const a = acts.find(x => x.id === docId); if (!a) return;
     const reason = prompt('Буцаасан шалтгаан:') || 'Тодруулгатай байна';
@@ -545,7 +629,17 @@ async function reject(docId) {
     }];
     try {
         await updateDoc(doc(db, 'acts', docId), { status: 'rejected', evs: newEvs, rejectedAt: serverTimestamp() });
-        toast('❌ Акт буцаагдлаа.'); bk();
+        toast('❌ Акт буцаагдлаа.');
+
+        // ★ ШИНЭ: Гүйцэтгэгчид буцаасан шалтгааны хамт email явуулах
+        try {
+            await sendRejectionMail(a, reason, cu.displayName || cu.email, role);
+            console.log('✅ Rejection email явуулсан →', a.submittedBy);
+        } catch (mailErr) {
+            console.error('❌ Rejection email алдаа:', mailErr);
+            // Email алдаа гарсан ч UI-г өөрчлөхгүй (акт аль хэдийн буцаагдсан)
+        }
+        bk();
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); }
 }
 
@@ -591,7 +685,6 @@ function updatePartialPreview() {
     e('pmInfoApproved').textContent = '₮' + fmtN(approved);
     e('pmInfoRemaining').textContent = '₮' + fmtN(remaining);
 
-    // Slider track цэнхэр
     const slider = e('pmSlider');
     slider.style.background = `linear-gradient(to right, #f59e0b 0%, #f59e0b ${pct}%, #e2e8f0 ${pct}%, #e2e8f0 100%)`;
 }
@@ -621,7 +714,6 @@ async function confirmPartialApprove() {
     btn.textContent = 'Боловсруулж байна...';
 
     try {
-        // 1) Анхны актыг "partial" status болгох + дараагийн алхам руу шилжүүлэх
         const newEvs = [...(a.evs || []), {
             type: 'partial', who: cu.displayName || cu.email, whoEmail: cu.email,
             title: 'Координатор хэсэгчлэн батлав ⚠',
@@ -631,7 +723,7 @@ async function confirmPartialApprove() {
 
         const partialUpd = {
             status: 'partial',
-            step: 1, // Инженер руу шилжих
+            step: 1,
             approvedPercent: pct,
             approvedAmount: approvedAmount,
             partialReason: reason,
@@ -639,7 +731,6 @@ async function confirmPartialApprove() {
         };
         await updateDoc(doc(db, 'acts', currentPartialActId), partialUpd);
 
-        // 2) Үлдэгдлийн ШИНЭ act үүсгэх (status = 'remaining')
         const remainingActId = a.actId + '-Б';
         const remainingActData = {
             actId: remainingActId,
@@ -672,7 +763,6 @@ async function confirmPartialApprove() {
         };
         await addDoc(collection(db, 'acts'), remainingActData);
 
-        // 3) Email-ууд
         // Инженерт мэдэгдэх
         try {
             await sendMail(CHAIN[1].email, CHAIN[1].name,
@@ -680,12 +770,13 @@ async function confirmPartialApprove() {
                 cu.displayName || cu.email);
         } catch (e) { console.error('Engineer email:', e); }
 
-        // Гүйцэтгэгчид мэдэгдэх (хэрэв talstgroup.mn биш бол)
+        // ★ ШИНЭ: Гүйцэтгэгчид хэсэгчлэн батласан мэдэгдэл (хувь, дүн, шалтгааны хамт)
         try {
-            await sendMail(a.submittedBy, a.submittedByName || 'Гүйцэтгэгч',
-                { ...a, amount: String(remainingAmount), work: a.work + ' (Үлдэгдэл)' },
-                cu.displayName || cu.email);
-        } catch (e) { console.error('Executor email:', e); }
+            await sendPartialMail(a, pct, approvedAmount, remainingAmount, reason, cu.displayName || cu.email);
+            console.log('✅ Partial-approval email явуулсан →', a.submittedBy);
+        } catch (mailErr) {
+            console.error('❌ Partial email алдаа:', mailErr);
+        }
 
         toast('✅ Хэсэгчлэн батлагдлаа! ' + pct + '% Инженер уруу, ' + (100 - pct) + '% гүйцэтгэгчид буцлаа.');
         closePartialModal();
@@ -744,7 +835,6 @@ async function confirmSubmitRemaining() {
     btn.textContent = 'Илгээж байна...';
 
     try {
-        // Үлдэгдэл актыг pending болгож, Координатор руу илгээх
         const newEvs = [...(a.evs || []), {
             type: 'submit', who: cu.displayName || cu.email, whoEmail: cu.email,
             title: '📤 Гүйцээсэн ажил илгээв',
@@ -763,7 +853,6 @@ async function confirmSubmitRemaining() {
         };
         await updateDoc(doc(db, 'acts', currentRemainingActId), upd);
 
-        // Координаторт email
         try {
             await sendMail(CHAIN[0].email, CHAIN[0].name, a, cu.displayName || cu.email);
         } catch (e) { console.error('Mail error:', e); }
@@ -779,7 +868,7 @@ async function confirmSubmitRemaining() {
 }
 
 // ════════════════════════════════════════════════════════════
-// FINAL PDF generation
+// FINAL PDF generation (өөрчлөгдөөгүй)
 // ════════════════════════════════════════════════════════════
 
 async function loadCyrillicFont() {
@@ -816,32 +905,24 @@ async function generateFinalPdf(act) {
         page.drawLine({ start: { x: margin, y: yPos }, end: { x: pageWidth - margin, y: yPos }, thickness: 0.5, color });
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // HEADER — Минимал, орчин үеийн дизайн
-    // ═══════════════════════════════════════════════════════════
-
-    // Title (зөвхөн TALST · ACT)
     drawText('TALST · ACT', margin, y, { size: 11, color: rgb(0.42, 0.45, 0.5) });
     y -= 4;
     page.drawLine({
         start: { x: margin, y: y - 2 },
         end: { x: margin + 50, y: y - 2 },
         thickness: 1.5,
-        color: rgb(0.06, 0.73, 0.51) // emerald
+        color: rgb(0.06, 0.73, 0.51)
     });
     y -= 24;
 
-    // Том акт дугаар
     drawText(act.actId, margin, y, { size: 26, color: rgb(0.06, 0.09, 0.16) });
     y -= 22;
 
-    // Date · Company (subtitle)
     const subtitleParts = [act.date];
     if (act.company) subtitleParts.push(act.company);
     drawText(subtitleParts.join('  ·  '), margin, y, { size: 11, color: rgb(0.42, 0.45, 0.5) });
     y -= 14;
 
-    // Status badge (хэсэгчлэн эсвэл бүрэн)
     const isPartial = act.approvedPercent && act.approvedPercent < 100;
     const isMerged = act.completedViaRemaining;
     const statusText = isPartial
@@ -853,7 +934,6 @@ async function generateFinalPdf(act) {
         ? rgb(0.96, 0.62, 0.04)
         : rgb(0.06, 0.73, 0.51);
 
-    // Жижиг хайрцаг (badge маягтай)
     const badgeWidth = statusText.length * 5.5 + 16;
     page.drawRectangle({
         x: margin,
@@ -867,13 +947,8 @@ async function generateFinalPdf(act) {
     drawText(statusText, margin + 8, y + 1, { size: 9, color: statusColor });
     y -= 28;
 
-    // Линий тусгаарлагч
     drawLine(y, rgb(0.9, 0.92, 0.94));
     y -= 18;
-
-    // ═══════════════════════════════════════════════════════════
-    // META — 2 баганатай grid layout
-    // ═══════════════════════════════════════════════════════════
 
     function drawMetaRow(label, value, valueColor = rgb(0.06, 0.09, 0.16), valueSize = 10.5) {
         checkNewPage();
@@ -892,7 +967,6 @@ async function generateFinalPdf(act) {
         y -= 6;
     }
 
-    // Баганаар зохион байгуулсан мэдээлэл
     drawMetaRow('Гэрээний дугаар', act.contract);
     drawMetaRow('Ажлын хугацаа', (act.dateFrom || '—') + ' — ' + (act.dateTo || '—'));
     drawMetaRow('Илгээсэн', act.submittedByName || act.submittedBy);
@@ -900,9 +974,7 @@ async function generateFinalPdf(act) {
     drawMetaSeparator();
     y -= 4;
 
-    // Дүн — онцолсон байдалтай
     if (isMerged) {
-        // 100% НЭГДСЭН — Анхны + Батлагдсан + Үлдэгдэл бүгдийг харуулах
         const approvedPart = parseInt(act.approvedAmount || 0);
         const remainingPart = parseInt(act.amount) - approvedPart;
         drawMetaRow('Анхны нийт дүн', '₮ ' + fmtN(act.amount), rgb(0.42, 0.45, 0.5), 10.5);
@@ -911,13 +983,11 @@ async function generateFinalPdf(act) {
         drawMetaSeparator();
         drawMetaRow('Нийт батлагдсан', '₮ ' + fmtN(act.amount), rgb(0.06, 0.4, 0.27), 14);
     } else if (isPartial) {
-        // Хэсэгчилсэн дүн — задралт харуулах
         const remainingPart = parseInt(act.amount) - parseInt(act.approvedAmount);
         drawMetaRow('Анхны нийт дүн', '₮ ' + fmtN(act.amount), rgb(0.42, 0.45, 0.5), 10.5);
         drawMetaRow(`Батлагдсан дүн (${act.approvedPercent}%)`, '₮ ' + fmtN(act.approvedAmount), rgb(0.06, 0.4, 0.27), 13);
         drawMetaRow(`Үлдэгдэл (${100 - act.approvedPercent}%)`, '₮ ' + fmtN(remainingPart), rgb(0.85, 0.55, 0.04), 11);
     } else if (act.parentApprovedPercent && act.originalAmount) {
-        // ҮЛДЭГДЭЛ АКТ — Анхны нийт + Батлагдсан + Үлдэгдэл
         const approvedPart = parseInt(act.originalAmount) - parseInt(act.amount);
         drawMetaRow('Анхны нийт дүн', '₮ ' + fmtN(act.originalAmount), rgb(0.42, 0.45, 0.5), 10.5);
         drawMetaRow(`Өмнө батлагдсан (${act.parentApprovedPercent}%)`, '₮ ' + fmtN(approvedPart), rgb(0.42, 0.45, 0.5), 10.5);
@@ -929,11 +999,9 @@ async function generateFinalPdf(act) {
     drawMetaSeparator();
     y -= 4;
 
-    // Ажлын тайлбар
     if (act.work) {
         drawText('Ажил', margin, y, { size: 9, color: rgb(0.55, 0.6, 0.65) });
         y -= 12;
-        // Урт текстийг хуваах
         const workWords = String(act.work).split(' ');
         let workLine = '';
         const maxWorkChars = 70;
@@ -957,15 +1025,12 @@ async function generateFinalPdf(act) {
         drawMetaRow('Хавсралт', act.pdfCount + ' PDF файл', rgb(0.42, 0.45, 0.5));
     }
 
-    // Холбогдсон акт (хэсэгчилсэн / үлдэгдэлийн хувьд)
     if (act.parentActId) {
         drawMetaRow('Эх акт', act.parentActId, rgb(0.42, 0.45, 0.5));
     }
 
-    // Хэсэгчилсэн шалтгаан
     if (act.partialReason) {
         y -= 6;
-        // Шалтгааны хайрцаг
         page.drawRectangle({
             x: margin,
             y: y - 30,
@@ -976,7 +1041,6 @@ async function generateFinalPdf(act) {
             borderWidth: 0.6,
             borderOpacity: 0.4,
         });
-        // Зүүн талын тэмдэг
         page.drawRectangle({
             x: margin,
             y: y - 30,
@@ -993,14 +1057,12 @@ async function generateFinalPdf(act) {
     drawLine(y, rgb(0.9, 0.92, 0.94));
     y -= 22;
 
-    // Title for events section
     drawText('ЯВЦЫН ТҮҮХ', margin, y, { size: 11, color: rgb(0.42, 0.45, 0.5) });
     drawText('АУДИТ ЛОГ', pageWidth - margin - 60, y, { size: 9, color: rgb(0.65, 0.7, 0.75) });
     y -= 22;
 
     const events = act.evs || [];
     events.forEach((ev, i) => {
-        // Цикл тусгаарлагч (нэгдсэн PDF дээр)
         if (ev.type === 'cycle_separator') {
             checkNewPage(50);
             y -= 8;
@@ -1147,7 +1209,6 @@ async function downloadFinalPdf(docId) {
 }
 
 function evH(ev, isLast) {
-    // Тусгай cycle separator event
     if (ev.type === 'cycle_separator') {
         return `<div class="cycle-sep">
             <div class="cycle-sep-line"></div>
@@ -1195,11 +1256,8 @@ function detH(idx) {
     const a = acts[idx]; if (!a) return '';
     const p = pct(a); const step = a.step || 0;
 
-    // Бүрэн батлах boломжтой эсэх (pending эсвэл partial хоёулаа)
     const canApprove = (a.status === 'pending' || a.status === 'partial') && role !== 'Гүйцэтгэгч' && RSTEP[role] === step;
-    // Хэсэгчлэн батлах боломжтой эсэх (зөвхөн Координатор + анх pending)
     const canPartial = a.status === 'pending' && role === 'Координатор' && step === 0;
-    // Үлдэгдэл гүйцээх боломжтой эсэх (гүйцэтгэгч өөрөө)
     const canComplete = a.status === 'remaining' && a.submittedBy === cu?.email;
 
     const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : a.dateFrom || a.dateTo || '—';
@@ -1223,17 +1281,14 @@ function detH(idx) {
         </button>
       </div>` : '';
 
-    // Партиал шалтгаан харуулах
     const partialReasonHtml = (a.status === 'partial' || a.status === 'remaining' || a.partialReason) && a.partialReason ? `
       <div class="partial-reason-card">
         <div class="partial-reason-label">⚠ Хэсэгчлэн батлах шалтгаан</div>
         <div class="partial-reason-text">${esc(a.partialReason)}</div>
       </div>` : '';
 
-    // Төлөв badge
     const statusBadge = `<span class="badge ${bc(a)}">${bt(a)}</span>`;
 
-    // Action buttons
     let actionBtns = '';
     if (canApprove && canPartial) {
         actionBtns = `<div class="abtns">
@@ -1252,22 +1307,18 @@ function detH(idx) {
         </div>`;
     }
 
-    // Үлдсэн дүн харуулах (хэсэгчлэн / үлдэгдэл актын хувьд)
     let amountDisplay;
     if (a.originalAmount && a.parentApprovedPercent) {
-        // ҮЛДЭГДЭЛ АКТ — Анхны дүн + Батлагдсан + Үлдэгдэл бүгдийг харуулах
         const approvedPart = parseInt(a.originalAmount) - parseInt(a.amount);
         amountDisplay = `<div class="row"><span class="rl">Анхны нийт дүн</span><span class="rv amt">₮ ${fmtN(a.originalAmount)}</span></div>
            <div class="row"><span class="rl">Батлагдсан (${a.parentApprovedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(approvedPart)}</span></div>
            <div class="row"><span class="rl">Үлдэгдэл (${a.remainingPercent || (100 - a.parentApprovedPercent)}%)</span><span class="rv" style="color:#d97706;font-weight:700">₮ ${fmtN(a.amount)}</span></div>`;
     } else if (a.approvedAmount && a.approvedAmount !== a.amount) {
-        // ХЭСЭГЧИЛСЭН АКТ — Анхны + Батлагдсан
         const remainingPart = parseInt(a.amount) - parseInt(a.approvedAmount);
         amountDisplay = `<div class="row"><span class="rl">Анхны дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
            <div class="row"><span class="rl">Батлагдсан дүн (${a.approvedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(a.approvedAmount)}</span></div>
            <div class="row"><span class="rl">Үлдэгдэл (${100 - a.approvedPercent}%)</span><span class="rv" style="color:#d97706;font-weight:600">₮ ${fmtN(remainingPart)}</span></div>`;
     } else {
-        // ЭНГИЙН АКТ
         amountDisplay = `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
     }
 
@@ -1328,25 +1379,42 @@ function liHDone(a, idx, from) {
   </div>`;
 }
 
-function liHRejected(a, idx, from, now, EIGHT_HOURS) {
+// ★ ШИНЭЧИЛСЭН: Буцаагдсан карт — countdown timer-тэй (8 цаг доторх)
+function liHRejected(a, idx, from) {
     const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : '';
+    const now = Date.now();
     const rejTime = a.rejectedAt ? a.rejectedAt.toMillis?.() || a.rejectedAt : null;
+
     let timerHtml = '';
+    let timerColor = '#e74c3c';
     if (rejTime) {
         const remaining = EIGHT_HOURS - (now - rejTime);
         if (remaining > 0) {
             const h = Math.floor(remaining / 3600000);
             const m = Math.floor((remaining % 3600000) / 60000);
-            timerHtml = `<div class="reject-timer">🗑 ${h} цаг ${m} минутын дараа устна</div>`;
+            // Сүүлийн 1 цаг үлдсэн үед ягаан, эс бөгөөс улаан
+            if (remaining < 60 * 60 * 1000) timerColor = '#dc2626';
+            timerHtml = `<div class="reject-timer" style="color:${timerColor};font-weight:600">
+                🗑 <strong>${h}ц ${m}мин</strong>-ын дараа автоматаар устах болно
+            </div>`;
+        } else {
+            timerHtml = '<div class="reject-timer">🗑 Удахгүй устах гэж байна...</div>';
         }
-    } else timerHtml = '<div class="reject-timer">🗑 Удахгүй устна</div>';
+    }
+
+    // Буцаах шалтгаан хайх (events дотор)
+    const rejectEv = (a.evs || []).reverse().find(ev => ev.type === 'reject');
+    const reasonText = rejectEv ? rejectEv.detail.replace(/^Шалтгаан:\s*/, '') : '';
+    const rejectorName = rejectEv ? rejectEv.who : '';
+
     return `<div class="li rejected" onclick="opd(${idx},${from})">
     <div class="li-top">
       <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div>
       <span class="badge br">✕ Буцаагдсан</span>
     </div>
     <div class="li-sub">${esc(a.company)} · ₮${fmtN(a.amount)}${dr ? ' · ' + esc(dr) : ''}</div>
-    <div style="display:flex;align-items:center;gap:7px">
+    ${reasonText ? `<div class="remaining-reason" style="background:rgba(254,226,226,0.6);border-left-color:#dc2626;color:#7f1d1d">📝 ${esc(reasonText)}${rejectorName ? ` <span style="opacity:0.7">— ${esc(rejectorName)}</span>` : ''}</div>` : ''}
+    <div style="display:flex;align-items:center;gap:7px;margin-top:8px">
       <div class="mbwrap"><div class="mb" style="width:100%;background:#e74c3c"></div></div>
       <span class="mpct" style="color:#e74c3c">✕</span>
     </div>
@@ -1375,12 +1443,10 @@ function rA() {
     if (role === 'Нягтлан') {
         list = acts.filter(a => a.status === 'done' || a.status === 'partial_done');
     } else if (role === 'Координатор') {
-        // Координатор: pending + remaining нь дахин илгээгдсэн (re-pending)
         list = acts.filter(a =>
             (a.status === 'pending' && (a.step || 0) === 0)
         );
     } else {
-        // Инженер, Захирал — pending болон partial хоёуланг харах (өөрийн step дээр)
         list = acts.filter(a =>
             (a.status === 'pending' || a.status === 'partial') &&
             (a.step || 0) === RSTEP[role]
@@ -1390,14 +1456,13 @@ function rA() {
 }
 
 // ════════════════════════════════════════════════════════
-// АКТУУД ТАБ — Минимал, focus-friendly
+// АКТУУД ТАБ — 5 role card-тэй
 // ════════════════════════════════════════════════════════
 
-let listFilter = null;          // null = home screen, аль эсвэл step нэр
+let listFilter = null;
 let listSearch = '';
 let listLimit = 10;
 
-// SVG icons (минимал, монохром)
 const ICONS = {
     search: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
     close: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
@@ -1406,13 +1471,14 @@ const ICONS = {
     engineer: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
     director: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-3-3"></path><path d="M19 14V6"></path></svg>',
     accountant: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
+    // ★ ШИНЭ: Буцаагдсан icon
+    rejected: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
 };
 
 window.setListFilter = (f) => {
     listFilter = f;
     listLimit = 10;
     rL();
-    // Шинэ rendering-н дараа input-д focus буцаах
     setTimeout(() => {
         const inp = e('listSearchInput');
         if (inp && document.activeElement !== inp && listSearch) inp.focus();
@@ -1435,14 +1501,10 @@ window.showMoreActs = () => {
     rL();
 };
 
-// IMPORTANT: Search-д realtime onkeyup ажиллахгүй — focus алдагдана
-// Зөвхөн Enter дарах эсвэл blur үед update хийнэ
-// Гэхдээ хэрэглэгчид амар байхын тулд debounce ашиглая
 let searchDebounceTimer = null;
 window.handleSearchInput = (val) => {
     listSearch = (val || '').toLowerCase().trim();
     listLimit = 10;
-    // Зөвхөн жагсаалтыг дахин зурна (input-ыг бус)
     if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
         renderListBody();
@@ -1476,7 +1538,6 @@ function renderListBody() {
 }
 
 function renderListBodyHtml() {
-    // Хүлээж буй акт-уудыг шатаар нь авах
     function actsAtStep(step) {
         return acts.filter(a =>
             (a.status === 'pending' || a.status === 'partial') &&
@@ -1484,11 +1545,23 @@ function renderListBodyHtml() {
         );
     }
 
+    // ★ ШИНЭ: Буцаагдсан акт (8 цаг доторх)
+    function actsRejected() {
+        const now = Date.now();
+        return acts.filter(a => {
+            if (a.status !== 'rejected') return false;
+            const rejTime = a.rejectedAt ? (a.rejectedAt.toMillis?.() || a.rejectedAt) : null;
+            if (!rejTime) return true; // Хэрвээ rejectedAt байхгүй бол 8 цаг хүлээгдсэн гэж тооцно (legacy)
+            return (now - rejTime) <= EIGHT_HOURS;
+        });
+    }
+
     const stepLists = {
         coordinator: actsAtStep(0),
         engineer: actsAtStep(1),
         director: actsAtStep(2),
         accountant: actsAtStep(3),
+        rejected: actsRejected(), // ★ ШИНЭ
     };
 
     const stepLabels = {
@@ -1496,6 +1569,7 @@ function renderListBodyHtml() {
         engineer: 'Инженер',
         director: 'Захирал',
         accountant: 'Нягтлан',
+        rejected: 'Буцаагдсан', // ★ ШИНЭ
     };
 
     const stepDescriptions = {
@@ -1503,15 +1577,14 @@ function renderListBodyHtml() {
         engineer: 'Инженерийн баталгаажуулалт',
         director: 'Захирлын батламж',
         accountant: 'Гүйлгээ хийгдэх гэж байгаа',
+        rejected: '8 цагийн дотор автоматаар устана', // ★ ШИНЭ
     };
 
-    // ─── ХАЙЛТ ─── (зөвхөн гэрээний дугаараар)
     function matchSearch(a) {
         if (!listSearch) return true;
         return (a.contract || '').toLowerCase().includes(listSearch);
     }
 
-    // Хайлт хийгдсэн бол: бүх акт-уудаас хайна
     if (listSearch) {
         const found = acts.filter(matchSearch);
         if (found.length === 0) {
@@ -1522,7 +1595,11 @@ function renderListBodyHtml() {
         const shown = found.slice(0, listLimit);
         const remaining = found.length - shown.length;
         let html = `<div class="search-result-hint">"${esc(listSearch)}" — ${found.length}ш олдов</div>`;
-        html += shown.map(a => liH(a, acts.indexOf(a), 2)).join('');
+        html += shown.map(a => {
+            // Хэрвээ буцаагдсан бол rejected card-аар
+            if (a.status === 'rejected') return liHRejected(a, acts.indexOf(a), 2);
+            return liH(a, acts.indexOf(a), 2);
+        }).join('');
         if (remaining > 0) {
             html += `<button class="show-more-btn" onclick="showMoreActs()">
                 Дараагийн ${Math.min(remaining, 10)} акт <span style="opacity:0.7">(${remaining} үлдсэн)</span>
@@ -1531,14 +1608,16 @@ function renderListBodyHtml() {
         return html;
     }
 
-    // ─── HOME SCREEN — 4 карт ───
+    // ★ HOME SCREEN — 5 карт (4 шат + 1 буцаагдсан)
     if (!listFilter) {
-        const cards = ['coordinator', 'engineer', 'director', 'accountant'];
+        const cards = ['coordinator', 'engineer', 'director', 'accountant', 'rejected'];
         const colors = {
             coordinator: { bg: 'rgba(239, 68, 68, 0.06)', border: 'rgba(239, 68, 68, 0.2)', accent: '#dc2626' },
             engineer:    { bg: 'rgba(59, 130, 246, 0.06)', border: 'rgba(59, 130, 246, 0.2)', accent: '#2563eb' },
             director:    { bg: 'rgba(139, 92, 246, 0.06)', border: 'rgba(139, 92, 246, 0.2)', accent: '#7c3aed' },
             accountant:  { bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.2)', accent: '#059669' },
+            // ★ ШИНЭ: Улаан өнгөтэй, бусдаас өвөрмөц
+            rejected:    { bg: 'rgba(220, 38, 38, 0.08)', border: 'rgba(220, 38, 38, 0.3)', accent: '#b91c1c' },
         };
 
         return `<div class="role-cards">
@@ -1546,7 +1625,8 @@ function renderListBodyHtml() {
             const list = stepLists[key];
             const c = colors[key];
             const isEmpty = list.length === 0;
-            return `<div class="role-card ${isEmpty ? 'empty' : ''}" 
+            const isRejected = key === 'rejected';
+            return `<div class="role-card ${isEmpty ? 'empty' : ''}${isRejected ? ' role-card-rejected' : ''}" 
                     style="--c-bg: ${c.bg}; --c-border: ${c.border}; --c-accent: ${c.accent}"
                     onclick="${isEmpty ? '' : `setListFilter('${key}')`}">
                     <div class="role-card-icon" style="color: ${c.accent}">${ICONS[key]}</div>
@@ -1560,7 +1640,7 @@ function renderListBodyHtml() {
         </div>`;
     }
 
-    // ─── DETAIL SCREEN — нэг шатын актууд ───
+    // DETAIL SCREEN
     const list = stepLists[listFilter] || [];
 
     let html = `<div class="role-detail-header">
@@ -1579,7 +1659,13 @@ function renderListBodyHtml() {
 
     const shown = list.slice(0, listLimit);
     const remaining = list.length - shown.length;
-    html += shown.map(a => liH(a, acts.indexOf(a), 2)).join('');
+
+    // ★ Буцаагдсан role-ийн хувьд тусгай rejected card ашиглана
+    if (listFilter === 'rejected') {
+        html += shown.map(a => liHRejected(a, acts.indexOf(a), 2)).join('');
+    } else {
+        html += shown.map(a => liH(a, acts.indexOf(a), 2)).join('');
+    }
 
     if (remaining > 0) {
         html += `<button class="show-more-btn" onclick="showMoreActs()">
@@ -1623,7 +1709,6 @@ function rD() {
     e('s2').textContent = done.length;
     e('s2sub').textContent = done.length + 'ш бүрэн батлагдсан';
 
-    // Шатуудаар хувих
     const allActiveActs = [...pending, ...partial];
     const steps = [0, 1, 2, 3].map(i => allActiveActs.filter(a => (a.step || 0) === i).length);
     const partialCount = partial.length;
@@ -1682,46 +1767,80 @@ function rD() {
             return pd.y === day.y && pd.m === day.m && pd.d === day.d;
         });
     }
-    const dayAmts = days.map(day => {
-        const da = actsOfDay(day);
-        if (!da.length) return 0;
-        const total = da.reduce((s, a) => s + parseInt(a.amount || 0), 0);
-        return total || da.length * 1000000;
-    });
+
+    // ★★★ ӨӨРЧИЛСӨН: Chart нь ӨДӨР ТУТМЫН НИЙТ ХҮСЭЛТИЙН ТОО харуулна
     const dayCounts = days.map(day => actsOfDay(day).length);
-    const dayColors = days.map(day => {
-        const da = actsOfDay(day);
-        if (!da.length) return '#ebebeb';
-        if (da.some(a => a.status === 'done')) return '#1d9e75';
-        if (da.some(a => a.status === 'partial')) return '#f59e0b';
-        if (da.some(a => a.status === 'rejected')) return '#e24b4a';
-        return '#378add';
+    const maxCount = Math.max(...dayCounts, 1);
+
+    // Bar өндөр — нийт тоог chart-ийн max-аар нь масштаблах
+    // Хоосон өдрийг 0, бусад өдөрт жинхэнэ тоог нь харуулна
+    const displayCounts = dayCounts;
+
+    // Өнгөнүүд — нэг өнгөтэй, тооноос хамаарч градиент байж болно
+    // Хүсэлт олонтой бол илүү тод (gradient deeper), цөөн бол цайвар
+    const dayColors = dayCounts.map(count => {
+        if (count === 0) return '#ebebeb'; // хоосон өдөр
+        const ratio = count / maxCount;
+        // Brand цэнхэр (#378add) шиг, intensity бариулна
+        if (ratio >= 0.75) return '#1d4ed8'; // их үед хар хөх
+        if (ratio >= 0.5) return '#2563eb';
+        if (ratio >= 0.25) return '#3b82f6';
+        return '#60a5fa'; // цөөхөн үед цайвар
     });
-    const maxAmt = Math.max(...dayAmts, 1);
-    const minVisible = maxAmt * 0.08;
-    const displayAmts = dayAmts.map(v => v > 0 ? Math.max(v, minVisible * 0.3) : 0);
+
     if (dbBarChart) { dbBarChart.destroy(); dbBarChart = null; }
     const ctx = e('dbBarChart'); if (!ctx) return;
     dbBarChart = new Chart(ctx, {
         type: 'bar',
-        data: { labels: days.map(d => d.label), datasets: [{ label: 'Дүн', data: displayAmts, backgroundColor: dayColors, borderRadius: 6, borderSkipped: false }] },
+        data: {
+            labels: days.map(d => d.label),
+            datasets: [{
+                label: 'Хүсэлтийн тоо',
+                data: displayCounts,
+                backgroundColor: dayColors,
+                borderRadius: 6,
+                borderSkipped: false
+            }]
+        },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
                         label: ctx => {
-                            const day = days[ctx.dataIndex]; const da = actsOfDay(day);
-                            if (!da.length) return 'Акт байхгүй';
+                            const day = days[ctx.dataIndex];
+                            const da = actsOfDay(day);
+                            if (!da.length) return 'Хүсэлт байхгүй';
                             const total = da.reduce((s, a) => s + parseInt(a.amount || 0), 0);
-                            return da.length + 'ш · ₮' + parseInt(total).toLocaleString('mn-MN');
+                            return `${da.length}ш хүсэлт · ₮${parseInt(total).toLocaleString('mn-MN')}`;
                         },
-                        title: ctx => days[ctx[0].dataIndex].label + ' · ' + dayCounts[ctx[0].dataIndex] + 'ш акт'
+                        title: ctx => {
+                            const day = days[ctx[0].dataIndex];
+                            return `${day.label} · ${dayCounts[ctx[0].dataIndex]}ш хүсэлт`;
+                        }
                     }
                 }
             },
-            scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#888', autoSkip: false, maxRotation: 0 } }, y: { display: false, beginAtZero: true, min: 0 } },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10 }, color: '#888', autoSkip: false, maxRotation: 0 }
+                },
+                y: {
+                    beginAtZero: true,
+                    min: 0,
+                    ticks: {
+                        font: { size: 10 },
+                        color: '#888',
+                        stepSize: 1,
+                        precision: 0,
+                        callback: v => Number.isInteger(v) ? v : null
+                    },
+                    grid: { color: 'rgba(0,0,0,0.04)' }
+                }
+            },
         }
     });
 }

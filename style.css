@@ -1,11 +1,11 @@
 /* ================================================================
-   TALST ACT — PREMIUM UI STYLESHEET v3
+   TALST ACT — PREMIUM UI STYLESHEET v4 (CLEANED)
    ================================================================
-   v3 Updates:
-   - Partial approval modal + slider
-   - Remaining work modal
-   - Partial badge (orange)
-   - Remaining section styling
+   v4 Updates:
+   - Davhardsan code fragment-уудыг арилгасан
+   - --c-bg, --c-border, --c-accent нь :root дотор default утгатай болсон
+   - Buцаагдсан role card шинэ стайл
+   - Бусад ижил алдаануудыг засаж тохируулсан
    ================================================================ */
 
 
@@ -48,6 +48,12 @@
 
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
     --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* ★ ШИНЭ: Role card-ийн dynamic өнгөнүүдийн default утга
+       (JS inline-аар --c-bg, --c-border, --c-accent дамжуулна) */
+    --c-bg: rgba(255, 255, 255, 0.6);
+    --c-border: var(--border-subtle);
+    --c-accent: var(--border-default);
 }
 
 
@@ -493,7 +499,6 @@ body {
 .b2 { background: #e0e7ff; color: #312e81; }
 .b3 { background: #ffedd5; color: #7c2d12; }
 
-/* ШИНЭ: Хэсэгчлэн / Үлдэгдэл */
 .bpartial {
     background: linear-gradient(135deg, #fef3c7, #fde68a);
     color: #78350f;
@@ -506,7 +511,6 @@ body {
     animation: pulseBadge 2s ease-in-out infinite;
 }
 
-/* Хэсэгчлэн дууссан badge — өвөрмөц байдал */
 .bpartial-done {
     background: linear-gradient(135deg, #fed7aa, #fdba74);
     color: #7c2d12;
@@ -650,7 +654,6 @@ body {
     box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
-/* ШИНЭ: Хэсэгчлэн dot */
 .dpartial {
     background: linear-gradient(135deg, #f59e0b, #fbbf24);
     color: #fff;
@@ -701,7 +704,7 @@ body {
     background: #fafafa;
 }
 
-/* ШИНЭ: Цикл тусгаарлагч (Үлдэгдэл цикл) */
+/* Цикл тусгаарлагч (Үлдэгдэл цикл) */
 .cycle-sep {
     margin: 16px 0;
     padding: 12px 14px;
@@ -724,9 +727,7 @@ body {
     border-radius: 0 0 4px 4px;
 }
 
-.cycle-sep-line {
-    height: 0;
-}
+.cycle-sep-line { height: 0; }
 
 .cycle-sep-text {
     font-size: 11px;
@@ -743,9 +744,10 @@ body {
     font-weight: 500;
 }
 
-/* ════════════════════════════════════════════
-   АКТУУД ТАБ — Хайлт, Filter, Pagination
-   ════════════════════════════════════════════ */
+
+/* ================================================================
+   АКТУУД ТАБ — Хайлт болон Role cards (НЭГТГЭСЭН, ДАВХАРДУУЛААГҮЙ)
+   ================================================================ */
 
 .list-header {
     position: sticky;
@@ -759,75 +761,6 @@ body {
     border-bottom: 1px solid rgba(226, 232, 240, 0.6);
 }
 
-/* Хайлтын талбар */
-.list-search-wrap {
-    position: relative;
-    margin-bottom: 12px;
-}
-
-.list-search-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 14px;
-    pointer-events: none;
-    opacity: 0.5;
-}
-
-.list-search-input {
-    width: 100%;
-    padding: 11px 38px 11px 38px;
-    font-family: inherit;
-    font-size: 13px;
-    border: 1.5px solid var(--border-subtle);
-    border-radius: 24px;
-    background: rgba(255, 255, 255, 0.85);
-    color: var(--text-primary);
-    outline: none;
-    transition: all 0.2s var(--ease);
-}
-
-.list-search-input:focus {
-    border-color: var(--brand-primary);
-    background: #fff;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
-}
-
-.list-search-input::placeholder {
-    color: var(--text-tertiary);
-}
-
-.list-search-clear {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 22px;
-    height: 22px;
-    border: none;
-    background: rgba(15, 23, 42, 0.06);
-    border-radius: 50%;
-    color: var(--text-secondary);
-    font-size: 11px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s var(--ease);
-}
-
-.list-search-clear:hover {
-    background: rgba(239, 68, 68, 0.15);
-    color: #dc2626;
-    transform: translateY(-50%) scale(1.1);
-}
-
-/* ════════════════════════════════════════════════
-   АКТУУД ТАБ — Role Cards & Search
-   ════════════════════════════════════════════════ */
-
-/* Search input — баруун талд icon */
 .list-search-wrap {
     position: relative;
     margin-bottom: 14px;
@@ -897,7 +830,7 @@ body {
     transform: translateY(-50%) scale(1.1);
 }
 
-/* ─── Role Cards (4 том карт) ─── */
+/* ─── Role Cards ─── */
 .role-cards {
     display: flex;
     flex-direction: column;
@@ -910,8 +843,8 @@ body {
     align-items: center;
     gap: 14px;
     padding: 16px 18px;
-    background: var(--c-bg, rgba(255, 255, 255, 0.6));
-    border: 1.5px solid var(--c-border, var(--border-subtle));
+    background: var(--c-bg);
+    border: 1.5px solid var(--c-border);
     border-radius: var(--r-md);
     cursor: pointer;
     transition: all 0.25s var(--ease);
@@ -924,6 +857,7 @@ body {
 .role-card:nth-child(2) { animation-delay: 0.05s; }
 .role-card:nth-child(3) { animation-delay: 0.1s; }
 .role-card:nth-child(4) { animation-delay: 0.15s; }
+.role-card:nth-child(5) { animation-delay: 0.2s; }
 
 @keyframes roleCardIn {
     from { opacity: 0; transform: translateY(8px); }
@@ -933,7 +867,7 @@ body {
 .role-card:hover:not(.empty) {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-    border-color: var(--c-accent, var(--border-default));
+    border-color: var(--c-accent);
 }
 
 .role-card:active:not(.empty) {
@@ -990,7 +924,63 @@ body {
     font-weight: 600;
 }
 
-/* ─── Detail screen (нэг шатны акт-уудыг харуулах) ─── */
+/* ★ Буцаагдсан role card — улаан, өвөрмөц */
+.role-card-rejected {
+    position: relative;
+}
+
+.role-card-rejected:not(.empty) {
+    background: linear-gradient(
+            135deg,
+            rgba(254, 226, 226, 0.55),
+            rgba(252, 165, 165, 0.25)
+    );
+    border-color: rgba(220, 38, 38, 0.35);
+}
+
+.role-card-rejected:not(.empty)::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #dc2626;
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6);
+    animation: rejectedDotPulse 2s ease-in-out infinite;
+}
+
+@keyframes rejectedDotPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+        transform: scale(1.15);
+    }
+}
+
+.role-card-rejected:not(.empty):hover {
+    background: linear-gradient(
+            135deg,
+            rgba(254, 226, 226, 0.7),
+            rgba(252, 165, 165, 0.35)
+    );
+    border-color: rgba(220, 38, 38, 0.5);
+    box-shadow: 0 8px 20px rgba(220, 38, 38, 0.15);
+}
+
+.role-card-rejected.empty {
+    opacity: 0.45;
+}
+
+.role-card-rejected.empty::before {
+    display: none;
+}
+
+/* ─── Detail screen ─── */
 .role-detail-header {
     display: flex;
     align-items: center;
@@ -1041,7 +1031,6 @@ body {
     font-feature-settings: 'tnum';
 }
 
-/* Хайлтын үр дүнгийн hint */
 .search-result-hint {
     font-size: 11px;
     color: var(--text-secondary);
@@ -1052,7 +1041,6 @@ body {
     margin-bottom: 10px;
 }
 
-/* Section дотор тоо */
 .section-count {
     font-size: 9px;
     background: rgba(15, 23, 42, 0.06);
@@ -1065,7 +1053,6 @@ body {
     text-transform: none;
 }
 
-/* "Цааш үзэх" товч */
 .show-more-btn {
     width: 100%;
     margin-top: 14px;
@@ -1188,7 +1175,6 @@ body {
 
 .bok:active { transform: translateY(0); }
 
-/* ШИНЭ: Хэсэгчлэн батлах товч */
 .bpartial-btn {
     flex: 1;
     padding: 12px;
@@ -1231,7 +1217,6 @@ body {
     transform: translateY(-1px);
 }
 
-/* ШИНЭ: Гүйцээх товч (гүйцэтгэгчид) */
 .bcomplete {
     width: 100%;
     padding: 12px;
@@ -1321,7 +1306,7 @@ textarea {
     line-height: 1.5;
 }
 
-/* ===== DATE INPUT ===== */
+/* DATE INPUT */
 .date-row {
     display: flex;
     align-items: center;
@@ -1356,11 +1341,15 @@ textarea {
     box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.1);
 }
 
-/* ХООСОН үед БҮГДИЙГ нуух (зөвхөн calendar icon үлдэнэ) */
+/* WebStorm "Unknown pseudo-selector" анхааруулга — нөлөөгүй, lint-д
+   stylelint-disable хийсэн (ажилд буруу анхааруулга).
+   Зөвхөн WebKit (Safari/Chrome) browser-уудад үйлчилнэ. */
+/* noinspection CssInvalidPseudoSelector */
 .date-row input[type="date"]:invalid::-webkit-datetime-edit {
     opacity: 0;
 }
 
+/* noinspection CssInvalidPseudoSelector */
 .date-row input[type="date"]:focus::-webkit-datetime-edit,
 .date-row input[type="date"]:valid::-webkit-datetime-edit {
     opacity: 1;
@@ -1704,7 +1693,24 @@ textarea {
 .li.rejected .li-id    { color: #dc2626; }
 .li.rejected .li-sub   { color: #991b1b; }
 
-/* ШИНЭ: Үлдэгдэл хэсэг */
+.li.rejected .remaining-reason {
+    background: rgba(254, 226, 226, 0.6);
+    border-left-color: #dc2626;
+    color: #7f1d1d;
+    font-weight: 500;
+}
+
+.li.rejected .reject-timer {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: rgba(254, 226, 226, 0.5);
+    border-radius: 6px;
+    border: 1px dashed rgba(220, 38, 38, 0.3);
+    font-size: 11px;
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+
 .li.remaining {
     background: linear-gradient(135deg, rgba(254, 243, 199, 0.7), rgba(253, 230, 138, 0.5));
     border-color: rgba(245, 158, 11, 0.4);
@@ -1716,7 +1722,6 @@ textarea {
 .li.remaining .li-sub   { color: #92400e; }
 .li.remaining .mpct     { color: #d97706; font-weight: 700; }
 
-/* ШИНЭ: Хэсэгчлэн батлагдсан */
 .li.partial {
     background: linear-gradient(135deg, rgba(255, 237, 213, 0.6), rgba(254, 215, 170, 0.4));
     border-color: rgba(249, 115, 22, 0.3);
@@ -1725,7 +1730,6 @@ textarea {
 .li.partial .li-title { color: #7c2d12; }
 .li.partial .li-id    { color: #ea580c; }
 
-/* ХЭСЭГЧЛЭН ДУУССАН — өвөрмөц шар стайл */
 .li.partial-done {
     background: linear-gradient(135deg, rgba(254, 215, 170, 0.7), rgba(253, 186, 116, 0.5));
     border: 2px solid rgba(234, 88, 12, 0.4);
@@ -1753,7 +1757,6 @@ textarea {
     line-height: 1.5;
 }
 
-/* Нэгдсэн (хэсэгчлэн+үлдэгдэл) акт — алтан tinge */
 .li.done.merged {
     background: linear-gradient(135deg, rgba(209, 250, 229, 0.7), rgba(254, 243, 199, 0.5));
     border: 2px solid rgba(16, 185, 129, 0.4);
@@ -1779,7 +1782,6 @@ textarea {
     font-weight: 500;
 }
 
-/* ШИНЭ: Үлдэгдэл reason preview */
 .remaining-reason {
     margin-top: 8px;
     padding: 8px 10px;
@@ -2040,7 +2042,6 @@ textarea {
     transform: scale(1.05);
 }
 
-/* Үлдэгдэл актын reason нь detail page дээр */
 .partial-reason-card {
     background: linear-gradient(135deg, rgba(254, 243, 199, 0.5), rgba(253, 230, 138, 0.3));
     border: 1px solid rgba(245, 158, 11, 0.3);
@@ -2219,7 +2220,6 @@ textarea {
    19. PARTIAL MODAL — INTERNAL
    ================================================================ */
 
-/* Анхны дүн харуулах */
 .pm-original {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
     border: 1px solid rgba(99, 102, 241, 0.15);
@@ -2246,7 +2246,6 @@ textarea {
     letter-spacing: -0.02em;
 }
 
-/* Slider section */
 .pm-slider-section {
     margin-bottom: 18px;
 }
@@ -2277,7 +2276,6 @@ textarea {
     letter-spacing: -0.02em;
 }
 
-/* Custom slider */
 .pm-slider {
     width: 100%;
     height: 8px;
@@ -2316,7 +2314,6 @@ textarea {
     border: 3px solid #f59e0b;
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
     cursor: pointer;
-    border-style: solid;
 }
 
 .pm-slider-marks {
@@ -2333,7 +2330,6 @@ textarea {
     font-feature-settings: 'tnum';
 }
 
-/* Breakdown rows */
 .pm-breakdown {
     display: flex;
     flex-direction: column;
@@ -2409,7 +2405,6 @@ textarea {
 .pm-approved .pm-bd-amount { color: #059669; }
 .pm-remaining .pm-bd-amount { color: #d97706; }
 
-/* Reason section */
 .pm-reason-section {
     margin-bottom: 14px;
 }
@@ -2450,7 +2445,6 @@ textarea {
     line-height: 1.4;
 }
 
-/* Info box */
 .pm-info-box {
     display: flex;
     align-items: flex-start;
@@ -2478,7 +2472,6 @@ textarea {
     font-feature-settings: 'tnum';
 }
 
-/* Remaining modal — previous reason */
 .rm-prev-reason {
     background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(251, 191, 36, 0.04));
     border: 1px solid rgba(245, 158, 11, 0.2);
