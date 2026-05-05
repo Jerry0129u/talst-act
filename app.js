@@ -21,27 +21,48 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
-    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
-    { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
+    { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
+    { name: 'Инженер', email: 'unursaikhan@talstgroup.mn' },
+    { name: 'Захирал', email: 'enkhtuul@talstgroup.mn' },
+    { name: 'Нягтлан', email: 'naranzul@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'zolzaya@talstgroup.mn': 'Координатор',
-    'barsbat@talstgroup.mn': 'Инженер',
-    'zorigoo@talstgroup.mn': 'Захирал',
-    'bayarmaa@talstgroup.mn': 'Нягтлан',
+    'unumunkh@talstgroup.mn': 'Координатор',
+    'unursaikhan@talstgroup.mn': 'Инженер',
+    'enkhtuul@talstgroup.mn': 'Захирал',
+    'naranzul@talstgroup.mn': 'Нягтлан',
+    // ★ ШИНЭ: Хяналтын erkh (read-only + comment)
+    'ulziisaikhan@talstgroup.mn': 'CEO',
+    'narankhuu@talstgroup.mn': 'CFO',
 };
+
+// ★ ШИНЭ: Хяналтын role-ийн жагсаалт (read-only)
+const VIEWER_ROLES = ['CEO', 'CFO'];
+
+function isViewer(r) { return VIEWER_ROLES.includes(r); }
 
 const ROLE_COLORS = {
     'Координатор': '#e74c3c', 'Инженер': '#3498db',
     'Захирал': '#8e44ad', 'Нягтлан': '#27ae60', 'Гүйцэтгэгч': '#e67e22',
+    'CEO': '#0f172a', 'CFO': '#1e293b',
+};
+
+// ★ ШИНЭ: Avatar background gradient (Актууд табын role card-уудтай ижил тон)
+const ROLE_AVATAR_BG = {
+    'Координатор': 'linear-gradient(135deg, #ef4444, #dc2626)',
+    'Инженер':     'linear-gradient(135deg, #3b82f6, #2563eb)',
+    'Захирал':     'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+    'Нягтлан':     'linear-gradient(135deg, #10b981, #059669)',
+    'Гүйцэтгэгч':  'linear-gradient(135deg, #f59e0b, #d97706)',
+    // CEO / CFO — хар, executive өнгө
+    'CEO':         'linear-gradient(135deg, #1e293b, #0f172a)',
+    'CFO':         'linear-gradient(135deg, #334155, #1e293b)',
 };
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
+const SE = ['unumunkh@talstgroup.mn', 'unursaikhan@talstgroup.mn', 'enkhtuul@talstgroup.mn', 'naranzul@talstgroup.mn'];
 
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
@@ -213,6 +234,8 @@ window.confirmPartialApprove = confirmPartialApprove;
 window.openRemainingModal = openRemainingModal;
 window.closeRemainingModal = closeRemainingModal;
 window.confirmSubmitRemaining = confirmSubmitRemaining;
+// ★ ШИНЭ: CEO/CFO коммент бичих
+window.submitComment = submitComment;
 
 function readPdfAsBase64(file) {
     return new Promise(resolve => {
@@ -321,24 +344,44 @@ function sendPartialMail(act, approvedPct, approvedAmt, remainingAmt, reason, co
     });
 }
 
+// ★ ШИНЭ: Avatar дотор үсгийн оронд үүрэгт тохирсон icon
+const ROLE_AVATAR_ICONS = {
+    'Координатор': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M3 21v-2a7 7 0 0 1 14 0v2"></path></svg>',
+    'Инженер': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
+    'Захирал': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-3-3"></path><path d="M19 14V6"></path></svg>',
+    'Нягтлан': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
+    'Гүйцэтгэгч': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg>',
+    // ★ ШИНЭ: CEO = Crown (титэм), CFO = Briefcase (цүнх)
+    'CEO': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zM5 20h14"></path></svg>',
+    'CFO': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+};
+
 onAuthStateChanged(auth, u => {
     if (u) {
         cu = u; role = ROLES[u.email] || 'Гүйцэтгэгч';
         e('loginPage').style.display = 'none'; e('appPage').style.display = 'block';
-        const ini = (u.displayName || u.email).split(' ').map(n => n[0]).join('').toUpperCase().substr(0, 2);
-        e('uav').textContent = ini; e('uav').style.background = ROLE_COLORS[role] || '#888';
+        // Үсэг биш, үүргийн icon оруулах
+        e('uav').innerHTML = ROLE_AVATAR_ICONS[role] || ROLE_AVATAR_ICONS['Гүйцэтгэгч'];
+        e('uav').style.background = ROLE_AVATAR_BG[role] || 'linear-gradient(135deg, #6b7280, #4b5563)';
+        e('uav').style.color = '#fff';
         const SHORT_NAMES = {
             'unumunkh@talstgroup.mn': 'Б.Өнөмөнх',
             'unursaikhan@talstgroup.mn': 'Инженер',
             'enkhtuul@talstgroup.mn': 'Захирал',
-            'naranzul@talstgroup.mn': 'Нягтлан'
+            'naranzul@talstgroup.mn': 'Нягтлан',
+            'ulziisaikhan@talstgroup.mn': 'CEO',
+            'narankhuu@talstgroup.mn': 'CFO',
         };
         e('uname').textContent = SHORT_NAMES[u.email] || u.displayName || u.email;
         e('urole').textContent = role;
         e('aplbl').textContent = role + ' горимд батлах актууд';
+
+        // ★ ШИНЭ: CEO/CFO үед Илгээх таб болон Батлах таб нуух
+        applyViewerMode();
+
         listen();
         startAutoDeleteRejected();
-        startRejectedCountdownRefresh(); // ★ ШИНЭ
+        startRejectedCountdownRefresh();
     } else {
         cu = null; e('loginPage').style.display = 'flex'; e('appPage').style.display = 'none';
         if (unsub) { unsub(); unsub = null; }
@@ -400,6 +443,10 @@ function startRejectedCountdownRefresh() {
 }
 
 function go(n) {
+    // ★ ШИНЭ: CEO/CFO нь зөвхөн Актууд (2) болон Дашборд (3) хардаг
+    if (isViewer(role) && (n === 0 || n === 1)) {
+        n = 2; // автоматаар Актууд таб руу шилжих
+    }
     [0, 1, 2, 3].forEach(i => { e('p' + i).style.display = 'none'; e('tb' + i).classList.remove('on') });
     e('pd').style.display = 'none';
     e('p' + n).style.display = 'block'; e('tb' + n).classList.add('on'); ctab = n;
@@ -418,6 +465,23 @@ function opd(idx, from) {
     prev = from;
     [0, 1, 2, 3].forEach(i => { e('p' + i).style.display = 'none'; e('tb' + i).classList.remove('on') });
     e('pd').style.display = 'block'; e('dc').dataset.idx = idx; e('dc').innerHTML = detH(idx);
+}
+
+// ★ ШИНЭ: CEO/CFO үед UI-г hide/show хийх
+function applyViewerMode() {
+    if (isViewer(role)) {
+        // Илгээх (0) болон Батлах (1) таб-ыг нуух
+        const tab0 = e('tb0'); const tab1 = e('tb1');
+        if (tab0) tab0.style.display = 'none';
+        if (tab1) tab1.style.display = 'none';
+        // CEO/CFO эхлээд Актууд (2) таб дээр нээгдэнэ
+        go(2);
+    } else {
+        // Бусад role-уудад бүх таб харагдана
+        const tab0 = e('tb0'); const tab1 = e('tb1');
+        if (tab0) tab0.style.display = '';
+        if (tab1) tab1.style.display = '';
+    }
 }
 
 function rA0() {
@@ -868,6 +932,78 @@ async function confirmSubmitRemaining() {
 }
 
 // ════════════════════════════════════════════════════════════
+// ★★★ ХЯНАЛТЫН ТЭМДЭГЛЭЛ — CEO/CFO COMMENT ★★★
+// ════════════════════════════════════════════════════════════
+
+async function submitComment(docId) {
+    if (!isViewer(role)) { toast('Зөвхөн CEO/CFO тэмдэглэл бичих эрхтэй', 'err'); return; }
+    const a = acts.find(x => x.id === docId);
+    if (!a) { toast('Акт олдсонгүй', 'err'); return; }
+
+    const inputEl = e('commentInput-' + docId);
+    if (!inputEl) return;
+    const text = inputEl.value.trim();
+    if (!text) {
+        toast('Тэмдэглэл бичнэ үү', 'err');
+        inputEl.focus();
+        return;
+    }
+    if (text.length > 500) {
+        toast('Тэмдэглэл 500 тэмдэгтээс хэтрэхгүй байх', 'err');
+        return;
+    }
+
+    inputEl.disabled = true;
+
+    try {
+        const newEvs = [...(a.evs || []), {
+            type: 'viewer_comment',
+            who: cu.displayName || cu.email,
+            whoEmail: cu.email,
+            whoRole: role,
+            title: `💬 ${role}-ийн тэмдэглэл`,
+            detail: text,
+            time: ts(),
+            hash: gh()
+        }];
+
+        await updateDoc(doc(db, 'acts', docId), { evs: newEvs });
+
+        // ★ Гүйцэтгэгчид имэйл мэдэгдэл (хэрэв байгаа бол)
+        if (a.submittedBy) {
+            try {
+                const subject = `💬 ${role} таны акт дээр тэмдэглэл нэмлээ: ${a.actId}`;
+                const message = `Хүндэт ${a.submittedByName || 'гүйцэтгэгч'},\n\n`
+                    + `${role} (${cu.displayName || cu.email}) таны актад хяналтын тэмдэглэл нэмэв.\n\n`
+                    + `АКТ: ${a.actId}\n`
+                    + `Компани: ${a.company}\n`
+                    + `Ажил: ${a.work}\n\n`
+                    + `═══════════════════════════════════\n`
+                    + `${role}-ИЙН ТЭМДЭГЛЭЛ:\n`
+                    + `${text}\n`
+                    + `═══════════════════════════════════\n\n`
+                    + `Энэ тэмдэглэлийг бүх хэрэглэгч (Координатор, Инженер, Захирал, Нягтлан) харж болно.`;
+                await sendMail(a.submittedBy, a.submittedByName || 'Гүйцэтгэгч', a, cu.displayName || cu.email, {
+                    subject,
+                    message,
+                    type: 'viewer_comment',
+                    reason: text,
+                });
+            } catch (mailErr) {
+                console.error('Comment email алдаа:', mailErr);
+            }
+        }
+
+        // Input цэвэрлэх (UI snapshot нэмж шинэчлэгдэнэ)
+        toast(`✅ ${role} тэмдэглэл нэмэгдлээ!`);
+    } catch (err) {
+        console.error('Comment error:', err);
+        toast('Алдаа: ' + err.message, 'err');
+        inputEl.disabled = false;
+    }
+}
+
+// ════════════════════════════════════════════════════════════
 // FINAL PDF generation (өөрчлөгдөөгүй)
 // ════════════════════════════════════════════════════════════
 
@@ -1218,6 +1354,31 @@ function evH(ev, isLast) {
         </div>`;
     }
 
+    // ★ ШИНЭ: Хяналтын тэмдэглэл — өвөрмөц өнгөтэй
+    if (ev.type === 'viewer_comment') {
+        const roleColor = ev.whoRole === 'CEO' ? '#0f172a' : '#1e293b';
+        return `<div class="tli">
+            <div class="tll"><div class="dot dcomment">💬</div>${!isLast ? '<div class="dline lcomment"></div>' : ''}</div>
+            <div class="tlr"><div class="tlcard tlcard-comment">
+                <div class="tlch">
+                    <div>
+                        <div class="tlwho" style="color:${roleColor};font-weight:700">
+                            ${esc(ev.whoRole || 'Хяналт')} · ${esc(ev.who)}
+                        </div>
+                        <div class="tltitle">${esc(ev.title)}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:4px">
+                        <span style="font-size:12px">📋</span>
+                        <div class="tltime">${ev.time || ''}</div>
+                    </div>
+                </div>
+                <div class="tlcb tlcb-comment">
+                    <div class="tldtl tldtl-comment">${esc(ev.detail)}</div>
+                </div>
+            </div></div>
+        </div>`;
+    }
+
     let dc, ic, lk;
     if (ev.type === 'partial' || ev.type === 'remaining_created') {
         dc = 'dpartial'; ic = '⚠'; lk = '🔓';
@@ -1256,9 +1417,15 @@ function detH(idx) {
     const a = acts[idx]; if (!a) return '';
     const p = pct(a); const step = a.step || 0;
 
-    const canApprove = (a.status === 'pending' || a.status === 'partial') && role !== 'Гүйцэтгэгч' && RSTEP[role] === step;
+    // ★ ӨӨРЧЛӨСӨН: CEO/CFO action хийж чадахгүй
+    const canApprove = (a.status === 'pending' || a.status === 'partial')
+        && role !== 'Гүйцэтгэгч'
+        && !isViewer(role)
+        && RSTEP[role] === step;
     const canPartial = a.status === 'pending' && role === 'Координатор' && step === 0;
     const canComplete = a.status === 'remaining' && a.submittedBy === cu?.email;
+    // ★ ШИНЭ: CEO/CFO коммент бичих эрхтэй
+    const canComment = isViewer(role);
 
     const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : a.dateFrom || a.dateTo || '—';
     let pdfsHtml = '';
@@ -1322,6 +1489,24 @@ function detH(idx) {
         amountDisplay = `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
     }
 
+    // ★ ШИНЭ: Хяналтын тэмдэглэл хэсэг (зөвхөн CEO/CFO харагдана)
+    const commentSection = canComment ? `
+    <div class="comment-section">
+      <div class="comment-header">
+        <div class="comment-icon">${ROLE_AVATAR_ICONS[role] || ''}</div>
+        <div>
+          <div class="comment-title">Хяналтын тэмдэглэл нэмэх</div>
+          <div class="comment-subtitle">${esc(role)} — Энэ тэмдэглэлийг бүх хэрэглэгч харна</div>
+        </div>
+      </div>
+      <textarea id="commentInput-${a.id}" class="comment-input"
+                placeholder="Хяналтын тэмдэглэл, асуулт, эсвэл сонор хүлээж байгаа зүйлээ бичнэ үү..."
+                rows="3"></textarea>
+      <button class="comment-submit-btn" onclick="submitComment('${a.id}')">
+        💬 Тэмдэглэл нэмэх
+      </button>
+    </div>` : '';
+
     return `<div class="card">
     <div class="ch">
       <div><div class="cid">${esc(a.actId)} · ${esc(a.date)}</div><div class="ctitle">${esc(a.work)}</div></div>
@@ -1343,6 +1528,7 @@ function detH(idx) {
     ${actionBtns}
     ${finalBtn}
     <div class="tl"><div class="tll-label">ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ</div>${tl}</div>
+    ${commentSection}
   </div>`;
 }
 
@@ -1438,6 +1624,8 @@ function rA() {
     const el = e('al');
     if (!acts.length) { el.innerHTML = '<div class="empty">Акт байхгүй байна</div>'; return; }
     if (role === 'Гүйцэтгэгч') { el.innerHTML = '<div class="empty">Акт илгээх таб ашиглана уу</div>'; return; }
+    // ★ ШИНЭ: CEO/CFO энэ таб дээр орохгүй (UI hide), гэхдээ урьдчилан сэргийлэхийн тулд
+    if (isViewer(role)) { el.innerHTML = '<div class="empty">Хяналт хэрэглэгч батлах эрхгүй</div>'; return; }
 
     let list;
     if (role === 'Нягтлан') {

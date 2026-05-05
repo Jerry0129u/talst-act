@@ -309,6 +309,20 @@ body {
     font-size: 10px;
     font-weight: 700;
     box-shadow: var(--shadow-xs), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: transform 0.2s var(--ease);
+}
+
+/* ★ ШИНЭ: Avatar дотор SVG icon — үсэг бус */
+.uav svg {
+    width: 15px;
+    height: 15px;
+    stroke: #fff;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
+.user-pill:hover .uav {
+    transform: scale(1.08);
 }
 
 .uname {
@@ -2553,4 +2567,157 @@ textarea {
     .modal-footer { padding: 12px 16px 16px; }
     .pm-original-value { font-size: 20px; }
     .pm-slider-value { font-size: 24px; }
+}
+
+
+/* ================================================================
+   ★ ШИНЭ: ХЯНАЛТЫН ТЭМДЭГЛЭЛ — CEO/CFO COMMENT
+   ================================================================ */
+
+/* Comment timeline event — өвөрмөц өнгө (slate, executive) */
+.dot.dcomment {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
+    font-size: 13px;
+}
+
+.dline.lcomment {
+    background: linear-gradient(to bottom, #1e293b, #475569);
+}
+
+.tlcard-comment {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(30, 41, 59, 0.02));
+    border-color: rgba(15, 23, 42, 0.15) !important;
+    border-left: 3px solid #1e293b !important;
+}
+
+.tlcard-comment:hover {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.06), rgba(30, 41, 59, 0.03));
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.tlcb-comment {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-top-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+.tldtl-comment {
+    color: #1e293b !important;
+    font-style: italic;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+
+/* Detail page — Comment input section (зөвхөн CEO/CFO харагдана) */
+.comment-section {
+    margin: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.03), rgba(30, 41, 59, 0.02));
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-xs);
+    animation: cardFadeIn 0.4s var(--ease);
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.comment-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+}
+
+.comment-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke: #fff;
+}
+
+.comment-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+}
+
+.comment-subtitle {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.comment-input {
+    width: 100%;
+    min-height: 70px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: #fff;
+    resize: vertical;
+    line-height: 1.5;
+    transition: all 0.2s var(--ease);
+    margin-bottom: 10px;
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: #1e293b;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+.comment-input:disabled {
+    background: #f1f5f9;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.comment-submit-btn {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    letter-spacing: -0.01em;
+}
+
+.comment-submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.3);
+    background: linear-gradient(135deg, #0f172a, #020617);
+}
+
+.comment-submit-btn:active {
+    transform: translateY(0);
+}
+
+.comment-submit-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
