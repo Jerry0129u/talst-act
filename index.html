@@ -32,21 +32,9 @@
 <!-- ====== ANIMATED MESH BACKGROUND (Stripe-style flowing ribbons) ====== -->
 <canvas id="meshCanvas"></canvas>
 
-<!-- ====== THEME TOGGLE (sun/moon, top-right) ====== -->
-<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Theme toggle">
-  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="4"></circle>
-    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
-  </svg>
-  <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-  </svg>
-</button>
-
 <script>
   function toggleTheme() {
     var current = document.documentElement.getAttribute('data-theme');
-    // dark болон default (=null) бол light руу шилж, бусад үед dark
     var next = current === 'light' ? 'dark' : 'light';
     if (next === 'dark') {
       document.documentElement.removeAttribute('data-theme');
@@ -73,8 +61,11 @@
 <!-- ========================================================== -->
 <div class="login-wrap" id="loginPage">
   <div class="login-card">
-    <img src="images/white.png"
-         style="height:54px;width:auto;object-fit:contain;margin:0 auto 20px;display:block;filter:brightness(1.1)"
+    <img src="images/white.png" class="logo logo-light"
+         style="height:54px;width:auto;object-fit:contain;margin:0 auto 20px;display:block"
+         alt="Talst Group">
+    <img src="images/blue.png" class="logo logo-dark"
+         style="height:54px;width:auto;object-fit:contain;margin:0 auto 20px;display:block"
          alt="Talst Group">
 
     <div class="login-sub">
@@ -107,16 +98,32 @@
 
   <!-- ==== TOPBAR ==== -->
   <div class="topbar">
-    <img src="images/white.png"
-         style="height:32px;width:auto;object-fit:contain;filter:brightness(1.1)"
+    <img src="images/white.png" class="logo logo-light"
+         style="height:32px;width:auto;object-fit:contain"
+         alt="Talst Group">
+    <img src="images/blue.png" class="logo logo-dark"
+         style="height:32px;width:auto;object-fit:contain"
          alt="Talst Group">
 
-    <div class="user-pill" onclick="doSignOut()">
-      <div class="uav" id="uav"></div>
-      <div>
-        <div class="uname" id="uname">...</div>
-        <div class="urole" id="urole">...</div>
+    <div class="topbar-right">
+      <div class="user-pill" onclick="doSignOut()">
+        <div class="uav" id="uav"></div>
+        <div>
+          <div class="uname" id="uname">...</div>
+          <div class="urole" id="urole">...</div>
+        </div>
       </div>
+
+      <!-- Theme toggle — profile-ийн баруун хажууд -->
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Theme toggle">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
     </div>
   </div>
 
