@@ -21,25 +21,22 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
+    { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
     { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
     { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
     { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'zolzaya@talstgroup.mn': 'Координатор',
+    'unumunkh@talstgroup.mn': 'Координатор',
     'barsbat@talstgroup.mn': 'Инженер',
     'zorigoo@talstgroup.mn': 'Захирал',
     'bayarmaa@talstgroup.mn': 'Нягтлан',
-    // ★ ШИНЭ: Хяналтын erkh (read-only + comment)
     'ulziisaikhan@talstgroup.mn': 'CEO',
     'narankhuu@talstgroup.mn': 'CFO',
 };
 
-// ★ ШИНЭ: Хяналтын role-ийн жагсаалт (read-only)
 const VIEWER_ROLES = ['CEO', 'CFO'];
-
 function isViewer(r) { return VIEWER_ROLES.includes(r); }
 
 const ROLE_COLORS = {
@@ -48,23 +45,24 @@ const ROLE_COLORS = {
     'CEO': '#0f172a', 'CFO': '#1e293b',
 };
 
-// ★ ШИНЭ: Avatar background gradient (Актууд табын role card-уудтай ижил тон)
 const ROLE_AVATAR_BG = {
     'Координатор': 'linear-gradient(135deg, #ef4444, #dc2626)',
     'Инженер':     'linear-gradient(135deg, #3b82f6, #2563eb)',
     'Захирал':     'linear-gradient(135deg, #8b5cf6, #7c3aed)',
     'Нягтлан':     'linear-gradient(135deg, #10b981, #059669)',
     'Гүйцэтгэгч':  'linear-gradient(135deg, #f59e0b, #d97706)',
-    // CEO / CFO — хар, executive өнгө
     'CEO':         'linear-gradient(135deg, #1e293b, #0f172a)',
     'CFO':         'linear-gradient(135deg, #334155, #1e293b)',
 };
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-const SE = ['zolzaya@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigootalstgroup.mn', 'bayarmaa@talstgroup.mn'];
+const SE = ['unumunkh@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigootalstgroup.mn', 'bayarmaa@talstgroup.mn'];
 
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
+
+// ★★★ ШИНЭ: Нотариатын тогтмол ★★★
+const NOTARY_DEDUCT_PERCENT = 20; // Төлөөгүй бол хасах хувь
 
 // --- FIREBASE INIT ---
 const fapp = initializeApp(cfg);
@@ -73,14 +71,19 @@ const db = getFirestore(fapp);
 
 let cu = null, role = 'Гүйцэтгэгч', acts = [], prev = 2, ctab = 0, unsub = null;
 let pdfDataList = [];
+let notaryPdfList = []; // ★ ШИНЭ: Нотариатын PDF
 let cachedFont = null;
 let autoDeleteInterval = null;
-let rejectedCountdownInterval = null; // ★ ШИНЭ: Countdown timer-д
+let rejectedCountdownInterval = null;
 
 // Modal state
 let currentPartialActId = null;
 let currentRemainingActId = null;
+let currentNotaryActId = null; // ★ ШИНЭ
 let remainingPdfList = [];
+
+// ★ ШИНЭ: Нотариатын төлөв (partial modal-д дамжуулах)
+let pendingNotaryStatus = null; // 'paid' эсвэл 'unpaid'
 
 const e = id => document.getElementById(id);
 
@@ -89,7 +92,6 @@ function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&
 function ts() { return new Date().toLocaleString('mn-MN') }
 function gh() { return 'sha256:' + Math.random().toString(36).substr(2, 8) + '...' + Math.random().toString(36).substr(2, 4) }
 
-// Прогресс хувь — partial болон remaining-ийг бас тооцно
 function pct(a) {
     if (a.status === 'done') return 100;
     if (a.status === 'partial_done') return a.approvedPercent || 100;
@@ -98,7 +100,6 @@ function pct(a) {
     return Math.round((a.step || 0) / 4 * 100);
 }
 
-// Badge класс
 function bc(a) {
     if (a.status === 'done') return 'bd';
     if (a.status === 'partial_done') return 'bpartial-done';
@@ -109,7 +110,6 @@ function bc(a) {
     return ['bw', 'bp', 'b1', 'b2', 'b3'][s] || 'bp';
 }
 
-// Badge текст
 function bt(a) {
     if (a.status === 'done') {
         if (a.completedViaRemaining) return '✓ 100% дууссан (Нэгдсэн)';
@@ -134,6 +134,7 @@ function todayYMD() {
 
 window.fmtAmt = () => { const v = e('fa').value; e('amtFmt').textContent = v && !isNaN(v) ? '₮ ' + parseInt(v).toLocaleString() : ''; };
 
+// === АЖЛЫН PDF ===
 window.addPdfs = async (input) => {
     const files = Array.from(input.files); if (!files.length) return;
     e('compInfo').textContent = 'PDF боловсруулж байна...';
@@ -153,7 +154,38 @@ window.rmPdf = (i) => {
     e('compInfo').textContent = pdfDataList.length ? `${pdfDataList.length} PDF · ~${total}KB` : '';
 };
 
-// ★ REMAINING MODAL — PDF upload
+// ★★★ ШИНЭ: НОТАРИАТЫН PDF ★★★
+window.addNotaryPdfs = async (input) => {
+    const files = Array.from(input.files); if (!files.length) return;
+    e('notaryInfo').textContent = 'Нотариатын PDF боловсруулж байна...';
+    for (const f of files) {
+        if (f.type !== 'application/pdf') { toast('Зөвхөн PDF файл сонгоно уу: ' + f.name, 'err'); continue; }
+        notaryPdfList.push(await readPdfAsBase64(f));
+    }
+    renderNotaryPdfList();
+    const total = notaryPdfList.reduce((s, x) => s + x.sizeKb, 0);
+    e('notaryInfo').textContent = `${notaryPdfList.length} нотариатын PDF · ~${total}KB`;
+    input.value = '';
+};
+
+window.rmNotaryPdf = (i) => {
+    notaryPdfList.splice(i, 1); renderNotaryPdfList();
+    const total = notaryPdfList.reduce((s, x) => s + x.sizeKb, 0);
+    e('notaryInfo').textContent = notaryPdfList.length ? `${notaryPdfList.length} нотариатын PDF · ~${total}KB` : '';
+};
+
+function renderNotaryPdfList() {
+    e('notaryList').innerHTML = notaryPdfList.map((d, i) => `
+    <div class="pdf-item pdf-item-notary">
+      <div class="pdf-info"><span class="pdf-icon">📜</span>
+        <span class="pdf-name" title="${esc(d.name)}">${esc(d.name)}</span>
+      </div>
+      <span class="pdf-size">${d.sizeKb}KB</span>
+      <div class="pdf-rm" onclick="rmNotaryPdf(${i})">✕</div>
+    </div>`).join('');
+}
+
+// === REMAINING PDF ===
 window.addRemainingPdfs = async (input) => {
     const files = Array.from(input.files); if (!files.length) return;
     for (const f of files) {
@@ -180,7 +212,7 @@ function renderRemainingPdfList() {
     </div>`).join('');
 }
 
-// ★★★ GOOGLE SIGN-IN ★★★
+// === GOOGLE SIGN-IN ===
 window.signInGoogle = async () => {
     try {
         if (isNative) {
@@ -226,7 +258,6 @@ window.go = go; window.bk = bk; window.opd = opd;
 window.submitAct = submitAct; window.approve = approve; window.reject = reject;
 window.downloadFinalPdf = downloadFinalPdf;
 
-// ★ ШИНЭ FUNCTIONS — partial approval & remaining
 window.openPartialModal = openPartialModal;
 window.closePartialModal = closePartialModal;
 window.updatePartialPreview = updatePartialPreview;
@@ -234,8 +265,13 @@ window.confirmPartialApprove = confirmPartialApprove;
 window.openRemainingModal = openRemainingModal;
 window.closeRemainingModal = closeRemainingModal;
 window.confirmSubmitRemaining = confirmSubmitRemaining;
-// ★ ШИНЭ: CEO/CFO коммент бичих
 window.submitComment = submitComment;
+
+// ★★★ ШИНЭ: НОТАРИАТЫН MODAL функцууд ★★★
+window.openNotaryModal = openNotaryModal;
+window.closeNotaryModal = closeNotaryModal;
+window.chooseNotaryPaid = chooseNotaryPaid;
+window.chooseNotaryUnpaid = chooseNotaryUnpaid;
 
 function readPdfAsBase64(file) {
     return new Promise(resolve => {
@@ -263,9 +299,8 @@ function toast(m, t = 'ok') {
 }
 
 // ════════════════════════════════════════════════════════════
-// ★★★ EMAIL SENDING — Шинэчилсэн ★★★
+// EMAIL SENDING
 // ════════════════════════════════════════════════════════════
-// Үндсэн илгээх функц (батлах chain-д явах энгийн email)
 function sendMail(toEmail, toName, act, fromName, opts = {}) {
     const params = {
         to_email: toEmail,
@@ -277,7 +312,6 @@ function sendMail(toEmail, toName, act, fromName, opts = {}) {
         from_name: fromName,
         email: toEmail,
         name: fromName,
-        // Шинэ нэмэлт талбарууд (template-д ашиглагдана)
         subject: opts.subject || `Шинэ акт: ${act.actId || ''}`,
         message: opts.message || `${fromName} танд акт илгээлээ. Батлуулна уу.`,
         notification_type: opts.type || 'approval_request',
@@ -292,7 +326,6 @@ function sendMail(toEmail, toName, act, fromName, opts = {}) {
         .catch(err => { console.error('❌ Email error:', err); throw err; });
 }
 
-// ★ ШИНЭ: Гүйцэтгэгчид буцаах мэдэгдэл
 function sendRejectionMail(act, reason, rejectorName, rejectorRole) {
     if (!act.submittedBy) return Promise.resolve();
     const subject = `❌ Таны акт буцаагдлаа: ${act.actId}`;
@@ -307,14 +340,10 @@ function sendRejectionMail(act, reason, rejectorName, rejectorRole) {
         + `ШАЛТГААН: ${reason}\n\n`
         + `Та шалтгааныг нягталж дахин илгээнэ үү.`;
     return sendMail(act.submittedBy, act.submittedByName || 'Гүйцэтгэгч', act, rejectorName, {
-        subject,
-        message,
-        type: 'rejection',
-        reason: reason,
+        subject, message, type: 'rejection', reason: reason,
     });
 }
 
-// ★ ШИНЭ: Гүйцэтгэгчид хэсэгчлэн батласан мэдэгдэл
 function sendPartialMail(act, approvedPct, approvedAmt, remainingAmt, reason, coordinatorName) {
     if (!act.submittedBy) return Promise.resolve();
     const subject = `⚠ Таны акт хэсэгчлэн батлагдлаа: ${act.actId} (${approvedPct}%)`;
@@ -331,27 +360,21 @@ function sendPartialMail(act, approvedPct, approvedAmt, remainingAmt, reason, co
         + `═══════════════════════════════════\n\n`
         + `ХЭСЭГЧЛЭН БАТЛАСАН ШАЛТГААН:\n${reason}\n\n`
         + `Координатор: ${coordinatorName}\n\n`
-        + `Үлдэгдэл ажлаа гүйцээгээд шинэ актаар дахин илгээнэ үү. `
-        + `"Илгээх" таб-д "Үлдэгдэл гүйцээх" хэсэг үүссэн байгаа.`;
+        + `Үлдэгдэл ажлаа гүйцээгээд шинэ актаар дахин илгээнэ үү.`;
     return sendMail(act.submittedBy, act.submittedByName || 'Гүйцэтгэгч', act, coordinatorName, {
-        subject,
-        message,
-        type: 'partial_approval',
-        reason: reason,
+        subject, message, type: 'partial_approval', reason: reason,
         approvedPercent: approvedPct + '%',
         approvedAmount: '₮' + fmtN(approvedAmt),
         remainingAmount: '₮' + fmtN(remainingAmt),
     });
 }
 
-// ★ ШИНЭ: Avatar дотор үсгийн оронд үүрэгт тохирсон icon
 const ROLE_AVATAR_ICONS = {
     'Координатор': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M3 21v-2a7 7 0 0 1 14 0v2"></path></svg>',
     'Инженер': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
     'Захирал': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-3-3"></path><path d="M19 14V6"></path></svg>',
     'Нягтлан': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
     'Гүйцэтгэгч': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg>',
-    // ★ ШИНЭ: CEO = Crown (титэм), CFO = Briefcase (цүнх)
     'CEO': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zM5 20h14"></path></svg>',
     'CFO': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
 };
@@ -360,7 +383,6 @@ onAuthStateChanged(auth, u => {
     if (u) {
         cu = u; role = ROLES[u.email] || 'Гүйцэтгэгч';
         e('loginPage').style.display = 'none'; e('appPage').style.display = 'block';
-        // Үсэг биш, үүргийн icon оруулах
         e('uav').innerHTML = ROLE_AVATAR_ICONS[role] || ROLE_AVATAR_ICONS['Гүйцэтгэгч'];
         e('uav').style.background = ROLE_AVATAR_BG[role] || 'linear-gradient(135deg, #6b7280, #4b5563)';
         e('uav').style.color = '#fff';
@@ -376,9 +398,7 @@ onAuthStateChanged(auth, u => {
         e('urole').textContent = role;
         e('aplbl').textContent = role + ' горимд батлах актууд';
 
-        // ★ ШИНЭ: CEO/CFO үед Илгээх таб болон Батлах таб нуух
         applyViewerMode();
-
         listen();
         startAutoDeleteRejected();
         startRejectedCountdownRefresh();
@@ -428,25 +448,18 @@ function startAutoDeleteRejected() {
     autoDeleteInterval = setInterval(cleanupExpiredRejected, 5 * 60 * 1000);
 }
 
-// ★ ШИНЭ: Буцаагдсан карт дээрх countdown timer-ыг 30 секунд тутамд шинэчлэх
 function startRejectedCountdownRefresh() {
     if (rejectedCountdownInterval) clearInterval(rejectedCountdownInterval);
     rejectedCountdownInterval = setInterval(() => {
-        // Зөвхөн "Актууд" таб дээр + буцаагдсан role идэвхтэй үед шинэчлэх
         if (ctab === 2) {
-            // Хэрвээ буцаагдсан role card сонгогдсон бол body-г refresh хийнэ
             if (listFilter === 'rejected') renderListBody();
-            // Эсвэл home screen дээр бол card-ийн тоог шинэчилнэ
             else if (!listFilter) renderListBody();
         }
-    }, 30 * 1000); // 30 секунд тутамд
+    }, 30 * 1000);
 }
 
 function go(n) {
-    // ★ ШИНЭ: CEO/CFO нь зөвхөн Актууд (2) болон Дашборд (3) хардаг
-    if (isViewer(role) && (n === 0 || n === 1)) {
-        n = 2; // автоматаар Актууд таб руу шилжих
-    }
+    if (isViewer(role) && (n === 0 || n === 1)) n = 2;
     [0, 1, 2, 3].forEach(i => { e('p' + i).style.display = 'none'; e('tb' + i).classList.remove('on') });
     e('pd').style.display = 'none';
     e('p' + n).style.display = 'block'; e('tb' + n).classList.add('on'); ctab = n;
@@ -467,17 +480,13 @@ function opd(idx, from) {
     e('pd').style.display = 'block'; e('dc').dataset.idx = idx; e('dc').innerHTML = detH(idx);
 }
 
-// ★ ШИНЭ: CEO/CFO үед UI-г hide/show хийх
 function applyViewerMode() {
     if (isViewer(role)) {
-        // Илгээх (0) болон Батлах (1) таб-ыг нуух
         const tab0 = e('tb0'); const tab1 = e('tb1');
         if (tab0) tab0.style.display = 'none';
         if (tab1) tab1.style.display = 'none';
-        // CEO/CFO эхлээд Актууд (2) таб дээр нээгдэнэ
         go(2);
     } else {
-        // Бусад role-уудад бүх таб харагдана
         const tab0 = e('tb0'); const tab1 = e('tb1');
         if (tab0) tab0.style.display = '';
         if (tab1) tab1.style.display = '';
@@ -515,28 +524,42 @@ function liHRemainingForExecutor(a, idx) {
     </div>`;
 }
 
+// ★★★ SUBMIT — нотариатын PDF хадгална ★★★
 async function submitAct() {
     const c = e('fc').value.trim(), g = e('fg').value.trim(), w = e('fw').value.trim(), a = e('fa').value.trim();
     if (!c || !g || !w || !a) { toast('Компани, гэрээ, ажил, дүн заавал!', 'err'); return; }
     const totalKb = pdfDataList.reduce((s, x) => s + x.sizeKb, 0);
-    if (totalKb > 2048) { toast(`PDF нийт ${totalKb}KB — 2MB-аас бага байх ёстой.`, 'err'); return; }
+    const notaryKb = notaryPdfList.reduce((s, x) => s + x.sizeKb, 0);
+    const grandTotalKb = totalKb + notaryKb;
+    if (grandTotalKb > 4096) { toast(`PDF нийт ${grandTotalKb}KB — 4MB-аас бага байх ёстой.`, 'err'); return; }
     const btn = e('sbtn'); btn.disabled = true; btn.textContent = 'Илгээж байна...';
     e('progWrap').style.display = 'block'; e('progText').style.display = 'block';
     e('progBar').style.width = '20%'; e('progText').textContent = 'Мэдээлэл бэлдэж байна...';
     const aid = 'АКТ-' + new Date().getFullYear() + '-' + String(Date.now()).substr(-4);
     try {
         e('progBar').style.width = '60%'; e('progText').textContent = 'Firestore-д хадгалж байна...';
+        const hasNotary = notaryPdfList.length > 0;
         const actData = {
             actId: aid, date: todayYMD(),
             company: c, contract: g, work: w, dateFrom: e('fd1').value, dateTo: e('fd2').value, amount: a,
             pdfs: pdfDataList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb })),
-            pdfCount: pdfDataList.length, step: 0, status: 'pending',
+            pdfCount: pdfDataList.length,
+            // ★ ШИНЭ нотариатын талбарууд
+            notaryPdfs: notaryPdfList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb })),
+            notaryPdfCount: notaryPdfList.length,
+            hasNotaryAttachment: hasNotary,
+            notaryStatus: null, // 'paid' / 'unpaid' / null — Координатор шийдэхэд тохируулна
+            notaryDeductedAmount: null, // 20% хасагдсан тохиолдолд
+            originalAmountBeforeNotary: null, // notary-аас өмнөх дүн
+            step: 0, status: 'pending',
             submittedBy: cu.email, submittedByName: cu.displayName || cu.email,
             createdAt: serverTimestamp(),
             evs: [{
                 type: 'submit', who: cu.displayName || cu.email, whoEmail: cu.email,
                 title: 'Акт илгээсэн',
-                detail: c + ' · ' + g + ' · ₮' + fmtN(a) + (pdfDataList.length ? ` · ${pdfDataList.length} PDF (~${totalKb}KB)` : ' · Баримтгүй'),
+                detail: c + ' · ' + g + ' · ₮' + fmtN(a)
+                    + (pdfDataList.length ? ` · ${pdfDataList.length} ажлын PDF (~${totalKb}KB)` : ' · Ажлын баримтгүй')
+                    + (hasNotary ? ` · ${notaryPdfList.length} нотариатын PDF (~${notaryKb}KB)` : ' · 📜 Нотариатын баримт ХАВСРААГҮЙ'),
                 time: ts(), hash: gh()
             }]
         };
@@ -546,16 +569,202 @@ async function submitAct() {
         e('progBar').style.width = '100%';
         toast('✅ Акт илгээгдлээ! Координаторт email очлоо.');
         ['fc', 'fg', 'fw', 'fd1', 'fd2', 'fa'].forEach(id => e(id).value = '');
-        pdfDataList = []; e('pdfList').innerHTML = ''; e('compInfo').textContent = ''; e('amtFmt').textContent = '';
+        pdfDataList = []; notaryPdfList = [];
+        e('pdfList').innerHTML = ''; e('compInfo').textContent = '';
+        e('notaryList').innerHTML = ''; e('notaryInfo').textContent = '';
+        e('amtFmt').textContent = '';
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); console.error(err); }
     btn.disabled = false; btn.textContent = 'Акт илгээх';
     setTimeout(() => { e('progWrap').style.display = 'none'; e('progText').style.display = 'none'; e('progBar').style.width = '0%'; }, 1500);
 }
 
+// ════════════════════════════════════════════════════════════
+// ★★★ НОТАРИАТЫН MODAL — Координаторын шийдэл ★★★
+// ════════════════════════════════════════════════════════════
+
+function openNotaryModal(docId) {
+    const a = acts.find(x => x.id === docId);
+    if (!a) return;
+    if (role !== 'Координатор') { toast('Зөвхөн Координатор шалгах эрхтэй', 'err'); return; }
+    if (a.status !== 'pending' || (a.step || 0) !== 0) { toast('Зөвхөн анхны шалгалтын үед боломжтой', 'err'); return; }
+    if (a.notaryStatus) { toast('Нотариат аль хэдийн шалгагдсан', 'err'); return; }
+
+    currentNotaryActId = docId;
+    const total = parseInt(a.amount);
+    const deduction = Math.round(total * NOTARY_DEDUCT_PERCENT / 100);
+    const afterDeduction = total - deduction;
+
+    e('nmActId').textContent = a.actId;
+    e('nmOriginalAmt').textContent = '₮' + fmtN(total);
+    e('nmPaidAmt').textContent = '₮' + fmtN(total);
+    e('nmUnpaidAmt').textContent = '₮' + fmtN(afterDeduction);
+    e('nmDeductAmt').textContent = '₮' + fmtN(deduction);
+
+    // Нотариатын баримт inline харуулах
+    const notaryList = e('nmNotaryList');
+    const titleEl = e('nmFilesTitle');
+    const subEl = e('nmFilesSub');
+
+    if (a.notaryPdfs && a.notaryPdfs.length) {
+        titleEl.textContent = 'Хавсаргасан нотариатын баримт';
+        subEl.textContent = `${a.notaryPdfs.length} файл · ${a.notaryPdfs.reduce((s, p) => s + (p.sizeKb || 0), 0)}KB`;
+        notaryList.innerHTML = a.notaryPdfs.map((pdf, i) => `
+            <div class="nm-notary-item">
+                <div class="nm-notary-item-head">
+                    <span class="nm-notary-icon">📜</span>
+                    <span class="nm-notary-name">${esc(pdf.name)}</span>
+                    <span class="nm-notary-size">${pdf.sizeKb}KB</span>
+                </div>
+                <iframe src="${pdf.base64}#toolbar=0&navpanes=0&view=FitH"
+                        class="nm-notary-preview"
+                        title="${esc(pdf.name)}"></iframe>
+            </div>
+        `).join('');
+    } else {
+        titleEl.textContent = '⚠ Нотариатын баримт хавсраагүй';
+        subEl.textContent = 'Гүйцэтгэгч баримт оруулаагүй';
+        notaryList.innerHTML = `
+            <div class="nm-no-notary">
+                <div class="nm-no-notary-icon">📭</div>
+                <div class="nm-no-notary-text">
+                    Энэ актад нотариатын баримт хавсаргаагүй байна.
+                    Та өөрийн нөөц мэдээллээс шалгаж, төлсөн эсэхийг сонгоно уу.
+                </div>
+            </div>`;
+    }
+
+    e('notaryModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeNotaryModal() {
+    e('notaryModal').classList.remove('open');
+    document.body.style.overflow = '';
+    currentNotaryActId = null;
+    pendingNotaryStatus = null;
+}
+
+// "Нотариат төлсөн" товч
+async function chooseNotaryPaid() {
+    const a = acts.find(x => x.id === currentNotaryActId);
+    if (!a) return;
+
+    const btn = e('nmPaidBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    try {
+        const newEvs = [...(a.evs || []), {
+            type: 'notary_check', who: cu.displayName || cu.email, whoEmail: cu.email,
+            title: '📜 Нотариат шалгасан: ТӨЛСӨН',
+            detail: `Координатор нотариатын төлбөр төлөгдсөнийг баталгаажуулав. Дүн хэвээр ₮${fmtN(a.amount)} үлдэв.`
+                + (a.hasNotaryAttachment ? ` Хавсарсан баримт: ${a.notaryPdfCount} PDF` : ' Баримт хавсраагүй (Координатор гараар шалгасан)'),
+            time: ts(), hash: gh()
+        }];
+
+        await updateDoc(doc(db, 'acts', currentNotaryActId), {
+            notaryStatus: 'paid',
+            notaryCheckedAt: serverTimestamp(),
+            notaryCheckedBy: cu.email,
+            evs: newEvs
+        });
+
+        toast('✅ Нотариат төлсөн — Дүн хэвээр үлдлээ. Одоо батлах сонгоно уу.');
+        closeNotaryModal();
+        // Detail page-ийг шинэчлэхэд снапшот автоматаар хийнэ
+    } catch (err) {
+        console.error('Notary paid error:', err);
+        toast('Алдаа: ' + err.message, 'err');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+}
+
+// "Нотариат төлөөгүй" товч — 20% хасах + хэсэгчлэн модал нээх
+async function chooseNotaryUnpaid() {
+    const a = acts.find(x => x.id === currentNotaryActId);
+    if (!a) return;
+
+    const btn = e('nmUnpaidBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    try {
+        const originalAmt = parseInt(a.amount);
+        const deduction = Math.round(originalAmt * NOTARY_DEDUCT_PERCENT / 100);
+        const newAmount = originalAmt - deduction;
+
+        const newEvs = [...(a.evs || []), {
+            type: 'notary_check', who: cu.displayName || cu.email, whoEmail: cu.email,
+            title: '📜 Нотариат шалгасан: ТӨЛӨӨГҮЙ — 20% хасагдав',
+            detail: `Координатор нотариатын төлбөр төлөгдөөгүйг тогтоов. `
+                + `Анхны дүн: ₮${fmtN(originalAmt)} → Хасагдах ${NOTARY_DEDUCT_PERCENT}%: -₮${fmtN(deduction)} → `
+                + `Шинэ үндсэн дүн: ₮${fmtN(newAmount)}. Хэсэгчилсэн батлалт автоматаар эхэллээ.`,
+            time: ts(), hash: gh()
+        }];
+
+        // Firestore-д хадгална — дүнг шинэчилнэ
+        await updateDoc(doc(db, 'acts', currentNotaryActId), {
+            notaryStatus: 'unpaid',
+            notaryCheckedAt: serverTimestamp(),
+            notaryCheckedBy: cu.email,
+            originalAmountBeforeNotary: String(originalAmt),
+            notaryDeductedAmount: String(deduction),
+            amount: String(newAmount), // ★ Үндсэн дүн өөрчлөгдөнө
+            evs: newEvs
+        });
+
+        // ★ ШИНЭ: Гүйцэтгэгчид мэдэгдэх (нотариат төлөөгүй тул 20% хасагдсан)
+        if (a.submittedBy) {
+            try {
+                const subject = `📜 Таны актын нотариатын төлбөр төлөгдөөгүй: ${a.actId}`;
+                const message = `Хүндэт ${a.submittedByName || 'гүйцэтгэгч'},\n\n`
+                    + `Таны илгээсэн актын нотариатын төлбөр төлөгдөөгүй тул дүнгээс 20% хасагдлаа.\n\n`
+                    + `АКТ: ${a.actId}\n`
+                    + `Компани: ${a.company}\n`
+                    + `Ажил: ${a.work}\n\n`
+                    + `═══════════════════════════════════\n`
+                    + `Анхны дүн: ₮${fmtN(originalAmt)}\n`
+                    + `Хасагдах (20%): -₮${fmtN(deduction)}\n`
+                    + `Шинэ үндсэн дүн: ₮${fmtN(newAmount)}\n`
+                    + `═══════════════════════════════════\n\n`
+                    + `Координатор: ${cu.displayName || cu.email}`;
+                await sendMail(a.submittedBy, a.submittedByName || 'Гүйцэтгэгч',
+                    { ...a, amount: String(newAmount) },
+                    cu.displayName || cu.email,
+                    { subject, message, type: 'notary_unpaid' });
+            } catch (e) { console.error('Notary mail:', e); }
+        }
+
+        toast(`⚠ 20% хасагдлаа (-₮${fmtN(deduction)}). Хэсэгчилсэн батлалт нээгдэж байна...`);
+        closeNotaryModal();
+
+        // ★ Богино delay-аар хэсэгчлэн модал нээх (snapshot шинэчлэгдэхэд)
+        setTimeout(() => {
+            openPartialModal(currentNotaryActId || a.id, { fromNotaryUnpaid: true });
+        }, 500);
+    } catch (err) {
+        console.error('Notary unpaid error:', err);
+        toast('Алдаа: ' + err.message, 'err');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+}
+
+// ════════════════════════════════════════════════════════════
+// APPROVE / REJECT
+// ════════════════════════════════════════════════════════════
+
 async function approve(docId) {
     const a = acts.find(x => x.id === docId);
     if (!a || (a.status !== 'pending' && a.status !== 'partial')) { toast('Батлах боломжгүй!', 'err'); return; }
     if (RSTEP[role] !== a.step) { toast('Та энэ актыг батлах эрхгүй!', 'err'); return; }
+
+    // ★ ШИНЭ: Координатор нотариат шалгаагүй бол анхааруулах
+    if (role === 'Координатор' && (a.step || 0) === 0 && !a.notaryStatus) {
+        toast('Эхлээд "Нотариат шалгах" товч дээр дарна уу!', 'err');
+        return;
+    }
 
     const isPartialAct = a.status === 'partial' || a.approvedPercent;
     const isRemainingAct = !!a.parentDocId;
@@ -683,7 +892,6 @@ async function approve(docId) {
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); }
 }
 
-// ★★★ REJECT — Гүйцэтгэгчид мэдэгдэл явуулах нэмэлттэй ★★★
 async function reject(docId) {
     const a = acts.find(x => x.id === docId); if (!a) return;
     const reason = prompt('Буцаасан шалтгаан:') || 'Тодруулгатай байна';
@@ -694,34 +902,58 @@ async function reject(docId) {
     try {
         await updateDoc(doc(db, 'acts', docId), { status: 'rejected', evs: newEvs, rejectedAt: serverTimestamp() });
         toast('❌ Акт буцаагдлаа.');
-
-        // ★ ШИНЭ: Гүйцэтгэгчид буцаасан шалтгааны хамт email явуулах
         try {
             await sendRejectionMail(a, reason, cu.displayName || cu.email, role);
-            console.log('✅ Rejection email явуулсан →', a.submittedBy);
         } catch (mailErr) {
             console.error('❌ Rejection email алдаа:', mailErr);
-            // Email алдаа гарсан ч UI-г өөрчлөхгүй (акт аль хэдийн буцаагдсан)
         }
         bk();
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); }
 }
 
 // ════════════════════════════════════════════════════════════
-// ★★★ ХЭСЭГЧЛЭН БАТЛАХ MODAL — PARTIAL APPROVAL ★★★
+// PARTIAL APPROVAL MODAL
 // ════════════════════════════════════════════════════════════
 
-function openPartialModal(docId) {
+function openPartialModal(docId, opts = {}) {
     const a = acts.find(x => x.id === docId);
     if (!a) return;
     if (role !== 'Координатор') { toast('Зөвхөн Координатор хэсэгчлэн батлах эрхтэй', 'err'); return; }
     if (a.status !== 'pending' || (a.step || 0) !== 0) { toast('Зөвхөн анхны шалгалтын үед хэсэгчлэн батлах боломжтой', 'err'); return; }
 
+    // ★ ШИНЭ: Нотариат шалгаагүй бол блоклох
+    if (!a.notaryStatus && !opts.fromNotaryUnpaid) {
+        toast('Эхлээд "Нотариат шалгах" товч дээр дарна уу!', 'err');
+        return;
+    }
+
     currentPartialActId = docId;
+
+    // ★ ШИНЭ: Нотариат төлөөгүй бол анхааруулга харуулна
+    const notaryWarn = e('pmNotaryWarn');
+    const originalLabel = e('pmOriginalLabel');
+    const originalSub = e('pmOriginalSub');
+
+    if (a.notaryStatus === 'unpaid' && a.originalAmountBeforeNotary) {
+        notaryWarn.style.display = 'flex';
+        originalLabel.textContent = 'Шинэ үндсэн дүн (нотариат -20%)';
+        originalSub.style.display = 'block';
+        originalSub.innerHTML = `Анхны дүн: <s>₮${fmtN(a.originalAmountBeforeNotary)}</s> · Хасагдсан: -₮${fmtN(a.notaryDeductedAmount)}`;
+    } else {
+        notaryWarn.style.display = 'none';
+        originalLabel.textContent = 'Нийт ажлын дүн';
+        originalSub.style.display = 'none';
+    }
+
     e('pmActId').textContent = a.actId;
     e('pmOriginalAmt').textContent = '₮' + fmtN(a.amount);
-    e('pmSlider').value = 85;
-    e('pmReason').value = '';
+
+    // ★ ШИНЭ: Нотариат төлөөгүй бол default 80%, бусад тохиолдолд 85%
+    const defaultPct = (a.notaryStatus === 'unpaid' || opts.fromNotaryUnpaid) ? 80 : 85;
+    e('pmSlider').value = defaultPct;
+    e('pmReason').value = (a.notaryStatus === 'unpaid')
+        ? `Нотариатын төлбөр төлөгдөөгүй тул 20% хасагдсан. Үлдэгдэл ажлыг гүйцээж дахин илгээнэ үү.`
+        : '';
     updatePartialPreview();
     e('partialModal').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -778,10 +1010,14 @@ async function confirmPartialApprove() {
     btn.textContent = 'Боловсруулж байна...';
 
     try {
+        const notaryNote = (a.notaryStatus === 'unpaid')
+            ? ` [Нотариат төлөгдөөгүй — нийт дүнгээс 20% (₮${fmtN(a.notaryDeductedAmount)}) хасагдсан]`
+            : '';
+
         const newEvs = [...(a.evs || []), {
             type: 'partial', who: cu.displayName || cu.email, whoEmail: cu.email,
             title: 'Координатор хэсэгчлэн батлав ⚠',
-            detail: `${pct}% батлагдсан · ₮${fmtN(approvedAmount)} → Инженер уруу · ₮${fmtN(remainingAmount)} гүйцэтгэгчид буцсан · Шалтгаан: ${reason}`,
+            detail: `${pct}% батлагдсан · ₮${fmtN(approvedAmount)} → Инженер уруу · ₮${fmtN(remainingAmount)} гүйцэтгэгчид буцсан · Шалтгаан: ${reason}${notaryNote}`,
             time: ts(), hash: gh()
         }];
 
@@ -813,6 +1049,10 @@ async function confirmPartialApprove() {
             partialReason: reason,
             pdfs: [],
             pdfCount: 0,
+            notaryPdfs: [],
+            notaryPdfCount: 0,
+            hasNotaryAttachment: false,
+            notaryStatus: null,
             step: 0,
             status: 'remaining',
             submittedBy: a.submittedBy,
@@ -827,17 +1067,14 @@ async function confirmPartialApprove() {
         };
         await addDoc(collection(db, 'acts'), remainingActData);
 
-        // Инженерт мэдэгдэх
         try {
             await sendMail(CHAIN[1].email, CHAIN[1].name,
                 { ...a, amount: String(approvedAmount) },
                 cu.displayName || cu.email);
         } catch (e) { console.error('Engineer email:', e); }
 
-        // ★ ШИНЭ: Гүйцэтгэгчид хэсэгчлэн батласан мэдэгдэл (хувь, дүн, шалтгааны хамт)
         try {
             await sendPartialMail(a, pct, approvedAmount, remainingAmount, reason, cu.displayName || cu.email);
-            console.log('✅ Partial-approval email явуулсан →', a.submittedBy);
         } catch (mailErr) {
             console.error('❌ Partial email алдаа:', mailErr);
         }
@@ -854,7 +1091,7 @@ async function confirmPartialApprove() {
 }
 
 // ════════════════════════════════════════════════════════════
-// ★★★ ҮЛДЭГДЭЛ ГҮЙЦЭЭХ MODAL — REMAINING SUBMIT ★★★
+// REMAINING MODAL
 // ════════════════════════════════════════════════════════════
 
 function openRemainingModal(docId) {
@@ -932,7 +1169,7 @@ async function confirmSubmitRemaining() {
 }
 
 // ════════════════════════════════════════════════════════════
-// ★★★ ХЯНАЛТЫН ТЭМДЭГЛЭЛ — CEO/CFO COMMENT ★★★
+// CEO/CFO COMMENT
 // ════════════════════════════════════════════════════════════
 
 async function submitComment(docId) {
@@ -969,7 +1206,6 @@ async function submitComment(docId) {
 
         await updateDoc(doc(db, 'acts', docId), { evs: newEvs });
 
-        // ★ Гүйцэтгэгчид имэйл мэдэгдэл (хэрэв байгаа бол)
         if (a.submittedBy) {
             try {
                 const subject = `💬 ${role} таны акт дээр тэмдэглэл нэмлээ: ${a.actId}`;
@@ -981,20 +1217,15 @@ async function submitComment(docId) {
                     + `═══════════════════════════════════\n`
                     + `${role}-ИЙН ТЭМДЭГЛЭЛ:\n`
                     + `${text}\n`
-                    + `═══════════════════════════════════\n\n`
-                    + `Энэ тэмдэглэлийг бүх хэрэглэгч (Координатор, Инженер, Захирал, Нягтлан) харж болно.`;
+                    + `═══════════════════════════════════`;
                 await sendMail(a.submittedBy, a.submittedByName || 'Гүйцэтгэгч', a, cu.displayName || cu.email, {
-                    subject,
-                    message,
-                    type: 'viewer_comment',
-                    reason: text,
+                    subject, message, type: 'viewer_comment', reason: text,
                 });
             } catch (mailErr) {
                 console.error('Comment email алдаа:', mailErr);
             }
         }
 
-        // Input цэвэрлэх (UI snapshot нэмж шинэчлэгдэнэ)
         toast(`✅ ${role} тэмдэглэл нэмэгдлээ!`);
     } catch (err) {
         console.error('Comment error:', err);
@@ -1004,7 +1235,7 @@ async function submitComment(docId) {
 }
 
 // ════════════════════════════════════════════════════════════
-// FINAL PDF generation (өөрчлөгдөөгүй)
+// FINAL PDF generation
 // ════════════════════════════════════════════════════════════
 
 async function loadCyrillicFont() {
@@ -1107,6 +1338,20 @@ async function generateFinalPdf(act) {
     drawMetaRow('Ажлын хугацаа', (act.dateFrom || '—') + ' — ' + (act.dateTo || '—'));
     drawMetaRow('Илгээсэн', act.submittedByName || act.submittedBy);
 
+    // ★ ШИНЭ: Нотариатын мэдээлэл
+    if (act.notaryStatus) {
+        drawMetaSeparator();
+        if (act.notaryStatus === 'paid') {
+            drawMetaRow('Нотариат', '✓ Төлөгдсөн', rgb(0.06, 0.4, 0.27), 10.5);
+        } else if (act.notaryStatus === 'unpaid') {
+            drawMetaRow('Нотариат', '✗ Төлөгдөөгүй (-20%)', rgb(0.85, 0.18, 0.18), 10.5);
+            if (act.originalAmountBeforeNotary) {
+                drawMetaRow('Анхны дүн (хасалт өмнө)', '₮ ' + fmtN(act.originalAmountBeforeNotary), rgb(0.42, 0.45, 0.5), 10.5);
+                drawMetaRow('Хасагдсан 20%', '-₮ ' + fmtN(act.notaryDeductedAmount), rgb(0.85, 0.18, 0.18), 10.5);
+            }
+        }
+    }
+
     drawMetaSeparator();
     y -= 4;
 
@@ -1120,7 +1365,7 @@ async function generateFinalPdf(act) {
         drawMetaRow('Нийт батлагдсан', '₮ ' + fmtN(act.amount), rgb(0.06, 0.4, 0.27), 14);
     } else if (isPartial) {
         const remainingPart = parseInt(act.amount) - parseInt(act.approvedAmount);
-        drawMetaRow('Анхны нийт дүн', '₮ ' + fmtN(act.amount), rgb(0.42, 0.45, 0.5), 10.5);
+        drawMetaRow('Үндсэн дүн', '₮ ' + fmtN(act.amount), rgb(0.42, 0.45, 0.5), 10.5);
         drawMetaRow(`Батлагдсан дүн (${act.approvedPercent}%)`, '₮ ' + fmtN(act.approvedAmount), rgb(0.06, 0.4, 0.27), 13);
         drawMetaRow(`Үлдэгдэл (${100 - act.approvedPercent}%)`, '₮ ' + fmtN(remainingPart), rgb(0.85, 0.55, 0.04), 11);
     } else if (act.parentApprovedPercent && act.originalAmount) {
@@ -1158,7 +1403,10 @@ async function generateFinalPdf(act) {
     }
 
     if (act.pdfCount) {
-        drawMetaRow('Хавсралт', act.pdfCount + ' PDF файл', rgb(0.42, 0.45, 0.5));
+        drawMetaRow('Хавсралт', act.pdfCount + ' ажлын PDF', rgb(0.42, 0.45, 0.5));
+    }
+    if (act.notaryPdfCount) {
+        drawMetaRow('Нотариатын баримт', act.notaryPdfCount + ' PDF', rgb(0.42, 0.45, 0.5));
     }
 
     if (act.parentActId) {
@@ -1228,11 +1476,13 @@ async function generateFinalPdf(act) {
         const isApprove = ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit';
         const isReject = ev.type === 'reject';
         const isPartial = ev.type === 'partial' || ev.type === 'remaining_created';
+        const isNotary = ev.type === 'notary_check';
         const dotColor = isApprove ? rgb(0.11, 0.62, 0.46)
             : isReject ? rgb(0.88, 0.29, 0.29)
                 : isPartial ? rgb(0.96, 0.62, 0.04)
-                    : rgb(0.5, 0.5, 0.5);
-        const icon = isApprove ? '✓' : isReject ? '✕' : isPartial ? '⚠' : '→';
+                    : isNotary ? rgb(0.4, 0.4, 0.85)
+                        : rgb(0.5, 0.5, 0.5);
+        const icon = isApprove ? '✓' : isReject ? '✕' : isPartial ? '⚠' : isNotary ? '§' : '→';
         page.drawCircle({ x: margin + 6, y: y + 4, size: 7, color: dotColor });
         drawText(icon, margin + 3, y + 1, { size: 10, color: rgb(1, 1, 1) });
         drawText(`${i + 1}. ${ev.title || ''}`, margin + 22, y, { size: 12, color: dotColor });
@@ -1273,10 +1523,13 @@ async function generateFinalPdf(act) {
     y -= 12;
     drawText('Talst Act System · Blockchain-style Audit Trail', margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
     y -= 12;
-    drawText(`Нийт ${events.length} арга хэмжээ · ${act.pdfCount || 0} хавсралт`, margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
+    const totalPdfCount = (act.pdfCount || 0) + (act.notaryPdfCount || 0);
+    drawText(`Нийт ${events.length} арга хэмжээ · ${totalPdfCount} хавсралт`, margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
 
-    if (act.pdfs && act.pdfs.length) {
-        for (const pdf of act.pdfs) {
+    // ★ ШИНЭ: ажлын болон нотариатын PDF хоёуланг хавсаргах
+    const allPdfs = [...(act.pdfs || []), ...(act.notaryPdfs || [])];
+    if (allPdfs.length) {
+        for (const pdf of allPdfs) {
             try {
                 const base64Data = (pdf.base64 || '').split(',')[1] || pdf.base64;
                 if (!base64Data) continue;
@@ -1354,7 +1607,6 @@ function evH(ev, isLast) {
         </div>`;
     }
 
-    // ★ ШИНЭ: Хяналтын тэмдэглэл — өвөрмөц өнгөтэй
     if (ev.type === 'viewer_comment') {
         const roleColor = ev.whoRole === 'CEO' ? '#0f172a' : '#1e293b';
         return `<div class="tli">
@@ -1382,6 +1634,8 @@ function evH(ev, isLast) {
     let dc, ic, lk;
     if (ev.type === 'partial' || ev.type === 'remaining_created') {
         dc = 'dpartial'; ic = '⚠'; lk = '🔓';
+    } else if (ev.type === 'notary_check') {
+        dc = 'dnotary'; ic = '📜'; lk = '🔒';
     } else if (ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit') {
         dc = 'dd'; ic = '✓'; lk = '🔒';
     } else if (ev.type === 'reject') {
@@ -1417,17 +1671,64 @@ function detH(idx) {
     const a = acts[idx]; if (!a) return '';
     const p = pct(a); const step = a.step || 0;
 
-    // ★ ӨӨРЧЛӨСӨН: CEO/CFO action хийж чадахгүй
     const canApprove = (a.status === 'pending' || a.status === 'partial')
         && role !== 'Гүйцэтгэгч'
         && !isViewer(role)
         && RSTEP[role] === step;
     const canPartial = a.status === 'pending' && role === 'Координатор' && step === 0;
     const canComplete = a.status === 'remaining' && a.submittedBy === cu?.email;
-    // ★ ШИНЭ: CEO/CFO коммент бичих эрхтэй
     const canComment = isViewer(role);
 
+    // ★ ШИНЭ: Координатор + step 0 + нотариат шалгаагүй
+    const needsNotaryCheck = a.status === 'pending'
+        && role === 'Координатор'
+        && step === 0
+        && !a.notaryStatus;
+
     const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : a.dateFrom || a.dateTo || '—';
+
+    // ★ ШИНЭ: Нотариатын PDF inline preview (зөвхөн Координатор, нотариат шалгаагүй үед)
+    let notaryPreviewHtml = '';
+    if (needsNotaryCheck && a.notaryPdfs && a.notaryPdfs.length) {
+        notaryPreviewHtml = `<div class="det-notary-preview">
+            <div class="det-notary-header">
+                <span style="font-size:18px">📜</span>
+                <div>
+                    <div class="det-notary-title">Нотариатын баримт (${a.notaryPdfs.length})</div>
+                    <div class="det-notary-sub">Доороос харж шалгана уу — татах шаардлагагүй</div>
+                </div>
+            </div>
+            ${a.notaryPdfs.map((pdf, i) => `
+                <div class="det-notary-doc">
+                    <div class="det-notary-doc-head">
+                        <span class="det-notary-doc-name">📜 ${esc(pdf.name)}</span>
+                        <span class="det-notary-doc-size">${pdf.sizeKb}KB</span>
+                    </div>
+                    <iframe src="${pdf.base64}#toolbar=0&navpanes=0&view=FitH"
+                            class="det-notary-iframe"
+                            title="${esc(pdf.name)}"></iframe>
+                </div>
+            `).join('')}
+        </div>`;
+    } else if (needsNotaryCheck && (!a.notaryPdfs || !a.notaryPdfs.length)) {
+        notaryPreviewHtml = `<div class="det-notary-preview det-notary-empty">
+            <div class="det-notary-empty-icon">📭</div>
+            <div class="det-notary-empty-title">Нотариатын баримт хавсраагүй</div>
+            <div class="det-notary-empty-text">Гүйцэтгэгч нотариатын баримт ороогүй байна. Та өөрөө шалгаж, "Төлсөн" эсвэл "Төлөөгүй" гэж сонгоно уу.</div>
+        </div>`;
+    }
+
+    // ★ ШИНЭ: Нотариатын товч (зөвхөн нотариат шалгаагүй үед)
+    let notaryActionHtml = '';
+    if (needsNotaryCheck) {
+        notaryActionHtml = `<div class="abtns" style="border-bottom:1px solid var(--border-subtle)">
+            <button class="bnotary-check" onclick="openNotaryModal('${a.id}')">
+                📜 Нотариат шалгах
+            </button>
+        </div>`;
+    }
+
+    // Ажлын PDF — заавал download товчтой
     let pdfsHtml = '';
     if (a.pdfs && a.pdfs.length) {
         pdfsHtml = '<div class="det-pdfs">' + a.pdfs.map(pdf => `
@@ -1438,6 +1739,19 @@ function detH(idx) {
         <a class="det-pdf-open" href="${pdf.base64}" download="${esc(pdf.name)}" onclick="event.stopPropagation()">Татах</a>
       </div>`).join('') + '</div>';
     }
+
+    // ★ ШИНЭ: Нотариатын PDF хэсэг — Координатор шалгасны дараа л download товчтой
+    let notaryDocsHtml = '';
+    if (!needsNotaryCheck && a.notaryPdfs && a.notaryPdfs.length) {
+        notaryDocsHtml = '<div class="det-pdfs det-pdfs-notary">' + a.notaryPdfs.map(pdf => `
+      <div class="det-pdf-item">
+        <span style="font-size:18px">📜</span>
+        <span class="det-pdf-name">${esc(pdf.name)}</span>
+        <span class="det-pdf-size">${pdf.sizeKb}KB</span>
+        <a class="det-pdf-open" href="${pdf.base64}" download="${esc(pdf.name)}" onclick="event.stopPropagation()">Татах</a>
+      </div>`).join('') + '</div>';
+    }
+
     let tl = (a.evs || []).map(ev => evH(ev, false)).join('');
     if (a.status === 'pending' || a.status === 'partial') for (let i = step; i < 4; i++) tl += wevH(i, i === 3);
 
@@ -1456,14 +1770,22 @@ function detH(idx) {
 
     const statusBadge = `<span class="badge ${bc(a)}">${bt(a)}</span>`;
 
+    // ★ ШИНЭ: Нотариатын статус badge (баримтын дэргэд)
+    let notaryStatusBadge = '';
+    if (a.notaryStatus === 'paid') {
+        notaryStatusBadge = `<div class="notary-status-pill notary-paid">📜 ✓ Нотариат төлөгдсөн</div>`;
+    } else if (a.notaryStatus === 'unpaid') {
+        notaryStatusBadge = `<div class="notary-status-pill notary-unpaid">📜 ✗ Нотариат төлөгдөөгүй · 20% хасагдсан (-₮${fmtN(a.notaryDeductedAmount)})</div>`;
+    }
+
     let actionBtns = '';
-    if (canApprove && canPartial) {
+    if (canApprove && canPartial && !needsNotaryCheck) {
         actionBtns = `<div class="abtns">
             <button class="bok" onclick="approve('${a.id}')">✓ Бүтэн батлах</button>
             <button class="bpartial-btn" onclick="openPartialModal('${a.id}')">⚠ Хэсэгчлэн</button>
             <button class="bno" onclick="reject('${a.id}')">✕ Буцаах</button>
         </div>`;
-    } else if (canApprove) {
+    } else if (canApprove && !needsNotaryCheck) {
         actionBtns = `<div class="abtns">
             <button class="bok" onclick="approve('${a.id}')">✓ Батлах</button>
             <button class="bno" onclick="reject('${a.id}')">✕ Буцаах</button>
@@ -1482,14 +1804,17 @@ function detH(idx) {
            <div class="row"><span class="rl">Үлдэгдэл (${a.remainingPercent || (100 - a.parentApprovedPercent)}%)</span><span class="rv" style="color:#d97706;font-weight:700">₮ ${fmtN(a.amount)}</span></div>`;
     } else if (a.approvedAmount && a.approvedAmount !== a.amount) {
         const remainingPart = parseInt(a.amount) - parseInt(a.approvedAmount);
-        amountDisplay = `<div class="row"><span class="rl">Анхны дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
+        amountDisplay = `<div class="row"><span class="rl">Үндсэн дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
            <div class="row"><span class="rl">Батлагдсан дүн (${a.approvedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(a.approvedAmount)}</span></div>
            <div class="row"><span class="rl">Үлдэгдэл (${100 - a.approvedPercent}%)</span><span class="rv" style="color:#d97706;font-weight:600">₮ ${fmtN(remainingPart)}</span></div>`;
+    } else if (a.notaryStatus === 'unpaid' && a.originalAmountBeforeNotary) {
+        amountDisplay = `<div class="row"><span class="rl">Анхны дүн</span><span class="rv" style="text-decoration:line-through;color:var(--text-tertiary)">₮ ${fmtN(a.originalAmountBeforeNotary)}</span></div>
+           <div class="row"><span class="rl">Нотариат -20%</span><span class="rv" style="color:#dc2626;font-weight:600">-₮ ${fmtN(a.notaryDeductedAmount)}</span></div>
+           <div class="row"><span class="rl">Үндсэн дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
     } else {
         amountDisplay = `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
     }
 
-    // ★ ШИНЭ: Хяналтын тэмдэглэл хэсэг (зөвхөн CEO/CFO харагдана)
     const commentSection = canComment ? `
     <div class="comment-section">
       <div class="comment-header">
@@ -1519,12 +1844,17 @@ function detH(idx) {
       ${amountDisplay}
       <div class="row"><span class="rl">Илгээсэн</span><span class="rv">${esc(a.submittedByName || a.submittedBy || '—')}</span></div>
       ${a.parentActId ? `<div class="row"><span class="rl">Эх акт</span><span class="rv">${esc(a.parentActId)}</span></div>` : ''}
-      ${a.pdfCount ? `<div class="row"><span class="rl">Баримт бичгүүд</span><span class="rv">${a.pdfCount} PDF файл</span></div>` : ''}
+      ${a.pdfCount ? `<div class="row"><span class="rl">Ажлын баримт</span><span class="rv">${a.pdfCount} PDF файл</span></div>` : ''}
+      ${a.notaryPdfCount ? `<div class="row"><span class="rl">Нотариатын баримт</span><span class="rv">${a.notaryPdfCount} PDF файл</span></div>` : ''}
     </div>
+    ${notaryStatusBadge}
     ${partialReasonHtml}
+    ${notaryPreviewHtml}
     ${pdfsHtml}
+    ${notaryDocsHtml}
     <div class="pbwrap"><div class="pb" style="width:${p}%"></div></div>
     <div class="plabel"><span>${p}% дууссан</span><span>${step}/4 батлалт</span></div>
+    ${notaryActionHtml}
     ${actionBtns}
     ${finalBtn}
     <div class="tl"><div class="tll-label">ЯВЦЫН ТҮҮХ · АУДИТ ЛОГ</div>${tl}</div>
@@ -1535,9 +1865,14 @@ function detH(idx) {
 function liH(a, idx, from) {
     const p = pct(a); const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : '';
     const cls = a.status === 'partial' ? 'li partial' : 'li';
+
+    // ★ ШИНЭ: Нотариат шалгах хэрэгтэй гэдэг тэмдэг
+    const needsCheck = role === 'Координатор' && a.status === 'pending' && (a.step || 0) === 0 && !a.notaryStatus;
+    const notaryFlag = needsCheck ? '<span class="li-notary-flag" title="Нотариат шалгах">📜</span>' : '';
+
     return `<div class="${cls}" onclick="opd(${idx},${from})">
     <div class="li-top">
-      <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)}</div><div class="li-title">${esc(a.work)}</div></div>
+      <div><div class="li-id">${esc(a.actId)} · ${esc(a.date)} ${notaryFlag}</div><div class="li-title">${esc(a.work)}</div></div>
       <span class="badge ${bc(a)}">${bt(a)}</span>
     </div>
     <div class="li-sub">${esc(a.company)} · ₮${fmtN(a.approvedAmount || a.amount)}${dr ? ' · ' + esc(dr) : ''}</div>
@@ -1565,7 +1900,6 @@ function liHDone(a, idx, from) {
   </div>`;
 }
 
-// ★ ШИНЭЧИЛСЭН: Буцаагдсан карт — countdown timer-тэй (8 цаг доторх)
 function liHRejected(a, idx, from) {
     const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : '';
     const now = Date.now();
@@ -1578,7 +1912,6 @@ function liHRejected(a, idx, from) {
         if (remaining > 0) {
             const h = Math.floor(remaining / 3600000);
             const m = Math.floor((remaining % 3600000) / 60000);
-            // Сүүлийн 1 цаг үлдсэн үед ягаан, эс бөгөөс улаан
             if (remaining < 60 * 60 * 1000) timerColor = '#dc2626';
             timerHtml = `<div class="reject-timer" style="color:${timerColor};font-weight:600">
                 🗑 <strong>${h}ц ${m}мин</strong>-ын дараа автоматаар устах болно
@@ -1588,8 +1921,7 @@ function liHRejected(a, idx, from) {
         }
     }
 
-    // Буцаах шалтгаан хайх (events дотор)
-    const rejectEv = (a.evs || []).reverse().find(ev => ev.type === 'reject');
+    const rejectEv = (a.evs || []).slice().reverse().find(ev => ev.type === 'reject');
     const reasonText = rejectEv ? rejectEv.detail.replace(/^Шалтгаан:\s*/, '') : '';
     const rejectorName = rejectEv ? rejectEv.who : '';
 
@@ -1624,7 +1956,6 @@ function rA() {
     const el = e('al');
     if (!acts.length) { el.innerHTML = '<div class="empty">Акт байхгүй байна</div>'; return; }
     if (role === 'Гүйцэтгэгч') { el.innerHTML = '<div class="empty">Акт илгээх таб ашиглана уу</div>'; return; }
-    // ★ ШИНЭ: CEO/CFO энэ таб дээр орохгүй (UI hide), гэхдээ урьдчилан сэргийлэхийн тулд
     if (isViewer(role)) { el.innerHTML = '<div class="empty">Хяналт хэрэглэгч батлах эрхгүй</div>'; return; }
 
     let list;
@@ -1643,9 +1974,9 @@ function rA() {
     el.innerHTML = list.length ? list.map(a => liH(a, acts.indexOf(a), 1)).join('') : '<div class="empty">Таны батлах акт байхгүй байна</div>';
 }
 
-// ════════════════════════════════════════════════════════
-// АКТУУД ТАБ — 5 role card-тэй
-// ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// АКТУУД ТАБ
+// ════════════════════════════════════════════════════════════
 
 let listFilter = null;
 let listSearch = '';
@@ -1659,7 +1990,6 @@ const ICONS = {
     engineer: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
     director: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-3-3"></path><path d="M19 14V6"></path></svg>',
     accountant: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
-    // ★ ШИНЭ: Буцаагдсан icon
     rejected: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
 };
 
@@ -1733,13 +2063,12 @@ function renderListBodyHtml() {
         );
     }
 
-    // ★ ШИНЭ: Буцаагдсан акт (8 цаг доторх)
     function actsRejected() {
         const now = Date.now();
         return acts.filter(a => {
             if (a.status !== 'rejected') return false;
             const rejTime = a.rejectedAt ? (a.rejectedAt.toMillis?.() || a.rejectedAt) : null;
-            if (!rejTime) return true; // Хэрвээ rejectedAt байхгүй бол 8 цаг хүлээгдсэн гэж тооцно (legacy)
+            if (!rejTime) return true;
             return (now - rejTime) <= EIGHT_HOURS;
         });
     }
@@ -1749,7 +2078,7 @@ function renderListBodyHtml() {
         engineer: actsAtStep(1),
         director: actsAtStep(2),
         accountant: actsAtStep(3),
-        rejected: actsRejected(), // ★ ШИНЭ
+        rejected: actsRejected(),
     };
 
     const stepLabels = {
@@ -1757,7 +2086,7 @@ function renderListBodyHtml() {
         engineer: 'Инженер',
         director: 'Захирал',
         accountant: 'Нягтлан',
-        rejected: 'Буцаагдсан', // ★ ШИНЭ
+        rejected: 'Буцаагдсан',
     };
 
     const stepDescriptions = {
@@ -1765,7 +2094,7 @@ function renderListBodyHtml() {
         engineer: 'Инженерийн баталгаажуулалт',
         director: 'Захирлын батламж',
         accountant: 'Гүйлгээ хийгдэх гэж байгаа',
-        rejected: '8 цагийн дотор автоматаар устана', // ★ ШИНЭ
+        rejected: '8 цагийн дотор автоматаар устана',
     };
 
     function matchSearch(a) {
@@ -1784,7 +2113,6 @@ function renderListBodyHtml() {
         const remaining = found.length - shown.length;
         let html = `<div class="search-result-hint">"${esc(listSearch)}" — ${found.length}ш олдов</div>`;
         html += shown.map(a => {
-            // Хэрвээ буцаагдсан бол rejected card-аар
             if (a.status === 'rejected') return liHRejected(a, acts.indexOf(a), 2);
             return liH(a, acts.indexOf(a), 2);
         }).join('');
@@ -1796,7 +2124,6 @@ function renderListBodyHtml() {
         return html;
     }
 
-    // ★ HOME SCREEN — 5 карт (4 шат + 1 буцаагдсан)
     if (!listFilter) {
         const cards = ['coordinator', 'engineer', 'director', 'accountant', 'rejected'];
         const colors = {
@@ -1804,7 +2131,6 @@ function renderListBodyHtml() {
             engineer:    { bg: 'rgba(59, 130, 246, 0.06)', border: 'rgba(59, 130, 246, 0.2)', accent: '#2563eb' },
             director:    { bg: 'rgba(139, 92, 246, 0.06)', border: 'rgba(139, 92, 246, 0.2)', accent: '#7c3aed' },
             accountant:  { bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.2)', accent: '#059669' },
-            // ★ ШИНЭ: Улаан өнгөтэй, бусдаас өвөрмөц
             rejected:    { bg: 'rgba(220, 38, 38, 0.08)', border: 'rgba(220, 38, 38, 0.3)', accent: '#b91c1c' },
         };
 
@@ -1828,7 +2154,6 @@ function renderListBodyHtml() {
         </div>`;
     }
 
-    // DETAIL SCREEN
     const list = stepLists[listFilter] || [];
 
     let html = `<div class="role-detail-header">
@@ -1848,7 +2173,6 @@ function renderListBodyHtml() {
     const shown = list.slice(0, listLimit);
     const remaining = list.length - shown.length;
 
-    // ★ Буцаагдсан role-ийн хувьд тусгай rejected card ашиглана
     if (listFilter === 'rejected') {
         html += shown.map(a => liHRejected(a, acts.indexOf(a), 2)).join('');
     } else {
@@ -1956,24 +2280,17 @@ function rD() {
         });
     }
 
-    // ★★★ ӨӨРЧИЛСӨН: Chart нь ӨДӨР ТУТМЫН НИЙТ ХҮСЭЛТИЙН ТОО харуулна
     const dayCounts = days.map(day => actsOfDay(day).length);
     const maxCount = Math.max(...dayCounts, 1);
-
-    // Bar өндөр — нийт тоог chart-ийн max-аар нь масштаблах
-    // Хоосон өдрийг 0, бусад өдөрт жинхэнэ тоог нь харуулна
     const displayCounts = dayCounts;
 
-    // Өнгөнүүд — нэг өнгөтэй, тооноос хамаарч градиент байж болно
-    // Хүсэлт олонтой бол илүү тод (gradient deeper), цөөн бол цайвар
     const dayColors = dayCounts.map(count => {
-        if (count === 0) return '#ebebeb'; // хоосон өдөр
+        if (count === 0) return '#ebebeb';
         const ratio = count / maxCount;
-        // Brand цэнхэр (#378add) шиг, intensity бариулна
-        if (ratio >= 0.75) return '#1d4ed8'; // их үед хар хөх
+        if (ratio >= 0.75) return '#1d4ed8';
         if (ratio >= 0.5) return '#2563eb';
         if (ratio >= 0.25) return '#3b82f6';
-        return '#60a5fa'; // цөөхөн үед цайвар
+        return '#60a5fa';
     });
 
     if (dbBarChart) { dbBarChart.destroy(); dbBarChart = null; }

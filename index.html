@@ -5,15 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Гүйцэтгэлийн Акт — Talst Group</title>
 
-  <!-- ====== STYLES ====== -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- ====== EXTERNAL LIBRARIES ====== -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
-  <!-- ====== EARLY THEME LOAD (flash болохгүйн тулд head дээр) ====== -->
+
   <script>
     (function() {
       try {
@@ -21,7 +19,6 @@
         if (saved === 'light' || saved === 'dark') {
           document.documentElement.setAttribute('data-theme', saved);
         }
-        // saved утгагүй бол default = dark (root-д тогтсон)
       } catch(e) {}
     })();
   </script>
@@ -29,7 +26,6 @@
 
 <body>
 
-<!-- ====== ANIMATED MESH BACKGROUND (Stripe-style flowing ribbons) ====== -->
 <canvas id="meshCanvas"></canvas>
 
 <script>
@@ -43,7 +39,6 @@
     }
     try { localStorage.setItem('talst-theme', next); } catch(e) {}
 
-    // Хэрэв Дашборд таб дээр байвал chart-ыг refresh хийнэ
     try {
       if (typeof window.go === 'function') {
         var dashTab = document.getElementById('p3');
@@ -56,9 +51,7 @@
 </script>
 
 
-<!-- ========================================================== -->
-<!-- ============== 1. НЭВТРЭХ ХУУДАС (LOGIN PAGE) =========== -->
-<!-- ========================================================== -->
+<!-- 1. НЭВТРЭХ ХУУДАС -->
 <div class="login-wrap" id="loginPage">
   <div class="login-card">
     <img src="images/white.png" class="logo logo-light"
@@ -91,12 +84,9 @@
 </div>
 
 
-<!-- ========================================================== -->
-<!-- ================ 2. ҮНДСЭН АПП (APP PAGE) =============== -->
-<!-- ========================================================== -->
+<!-- 2. ҮНДСЭН АПП -->
 <div class="app" id="appPage">
 
-  <!-- ==== TOPBAR ==== -->
   <div class="topbar">
     <img src="images/white.png" class="logo logo-light"
          style="height:32px;width:auto;object-fit:contain"
@@ -114,7 +104,6 @@
         </div>
       </div>
 
-      <!-- Theme toggle — profile-ийн баруун хажууд -->
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Theme toggle">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="4"></circle>
@@ -127,10 +116,8 @@
     </div>
   </div>
 
-  <!-- ==== Toast ==== -->
   <div id="toast" class="toast"></div>
 
-  <!-- ==== TAB NAVIGATION ==== -->
   <div class="tabs">
     <button class="tab on" id="tb0" onclick="go(0)">Илгээх</button>
     <button class="tab"    id="tb1" onclick="go(1)">Батлах</button>
@@ -139,7 +126,7 @@
   </div>
 
 
-  <!-- ====== TAB 0: ШИНЭ АКТ ИЛГЭЭХ ====== -->
+  <!-- TAB 0: ШИНЭ АКТ ИЛГЭЭХ -->
   <div id="p0">
     <div class="form-card">
       <div class="ftitle">Шинэ акт илгээх</div>
@@ -177,6 +164,26 @@
       <div class="pdf-list" id="pdfList"></div>
       <div class="compress-info" id="compInfo"></div>
 
+      <!-- ★★★ ШИНЭ: НОТАРИАТЫН БАРИМТ UPLOAD ★★★ -->
+      <div class="fl">
+        Нотариатын баримт (PDF)
+        <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-tertiary);font-size:10px">
+          · Сонголттой
+        </span>
+      </div>
+      <div class="notary-hint">
+        ℹ️ Нотариатын төлбөрийн баримт хавсаргаагүй бол Координатор баримт төлөгдсөн эсэхийг шалгаж, төлөөгүй тохиолдолд <strong>20%</strong> хасалт тооцох болно.
+      </div>
+      <label class="file-upload-btn notary-upload" for="fnotary">📜 Нотариатын баримт сонгох (PDF)</label>
+      <input type="file"
+             id="fnotary"
+             class="file-input"
+             multiple
+             accept="application/pdf"
+             onchange="addNotaryPdfs(this)">
+      <div class="pdf-list" id="notaryList"></div>
+      <div class="compress-info" id="notaryInfo"></div>
+
       <div class="prog-bar-wrap" id="progWrap">
         <div class="prog-bar" id="progBar"></div>
       </div>
@@ -187,7 +194,7 @@
   </div>
 
 
-  <!-- ====== TAB 1: БАТЛАХ ====== -->
+  <!-- TAB 1: БАТЛАХ -->
   <div id="p1" style="display:none">
     <div class="seclbl" id="aplbl">Батлах боломжтой актууд</div>
     <div id="al">
@@ -196,7 +203,7 @@
   </div>
 
 
-  <!-- ====== TAB 2: АКТУУД ====== -->
+  <!-- TAB 2: АКТУУД -->
   <div id="p2" style="display:none">
     <div id="ll">
       <div class="loading"><div class="spin"></div></div>
@@ -204,7 +211,7 @@
   </div>
 
 
-  <!-- ====== TAB 3: ДАШБОРД ====== -->
+  <!-- TAB 3: ДАШБОРД -->
   <div id="p3" style="display:none">
     <div class="db-greeting">
       <span style="font-size:12px;color:var(--text-secondary)">Гүйцэтгэлийн актын дашборд</span>
@@ -329,7 +336,7 @@
   </div>
 
 
-  <!-- ====== DETAIL PAGE ====== -->
+  <!-- DETAIL PAGE -->
   <div id="pd" style="display:none">
     <span class="back" onclick="bk()">← Буцах</span>
     <div id="dc"></div>
@@ -338,7 +345,77 @@
 </div>
 
 
-<!-- ====== ХЭСЭГЧЛЭН БАТЛАХ MODAL ====== -->
+<!-- ★★★ ШИНЭ: НОТАРИАТ ШАЛГАХ MODAL ★★★ -->
+<div class="modal-overlay" id="notaryModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📜 Нотариат шалгах</div>
+        <div class="modal-subtitle" id="nmActId">АКТ-2026-XXXX</div>
+      </div>
+      <button class="modal-close" onclick="closeNotaryModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="pm-original">
+        <div class="pm-original-label">Ажлын нийт дүн</div>
+        <div class="pm-original-value" id="nmOriginalAmt">0₮</div>
+      </div>
+
+      <!-- Нотариатын баримт жагсаалт -->
+      <div id="nmNotaryFilesBlock" class="nm-notary-files">
+        <div class="nm-files-header">
+          <span class="nm-files-icon">📜</span>
+          <div>
+            <div class="nm-files-title" id="nmFilesTitle">Хавсаргасан нотариатын баримт</div>
+            <div class="nm-files-sub" id="nmFilesSub">—</div>
+          </div>
+        </div>
+        <div id="nmNotaryList" class="nm-notary-list"></div>
+      </div>
+
+      <div class="nm-question">
+        <div class="nm-q-title">❓ Нотариатын төлбөрийг төлсөн үү?</div>
+        <div class="nm-q-sub">Доорх сонголтын аль нэгийг сонгоно уу. Сонголт нь дараагийн алхамд нөлөөлнө.</div>
+      </div>
+
+      <div class="nm-options">
+        <button class="nm-option nm-option-paid" id="nmPaidBtn" onclick="chooseNotaryPaid()">
+          <div class="nm-opt-icon">✓</div>
+          <div class="nm-opt-body">
+            <div class="nm-opt-title">Нотариат төлсөн</div>
+            <div class="nm-opt-desc">Дүн <strong>хэвээр</strong> үлдэнэ · Бүтэн / Хэсэгчлэн батлах сонгоно</div>
+            <div class="nm-opt-amount" id="nmPaidAmt">0₮</div>
+          </div>
+        </button>
+
+        <button class="nm-option nm-option-unpaid" id="nmUnpaidBtn" onclick="chooseNotaryUnpaid()">
+          <div class="nm-opt-icon">✗</div>
+          <div class="nm-opt-body">
+            <div class="nm-opt-title">Нотариат төлөөгүй</div>
+            <div class="nm-opt-desc"><strong>20% хасагдана</strong> · Хэсэгчлэн модал автоматаар нээгдэнэ</div>
+            <div class="nm-opt-amount" id="nmUnpaidAmt">0₮</div>
+            <div class="nm-opt-detail">Хасагдах: <span id="nmDeductAmt">0₮</span></div>
+          </div>
+        </button>
+      </div>
+
+      <div class="pm-info-box">
+        <div class="pm-info-icon">ℹ️</div>
+        <div class="pm-info-text">
+          Сонголтыг audit log-д тэмдэглэнэ. <strong>Төлөөгүй</strong> бол нийт дүнгээс 20% хасагдан, Хэсэгчлэн модал автоматаар нээгдэж 80% default-аар тохируулагдана.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeNotaryModal()">Цуцлах</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ХЭСЭГЧЛЭН БАТЛАХ MODAL -->
 <div class="modal-overlay" id="partialModal">
   <div class="modal-card">
     <div class="modal-header">
@@ -350,9 +427,19 @@
     </div>
 
     <div class="modal-body">
+      <!-- Нотариат төлөөгүй бол анхааруулга -->
+      <div id="pmNotaryWarn" class="pm-notary-warn" style="display:none">
+        <div class="pm-notary-warn-icon">⚠</div>
+        <div class="pm-notary-warn-text">
+          <strong>Нотариатын төлбөр төлөгдөөгүй.</strong>
+          Нийт дүнгээс <strong>20% хасагдсан</strong>. Доорх "Ажлын нийт дүн" нь 20% хасагдсан шинэ үндсэн дүн.
+        </div>
+      </div>
+
       <div class="pm-original">
-        <div class="pm-original-label">Нийт ажлын дүн</div>
+        <div class="pm-original-label" id="pmOriginalLabel">Нийт ажлын дүн</div>
         <div class="pm-original-value" id="pmOriginalAmt">0₮</div>
+        <div id="pmOriginalSub" class="pm-original-sub" style="display:none"></div>
       </div>
 
       <div class="pm-slider-section">
@@ -413,7 +500,7 @@
 </div>
 
 
-<!-- ====== ҮЛДЭГДЭЛ ГҮЙЦЭЭХ MODAL ====== -->
+<!-- ҮЛДЭГДЭЛ ГҮЙЦЭЭХ MODAL -->
 <div class="modal-overlay" id="remainingModal">
   <div class="modal-card">
     <div class="modal-header">
@@ -464,7 +551,6 @@
 </div>
 
 
-<!-- ====== ★ STRIPE-STYLE FLOWING MESH BACKGROUND ANIMATION ====== -->
 <script>
   (function(){
     const cv = document.getElementById('meshCanvas');
@@ -485,7 +571,6 @@
     resize();
     window.addEventListener('resize', resize);
 
-    // 4 wavy ribbons of light — Stripe gradient style
     function getRibbons() {
       const h = window.innerHeight;
       return [
@@ -535,9 +620,7 @@
       requestAnimationFrame(draw);
     }
 
-    // Reduced motion → static
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      // Draw once and stop
       t = 100;
       requestAnimationFrame(draw);
     } else {
@@ -547,7 +630,6 @@
 </script>
 
 
-<!-- ====== MAIN APPLICATION SCRIPT ====== -->
 <script type="module" src="app.js"></script>
 </body>
 </html>
