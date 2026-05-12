@@ -3699,6 +3699,574 @@ textarea {
     box-shadow: 0 0 14px rgba(99, 91, 255, 0.5), 0 4px 12px rgba(99, 91, 255, 0.3);
     font-size: 11px;
 }
+/* ================================================================
+   ★ NOTARY STYLES — нотариат шалгах UI
+   ================================================================ */
+
+/* Form-доторх нотариатын label & upload — бусад field-тэй ИЖИЛ стандарт */
+
+/* Label дотор "Сонголттой" гэсэн жижиг badge */
+.label-optional {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 7px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+/* Hint текст — жижиг, нэмэлт мэдээлэл маягтай (бусад form-help-тэй ижил) */
+.notary-hint {
+    margin: 6px 0 10px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.55;
+    letter-spacing: 0;
+}
+
+.notary-hint strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* Upload товч — энгийн PDF файл сонгох товчтой ИЖИЛ */
+.file-upload-btn.notary-upload {
+    /* Бусад file-upload-btn-тэй ижил харагдана — өөрчлөлтгүй */
+}
+
+/* Нотариатын PDF item */
+.pdf-item.pdf-item-notary {
+    border-left: 3px solid var(--brand);
+    background: linear-gradient(135deg, rgba(99, 91, 255, 0.06), rgba(167, 139, 250, 0.02));
+}
+
+/* ─── Detail card: Нотариат шалгах преview ─── */
+.det-notary-preview {
+    margin: 13px 18px;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(99, 91, 255, 0.08), rgba(167, 139, 250, 0.03));
+    border: 1px solid rgba(99, 91, 255, 0.3);
+    border-radius: var(--r-md);
+    box-shadow: 0 0 20px rgba(99, 91, 255, 0.08);
+    backdrop-filter: blur(12px);
+}
+
+.det-notary-header {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 12px;
+    padding-bottom: 11px;
+    border-bottom: 1px solid rgba(99, 91, 255, 0.18);
+}
+
+.det-notary-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+.det-notary-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+}
+
+.det-notary-doc {
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+}
+
+.det-notary-doc:last-child {
+    margin-bottom: 0;
+}
+
+.det-notary-doc-head {
+    padding: 9px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(99, 91, 255, 0.05);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.det-notary-doc-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 220px;
+}
+
+.det-notary-doc-size {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-feature-settings: 'tnum';
+    flex-shrink: 0;
+}
+
+.det-notary-iframe {
+    width: 100%;
+    height: 320px;
+    border: none;
+    display: block;
+    background: #fff;
+}
+
+/* Хоосон тохиолдол */
+.det-notary-empty {
+    text-align: center;
+    padding: 18px 14px;
+}
+
+.det-notary-empty-icon {
+    font-size: 30px;
+    margin-bottom: 8px;
+    opacity: 0.7;
+}
+
+.det-notary-empty-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-warning);
+    margin-bottom: 5px;
+}
+
+.det-notary-empty-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+/* Нотариатын баримтын section (Координатор шалгасны дараа) */
+.det-pdfs.det-pdfs-notary {
+    background: rgba(99, 91, 255, 0.03);
+}
+
+.det-pdfs.det-pdfs-notary::before {
+    content: '📜 Нотариатын баримт';
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--brand-light);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 8px 0 4px;
+    margin-bottom: 4px;
+}
+
+/* ─── Нотариатын статусын pill (баримтын дэргэд) ─── */
+.notary-status-pill {
+    margin: 11px 18px;
+    padding: 9px 13px;
+    border-radius: var(--r-sm);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.notary-status-pill.notary-paid {
+    background: linear-gradient(135deg, rgba(0, 217, 163, 0.12), rgba(0, 217, 163, 0.04));
+    color: var(--accent-success-light);
+    border: 1px solid rgba(0, 217, 163, 0.35);
+    box-shadow: 0 0 14px rgba(0, 217, 163, 0.15);
+}
+
+.notary-status-pill.notary-unpaid {
+    background: linear-gradient(135deg, rgba(255, 87, 87, 0.1), rgba(220, 38, 38, 0.04));
+    color: #fca5a5;
+    border: 1px solid rgba(255, 87, 87, 0.35);
+    box-shadow: 0 0 14px rgba(255, 87, 87, 0.15);
+}
+
+/* ─── Нотариат шалгах товч (Coordinator) ─── */
+.bnotary-check {
+    flex: 1;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    color: #fff;
+    border: none;
+    border-radius: var(--r-sm);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: -0.01em;
+    box-shadow: var(--shadow-glow);
+    transition: all 0.3s var(--ease);
+    position: relative;
+    overflow: hidden;
+}
+
+.bnotary-check::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s;
+}
+
+.bnotary-check:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 32px rgba(99, 91, 255, 0.6), 0 12px 28px rgba(99, 91, 255, 0.4);
+}
+
+.bnotary-check:hover::before { left: 100%; }
+.bnotary-check:active { transform: translateY(0); }
+
+/* ─── Жагсаалт дахь нотариат шалгах туг ─── */
+.li-notary-flag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: 6px;
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    border-radius: 50%;
+    font-size: 9px;
+    box-shadow: 0 0 10px rgba(99, 91, 255, 0.5);
+    animation: notaryPulse 2s ease-in-out infinite;
+    vertical-align: middle;
+}
+
+@keyframes notaryPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(99, 91, 255, 0.5), 0 0 0 0 rgba(99, 91, 255, 0.4); }
+    50%      { box-shadow: 0 0 16px rgba(99, 91, 255, 0.7), 0 0 0 5px rgba(99, 91, 255, 0); }
+}
+
+/* ─── Нотариат шалгах modal ─── */
+#notaryModal .modal-card {
+    max-width: 520px;
+}
+
+.nm-notary-files {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    padding: 14px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.nm-files-header {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 12px;
+    padding-bottom: 11px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.nm-files-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.nm-files-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.nm-files-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+}
+
+.nm-notary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nm-notary-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+}
+
+.nm-notary-item-head {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: rgba(99, 91, 255, 0.06);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.nm-notary-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.nm-notary-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nm-notary-size {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-feature-settings: 'tnum';
+    flex-shrink: 0;
+}
+
+.nm-notary-preview {
+    width: 100%;
+    height: 300px;
+    border: none;
+    display: block;
+    background: #fff;
+}
+
+.nm-no-notary {
+    text-align: center;
+    padding: 22px 16px;
+    background: rgba(255, 181, 71, 0.06);
+    border: 1px dashed rgba(255, 181, 71, 0.35);
+    border-radius: var(--r-sm);
+}
+
+.nm-no-notary-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+}
+
+.nm-no-notary-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Асуулт */
+.nm-question {
+    margin-bottom: 14px;
+    text-align: center;
+}
+
+.nm-q-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.nm-q-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* 2 сонголтын товч */
+.nm-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.nm-option {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 14px 16px;
+    border: 2px solid;
+    border-radius: var(--r-md);
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: all 0.3s var(--ease);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.nm-option:hover {
+    transform: translateY(-2px);
+}
+
+.nm-option:active { transform: translateY(0); }
+
+.nm-option:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.nm-option-paid {
+    border-color: rgba(0, 217, 163, 0.4);
+    background: linear-gradient(135deg, rgba(0, 217, 163, 0.08), rgba(0, 217, 163, 0.02));
+}
+
+.nm-option-paid:hover {
+    border-color: var(--accent-success);
+    background: linear-gradient(135deg, rgba(0, 217, 163, 0.14), rgba(0, 217, 163, 0.04));
+    box-shadow: 0 0 24px rgba(0, 217, 163, 0.25);
+}
+
+.nm-option-unpaid {
+    border-color: rgba(255, 87, 87, 0.4);
+    background: linear-gradient(135deg, rgba(255, 87, 87, 0.08), rgba(220, 38, 38, 0.02));
+}
+
+.nm-option-unpaid:hover {
+    border-color: var(--accent-danger);
+    background: linear-gradient(135deg, rgba(255, 87, 87, 0.14), rgba(220, 38, 38, 0.04));
+    box-shadow: 0 0 24px rgba(255, 87, 87, 0.25);
+}
+
+.nm-opt-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.nm-option-paid .nm-opt-icon {
+    background: linear-gradient(135deg, var(--accent-success), #10b981);
+    box-shadow: 0 4px 12px rgba(0, 217, 163, 0.5);
+}
+
+.nm-option-unpaid .nm-opt-icon {
+    background: linear-gradient(135deg, var(--accent-danger), var(--accent-danger-dark));
+    box-shadow: 0 4px 12px rgba(255, 87, 87, 0.5);
+}
+
+.nm-opt-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.nm-opt-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+}
+
+.nm-opt-desc {
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 4px;
+}
+
+.nm-opt-desc strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.nm-opt-amount {
+    font-size: 16px;
+    font-weight: 800;
+    font-feature-settings: 'tnum';
+    letter-spacing: -0.02em;
+    margin-top: 4px;
+}
+
+.nm-option-paid .nm-opt-amount {
+    color: var(--accent-success-light);
+}
+
+.nm-option-unpaid .nm-opt-amount {
+    color: #fca5a5;
+}
+
+.nm-opt-detail {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.nm-opt-detail span {
+    color: var(--accent-danger);
+    font-weight: 700;
+    font-feature-settings: 'tnum';
+}
+
+/* ─── Partial modal — нотариат төлөөгүй анхааруулга ─── */
+.pm-notary-warn {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: linear-gradient(135deg, rgba(255, 87, 87, 0.1), rgba(220, 38, 38, 0.03));
+    border: 1px solid rgba(255, 87, 87, 0.35);
+    border-left: 3px solid var(--accent-danger);
+    border-radius: var(--r-sm);
+    backdrop-filter: blur(10px);
+}
+
+.pm-notary-warn-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+.pm-notary-warn-text {
+    font-size: 11.5px;
+    color: #fca5a5;
+    line-height: 1.55;
+}
+
+.pm-notary-warn-text strong {
+    color: #fee2e2;
+    font-weight: 700;
+}
+
+.pm-original-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+    font-feature-settings: 'tnum';
+}
+
+.pm-original-sub s {
+    opacity: 0.6;
+}
+
+/* ─── Audit log — Нотариат шалгах event ─── */
+.dot.dnotary {
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    color: #fff;
+    box-shadow: 0 0 14px rgba(99, 91, 255, 0.5), 0 4px 12px rgba(99, 91, 255, 0.3);
+    font-size: 11px;
+}
 
 /* ─── Mobile responsiveness ─── */
 @media (max-width: 480px) {
@@ -3747,4 +4315,29 @@ textarea {
 
 [data-theme="light"] .det-notary-empty-text {
     color: #475569;
+}
+
+/* ─── READ-ONLY preview (Координатор/Инженер/Захиралд харагдах) ─── */
+.det-notary-preview.det-notary-readonly {
+    background: linear-gradient(135deg, rgba(160, 160, 180, 0.04), rgba(160, 160, 180, 0.02));
+    border-color: var(--border-subtle);
+    box-shadow: none;
+}
+
+.det-notary-readonly .det-notary-header {
+    border-bottom-color: var(--border-subtle);
+}
+
+.det-notary-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 6px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    vertical-align: middle;
 }

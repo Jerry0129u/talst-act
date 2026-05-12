@@ -22,18 +22,18 @@ emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
     { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
-    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
+    { name: 'Инженер', email: 'unursaikhan@talstgroup.mn' },
     { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
+    { name: 'Нягтлан', email: 'naranzul@talstgroup.mn' },
 ];
 
 const ROLES = {
     'unumunkh@talstgroup.mn': 'Координатор',
-    'barsbat@talstgroup.mn': 'Инженер',
+    'unursaikhan@talstgroup.mn': 'Инженер',
     'zorigoo@talstgroup.mn': 'Захирал',
     'bayarmaa@talstgroup.mn': 'Нягтлан',
     'ulziisaikhan@talstgroup.mn': 'CEO',
-    'narankhuu@talstgroup.mn': 'CFO',
+    'naranzul@talstgroup.mn': 'CFO',
 };
 
 const VIEWER_ROLES = ['CEO', 'CFO'];
@@ -57,12 +57,13 @@ const ROLE_AVATAR_BG = {
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-const SE = ['unumunkh@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigootalstgroup.mn', 'bayarmaa@talstgroup.mn'];
+// ★ FIX #1: SE[2] typo засагдсан ('zorigootalstgroup.mn' → 'zorigoo@talstgroup.mn')
+const SE = ['unumunkh@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
 
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
-// ★★★ ШИНЭ: Нотариатын тогтмол ★★★
-const NOTARY_DEDUCT_PERCENT = 20; // Төлөөгүй бол хасах хувь
+// ★★★ Е-баримтын тогтмол — 10% хасалт ★★★
+const EBR_DEDUCT_PERCENT = 10; // Төлөөгүй бол хасах хувь
 
 // --- FIREBASE INIT ---
 const fapp = initializeApp(cfg);
@@ -71,7 +72,7 @@ const db = getFirestore(fapp);
 
 let cu = null, role = 'Гүйцэтгэгч', acts = [], prev = 2, ctab = 0, unsub = null;
 let pdfDataList = [];
-let notaryPdfList = []; // ★ ШИНЭ: Нотариатын PDF
+let ebrPdfList = []; // Е-баримтын PDF
 let cachedFont = null;
 let autoDeleteInterval = null;
 let rejectedCountdownInterval = null;
@@ -79,10 +80,10 @@ let rejectedCountdownInterval = null;
 // Modal state
 let currentPartialActId = null;
 let currentRemainingActId = null;
-let currentNotaryActId = null; // ★ ШИНЭ
+let currentNotaryActId = null;
 let remainingPdfList = [];
 
-// ★ ШИНЭ: Нотариатын төлөв (partial modal-д дамжуулах)
+// Е-баримтын төлөв
 let pendingNotaryStatus = null; // 'paid' эсвэл 'unpaid'
 
 const e = id => document.getElementById(id);
@@ -154,34 +155,38 @@ window.rmPdf = (i) => {
     e('compInfo').textContent = pdfDataList.length ? `${pdfDataList.length} PDF · ~${total}KB` : '';
 };
 
-// ★★★ ШИНЭ: НОТАРИАТЫН PDF ★★★
-window.addNotaryPdfs = async (input) => {
+// ★★★ НОТАРИАТЫН PDF (хоёр нэрээр (alias) — index.html-ийн хуучин дуудлагуудтай нийцүүлэв) ★★★
+window.addEbrPdfs = async (input) => {
     const files = Array.from(input.files); if (!files.length) return;
-    e('notaryInfo').textContent = 'Нотариатын PDF боловсруулж байна...';
+    e('notaryInfo').textContent = 'Е-баримтын PDF боловсруулж байна...';
     for (const f of files) {
         if (f.type !== 'application/pdf') { toast('Зөвхөн PDF файл сонгоно уу: ' + f.name, 'err'); continue; }
-        notaryPdfList.push(await readPdfAsBase64(f));
+        ebrPdfList.push(await readPdfAsBase64(f));
     }
-    renderNotaryPdfList();
-    const total = notaryPdfList.reduce((s, x) => s + x.sizeKb, 0);
-    e('notaryInfo').textContent = `${notaryPdfList.length} нотариатын PDF · ~${total}KB`;
+    renderEbrPdfList();
+    const total = ebrPdfList.reduce((s, x) => s + x.sizeKb, 0);
+    e('notaryInfo').textContent = `${ebrPdfList.length} е-баримтын PDF · ~${total}KB`;
     input.value = '';
 };
 
-window.rmNotaryPdf = (i) => {
-    notaryPdfList.splice(i, 1); renderNotaryPdfList();
-    const total = notaryPdfList.reduce((s, x) => s + x.sizeKb, 0);
-    e('notaryInfo').textContent = notaryPdfList.length ? `${notaryPdfList.length} нотариатын PDF · ~${total}KB` : '';
-};
+// ★ FIX #2: alias — index.html-д "addNotaryPdfs" гэж дуудаж байгаа
+window.addNotaryPdfs = window.addEbrPdfs;
 
-function renderNotaryPdfList() {
-    e('notaryList').innerHTML = notaryPdfList.map((d, i) => `
+window.rmEbrPdf = (i) => {
+    ebrPdfList.splice(i, 1); renderEbrPdfList();
+    const total = ebrPdfList.reduce((s, x) => s + x.sizeKb, 0);
+    e('notaryInfo').textContent = ebrPdfList.length ? `${ebrPdfList.length} е-баримтын PDF · ~${total}KB` : '';
+};
+window.rmNotaryPdf = window.rmEbrPdf;
+
+function renderEbrPdfList() {
+    e('notaryList').innerHTML = ebrPdfList.map((d, i) => `
     <div class="pdf-item pdf-item-notary">
-      <div class="pdf-info"><span class="pdf-icon">📜</span>
+      <div class="pdf-info"><span class="pdf-icon">📄</span>
         <span class="pdf-name" title="${esc(d.name)}">${esc(d.name)}</span>
       </div>
       <span class="pdf-size">${d.sizeKb}KB</span>
-      <div class="pdf-rm" onclick="rmNotaryPdf(${i})">✕</div>
+      <div class="pdf-rm" onclick="rmEbrPdf(${i})">✕</div>
     </div>`).join('');
 }
 
@@ -267,11 +272,17 @@ window.closeRemainingModal = closeRemainingModal;
 window.confirmSubmitRemaining = confirmSubmitRemaining;
 window.submitComment = submitComment;
 
-// ★★★ ШИНЭ: НОТАРИАТЫН MODAL функцууд ★★★
-window.openNotaryModal = openNotaryModal;
-window.closeNotaryModal = closeNotaryModal;
-window.chooseNotaryPaid = chooseNotaryPaid;
-window.chooseNotaryUnpaid = chooseNotaryUnpaid;
+// ★★★ НОТАРИАТЫН MODAL функцууд (alias-аар хоёр нэр) ★★★
+window.openEbrModal = openEbrModal;
+window.closeEbrModal = closeEbrModal;
+window.chooseEbrPaid = chooseEbrPaid;
+window.chooseEbrUnpaid = chooseEbrUnpaid;
+
+// ★ FIX #3: index.html-д "closeNotaryModal/chooseNotaryPaid/chooseNotaryUnpaid" гэж дуудаж байгаа
+window.openNotaryModal = openEbrModal;
+window.closeNotaryModal = closeEbrModal;
+window.chooseNotaryPaid = chooseEbrPaid;
+window.chooseNotaryUnpaid = chooseEbrUnpaid;
 
 function readPdfAsBase64(file) {
     return new Promise(resolve => {
@@ -430,7 +441,7 @@ async function cleanupExpiredRejected() {
     const now = Date.now();
     const expired = acts.filter(a => {
         if (a.status !== 'rejected') return false;
-        const rejTime = a.rejectedAt ? (a.rejectedAt.toMillis?.() || a.rejectedAt) : null;
+        const rejTime = a.rejectedAt ? (typeof a.rejectedAt.toMillis === 'function' ? a.rejectedAt.toMillis() : a.rejectedAt) : null;
         if (!rejTime) return true;
         return (now - rejTime) > EIGHT_HOURS;
     });
@@ -524,12 +535,12 @@ function liHRemainingForExecutor(a, idx) {
     </div>`;
 }
 
-// ★★★ SUBMIT — нотариатын PDF хадгална ★★★
+// ★★★ SUBMIT — е-баримтын PDF хадгална ★★★
 async function submitAct() {
     const c = e('fc').value.trim(), g = e('fg').value.trim(), w = e('fw').value.trim(), a = e('fa').value.trim();
     if (!c || !g || !w || !a) { toast('Компани, гэрээ, ажил, дүн заавал!', 'err'); return; }
     const totalKb = pdfDataList.reduce((s, x) => s + x.sizeKb, 0);
-    const notaryKb = notaryPdfList.reduce((s, x) => s + x.sizeKb, 0);
+    const notaryKb = ebrPdfList.reduce((s, x) => s + x.sizeKb, 0);
     const grandTotalKb = totalKb + notaryKb;
     if (grandTotalKb > 4096) { toast(`PDF нийт ${grandTotalKb}KB — 4MB-аас бага байх ёстой.`, 'err'); return; }
     const btn = e('sbtn'); btn.disabled = true; btn.textContent = 'Илгээж байна...';
@@ -538,19 +549,19 @@ async function submitAct() {
     const aid = 'АКТ-' + new Date().getFullYear() + '-' + String(Date.now()).substr(-4);
     try {
         e('progBar').style.width = '60%'; e('progText').textContent = 'Firestore-д хадгалж байна...';
-        const hasNotary = notaryPdfList.length > 0;
+        const hasNotary = ebrPdfList.length > 0;
         const actData = {
             actId: aid, date: todayYMD(),
             company: c, contract: g, work: w, dateFrom: e('fd1').value, dateTo: e('fd2').value, amount: a,
             pdfs: pdfDataList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb })),
             pdfCount: pdfDataList.length,
-            // ★ ШИНЭ нотариатын талбарууд
-            notaryPdfs: notaryPdfList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb })),
-            notaryPdfCount: notaryPdfList.length,
-            hasNotaryAttachment: hasNotary,
-            notaryStatus: null, // 'paid' / 'unpaid' / null — Координатор шийдэхэд тохируулна
-            notaryDeductedAmount: null, // 20% хасагдсан тохиолдолд
-            originalAmountBeforeNotary: null, // notary-аас өмнөх дүн
+            // Е-баримтын талбарууд
+            ebrPdfs: ebrPdfList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb })),
+            ebrPdfCount: ebrPdfList.length,
+            hasEbrAttachment: hasNotary,
+            ebrStatus: null,
+            ebrDeductedAmount: null,
+            originalAmountBeforeEbr: null,
             step: 0, status: 'pending',
             submittedBy: cu.email, submittedByName: cu.displayName || cu.email,
             createdAt: serverTimestamp(),
@@ -559,7 +570,7 @@ async function submitAct() {
                 title: 'Акт илгээсэн',
                 detail: c + ' · ' + g + ' · ₮' + fmtN(a)
                     + (pdfDataList.length ? ` · ${pdfDataList.length} ажлын PDF (~${totalKb}KB)` : ' · Ажлын баримтгүй')
-                    + (hasNotary ? ` · ${notaryPdfList.length} нотариатын PDF (~${notaryKb}KB)` : ' · 📜 Нотариатын баримт ХАВСРААГҮЙ'),
+                    + (hasNotary ? ` · ${ebrPdfList.length} е-баримтын PDF (~${notaryKb}KB)` : ' · 📄 Е-баримт ХАВСРААГҮЙ'),
                 time: ts(), hash: gh()
             }]
         };
@@ -569,7 +580,7 @@ async function submitAct() {
         e('progBar').style.width = '100%';
         toast('✅ Акт илгээгдлээ! Координаторт email очлоо.');
         ['fc', 'fg', 'fw', 'fd1', 'fd2', 'fa'].forEach(id => e(id).value = '');
-        pdfDataList = []; notaryPdfList = [];
+        pdfDataList = []; ebrPdfList = [];
         e('pdfList').innerHTML = ''; e('compInfo').textContent = '';
         e('notaryList').innerHTML = ''; e('notaryInfo').textContent = '';
         e('amtFmt').textContent = '';
@@ -579,19 +590,20 @@ async function submitAct() {
 }
 
 // ════════════════════════════════════════════════════════════
-// ★★★ НОТАРИАТЫН MODAL — Координаторын шийдэл ★★★
+// ★★★ Е-БАРИМТЫН MODAL — Нягтлангийн шийдэл (сүүлийн алхам) ★★★
 // ════════════════════════════════════════════════════════════
 
-function openNotaryModal(docId) {
+function openEbrModal(docId) {
     const a = acts.find(x => x.id === docId);
     if (!a) return;
-    if (role !== 'Координатор') { toast('Зөвхөн Координатор шалгах эрхтэй', 'err'); return; }
-    if (a.status !== 'pending' || (a.step || 0) !== 0) { toast('Зөвхөн анхны шалгалтын үед боломжтой', 'err'); return; }
-    if (a.notaryStatus) { toast('Нотариат аль хэдийн шалгагдсан', 'err'); return; }
+    if (role !== 'Нягтлан') { toast('Зөвхөн Нягтлан е-баримт шалгах эрхтэй', 'err'); return; }
+    if ((a.step || 0) !== 3) { toast('Зөвхөн Нягтлангийн алхамд боломжтой', 'err'); return; }
+    if (a.status !== 'pending' && a.status !== 'partial') { toast('Энэ актыг шалгах боломжгүй', 'err'); return; }
+    if (a.ebrStatus) { toast('Е-баримт аль хэдийн шалгагдсан', 'err'); return; }
 
     currentNotaryActId = docId;
     const total = parseInt(a.amount);
-    const deduction = Math.round(total * NOTARY_DEDUCT_PERCENT / 100);
+    const deduction = Math.round(total * EBR_DEDUCT_PERCENT / 100);
     const afterDeduction = total - deduction;
 
     e('nmActId').textContent = a.actId;
@@ -600,18 +612,18 @@ function openNotaryModal(docId) {
     e('nmUnpaidAmt').textContent = '₮' + fmtN(afterDeduction);
     e('nmDeductAmt').textContent = '₮' + fmtN(deduction);
 
-    // Нотариатын баримт inline харуулах
+    // Е-баримт inline харуулах
     const notaryList = e('nmNotaryList');
     const titleEl = e('nmFilesTitle');
     const subEl = e('nmFilesSub');
 
-    if (a.notaryPdfs && a.notaryPdfs.length) {
-        titleEl.textContent = 'Хавсаргасан нотариатын баримт';
-        subEl.textContent = `${a.notaryPdfs.length} файл · ${a.notaryPdfs.reduce((s, p) => s + (p.sizeKb || 0), 0)}KB`;
-        notaryList.innerHTML = a.notaryPdfs.map((pdf, i) => `
+    if (a.ebrPdfs && a.ebrPdfs.length) {
+        titleEl.textContent = 'Хавсаргасан е-баримт';
+        subEl.textContent = `${a.ebrPdfs.length} файл · ${a.ebrPdfs.reduce((s, p) => s + (p.sizeKb || 0), 0)}KB`;
+        notaryList.innerHTML = a.ebrPdfs.map((pdf, i) => `
             <div class="nm-notary-item">
                 <div class="nm-notary-item-head">
-                    <span class="nm-notary-icon">📜</span>
+                    <span class="nm-notary-icon">📄</span>
                     <span class="nm-notary-name">${esc(pdf.name)}</span>
                     <span class="nm-notary-size">${pdf.sizeKb}KB</span>
                 </div>
@@ -621,13 +633,13 @@ function openNotaryModal(docId) {
             </div>
         `).join('');
     } else {
-        titleEl.textContent = '⚠ Нотариатын баримт хавсраагүй';
+        titleEl.textContent = '⚠ Е-баримт хавсраагүй';
         subEl.textContent = 'Гүйцэтгэгч баримт оруулаагүй';
         notaryList.innerHTML = `
             <div class="nm-no-notary">
                 <div class="nm-no-notary-icon">📭</div>
                 <div class="nm-no-notary-text">
-                    Энэ актад нотариатын баримт хавсаргаагүй байна.
+                    Энэ актад е-баримт хавсаргаагүй байна.
                     Та өөрийн нөөц мэдээллээс шалгаж, төлсөн эсэхийг сонгоно уу.
                 </div>
             </div>`;
@@ -637,15 +649,15 @@ function openNotaryModal(docId) {
     document.body.style.overflow = 'hidden';
 }
 
-function closeNotaryModal() {
+function closeEbrModal() {
     e('notaryModal').classList.remove('open');
     document.body.style.overflow = '';
     currentNotaryActId = null;
     pendingNotaryStatus = null;
 }
 
-// "Нотариат төлсөн" товч
-async function chooseNotaryPaid() {
+// "Е-баримт төлсөн" товч
+async function chooseEbrPaid() {
     const a = acts.find(x => x.id === currentNotaryActId);
     if (!a) return;
 
@@ -655,33 +667,32 @@ async function chooseNotaryPaid() {
 
     try {
         const newEvs = [...(a.evs || []), {
-            type: 'notary_check', who: cu.displayName || cu.email, whoEmail: cu.email,
-            title: '📜 Нотариат шалгасан: ТӨЛСӨН',
-            detail: `Координатор нотариатын төлбөр төлөгдсөнийг баталгаажуулав. Дүн хэвээр ₮${fmtN(a.amount)} үлдэв.`
-                + (a.hasNotaryAttachment ? ` Хавсарсан баримт: ${a.notaryPdfCount} PDF` : ' Баримт хавсраагүй (Координатор гараар шалгасан)'),
+            type: 'ebr_check', who: cu.displayName || cu.email, whoEmail: cu.email,
+            title: '📄 Е-баримт шалгасан: ТӨЛСӨН',
+            detail: `Нягтлан е-баримтын төлбөр төлөгдсөнийг баталгаажуулав. Дүн хэвээр ₮${fmtN(a.amount)} үлдэв.`
+                + (a.hasEbrAttachment ? ` Хавсарсан баримт: ${a.ebrPdfCount} PDF` : ' Баримт хавсраагүй (Нягтлан гараар шалгасан)'),
             time: ts(), hash: gh()
         }];
 
         await updateDoc(doc(db, 'acts', currentNotaryActId), {
-            notaryStatus: 'paid',
-            notaryCheckedAt: serverTimestamp(),
-            notaryCheckedBy: cu.email,
+            ebrStatus: 'paid',
+            ebrCheckedAt: serverTimestamp(),
+            ebrCheckedBy: cu.email,
             evs: newEvs
         });
 
-        toast('✅ Нотариат төлсөн — Дүн хэвээр үлдлээ. Одоо батлах сонгоно уу.');
-        closeNotaryModal();
-        // Detail page-ийг шинэчлэхэд снапшот автоматаар хийнэ
+        toast('✅ Е-баримт төлсөн — Дүн хэвээр үлдлээ. Одоо "Батлах" товчийг дарна уу.');
+        closeEbrModal();
     } catch (err) {
-        console.error('Notary paid error:', err);
+        console.error('Е-баримт paid error:', err);
         toast('Алдаа: ' + err.message, 'err');
         btn.disabled = false;
         btn.style.opacity = '1';
     }
 }
 
-// "Нотариат төлөөгүй" товч — 20% хасах + хэсэгчлэн модал нээх
-async function chooseNotaryUnpaid() {
+// "Е-баримт төлөөгүй" товч — Нягтлан: 10% хасаад үлдсэн дүнг тооцоолно
+async function chooseEbrUnpaid() {
     const a = acts.find(x => x.id === currentNotaryActId);
     if (!a) return;
 
@@ -691,60 +702,54 @@ async function chooseNotaryUnpaid() {
 
     try {
         const originalAmt = parseInt(a.amount);
-        const deduction = Math.round(originalAmt * NOTARY_DEDUCT_PERCENT / 100);
+        const deduction = Math.round(originalAmt * EBR_DEDUCT_PERCENT / 100);
         const newAmount = originalAmt - deduction;
 
         const newEvs = [...(a.evs || []), {
-            type: 'notary_check', who: cu.displayName || cu.email, whoEmail: cu.email,
-            title: '📜 Нотариат шалгасан: ТӨЛӨӨГҮЙ — 20% хасагдав',
-            detail: `Координатор нотариатын төлбөр төлөгдөөгүйг тогтоов. `
-                + `Анхны дүн: ₮${fmtN(originalAmt)} → Хасагдах ${NOTARY_DEDUCT_PERCENT}%: -₮${fmtN(deduction)} → `
-                + `Шинэ үндсэн дүн: ₮${fmtN(newAmount)}. Хэсэгчилсэн батлалт автоматаар эхэллээ.`,
+            type: 'ebr_check', who: cu.displayName || cu.email, whoEmail: cu.email,
+            title: `📄 Е-баримт шалгасан: ТӨЛӨӨГҮЙ — ${EBR_DEDUCT_PERCENT}% хасагдав`,
+            detail: `Нягтлан е-баримтын төлбөр төлөгдөөгүйг тогтоов. `
+                + `Анхны дүн: ₮${fmtN(originalAmt)} → Хасагдах ${EBR_DEDUCT_PERCENT}%: -₮${fmtN(deduction)} → `
+                + `Эцсийн дүн: ₮${fmtN(newAmount)}. Одоо "Батлах" товчийг дарж эцэслэнэ үү.`,
             time: ts(), hash: gh()
         }];
 
-        // Firestore-д хадгална — дүнг шинэчилнэ
         await updateDoc(doc(db, 'acts', currentNotaryActId), {
-            notaryStatus: 'unpaid',
-            notaryCheckedAt: serverTimestamp(),
-            notaryCheckedBy: cu.email,
-            originalAmountBeforeNotary: String(originalAmt),
-            notaryDeductedAmount: String(deduction),
-            amount: String(newAmount), // ★ Үндсэн дүн өөрчлөгдөнө
+            ebrStatus: 'unpaid',
+            ebrCheckedAt: serverTimestamp(),
+            ebrCheckedBy: cu.email,
+            originalAmountBeforeEbr: String(originalAmt),
+            ebrDeductedAmount: String(deduction),
+            amount: String(newAmount), // ★ Эцсийн дүн (хасалт хийгдсэн)
             evs: newEvs
         });
 
-        // ★ ШИНЭ: Гүйцэтгэгчид мэдэгдэх (нотариат төлөөгүй тул 20% хасагдсан)
+        // Гүйцэтгэгчид мэдэгдэх (е-баримт төлөөгүй тул хасагдсан)
         if (a.submittedBy) {
             try {
-                const subject = `📜 Таны актын нотариатын төлбөр төлөгдөөгүй: ${a.actId}`;
+                const subject = `📄 Таны актын е-баримтын төлбөр төлөгдөөгүй: ${a.actId}`;
                 const message = `Хүндэт ${a.submittedByName || 'гүйцэтгэгч'},\n\n`
-                    + `Таны илгээсэн актын нотариатын төлбөр төлөгдөөгүй тул дүнгээс 20% хасагдлаа.\n\n`
+                    + `Таны илгээсэн актын е-баримтын төлбөр төлөгдөөгүй тул эцсийн дүнгээс ${EBR_DEDUCT_PERCENT}% хасагдлаа.\n\n`
                     + `АКТ: ${a.actId}\n`
                     + `Компани: ${a.company}\n`
                     + `Ажил: ${a.work}\n\n`
                     + `═══════════════════════════════════\n`
                     + `Анхны дүн: ₮${fmtN(originalAmt)}\n`
-                    + `Хасагдах (20%): -₮${fmtN(deduction)}\n`
-                    + `Шинэ үндсэн дүн: ₮${fmtN(newAmount)}\n`
+                    + `Хасагдах (${EBR_DEDUCT_PERCENT}%): -₮${fmtN(deduction)}\n`
+                    + `Эцсийн дүн: ₮${fmtN(newAmount)}\n`
                     + `═══════════════════════════════════\n\n`
-                    + `Координатор: ${cu.displayName || cu.email}`;
+                    + `Нягтлан: ${cu.displayName || cu.email}`;
                 await sendMail(a.submittedBy, a.submittedByName || 'Гүйцэтгэгч',
                     { ...a, amount: String(newAmount) },
                     cu.displayName || cu.email,
-                    { subject, message, type: 'notary_unpaid' });
-            } catch (e) { console.error('Notary mail:', e); }
+                    { subject, message, type: 'ebr_unpaid' });
+            } catch (e) { console.error('Е-баримт mail:', e); }
         }
 
-        toast(`⚠ 20% хасагдлаа (-₮${fmtN(deduction)}). Хэсэгчилсэн батлалт нээгдэж байна...`);
-        closeNotaryModal();
-
-        // ★ Богино delay-аар хэсэгчлэн модал нээх (snapshot шинэчлэгдэхэд)
-        setTimeout(() => {
-            openPartialModal(currentNotaryActId || a.id, { fromNotaryUnpaid: true });
-        }, 500);
+        toast(`⚠ ${EBR_DEDUCT_PERCENT}% хасагдлаа (-₮${fmtN(deduction)}). Одоо "Батлах" товчийг дарж эцэслэнэ үү.`);
+        closeEbrModal();
     } catch (err) {
-        console.error('Notary unpaid error:', err);
+        console.error('Е-баримт unpaid error:', err);
         toast('Алдаа: ' + err.message, 'err');
         btn.disabled = false;
         btn.style.opacity = '1';
@@ -760,9 +765,9 @@ async function approve(docId) {
     if (!a || (a.status !== 'pending' && a.status !== 'partial')) { toast('Батлах боломжгүй!', 'err'); return; }
     if (RSTEP[role] !== a.step) { toast('Та энэ актыг батлах эрхгүй!', 'err'); return; }
 
-    // ★ ШИНЭ: Координатор нотариат шалгаагүй бол анхааруулах
-    if (role === 'Координатор' && (a.step || 0) === 0 && !a.notaryStatus) {
-        toast('Эхлээд "Нотариат шалгах" товч дээр дарна уу!', 'err');
+    // Нягтлан — Е-баримт шалгаагүй бол блоклоно
+    if (role === 'Нягтлан' && (a.step || 0) === 3 && !a.ebrStatus) {
+        toast('Эхлээд "Е-баримт шалгах" товч дээр дарна уу!', 'err');
         return;
     }
 
@@ -921,39 +926,20 @@ function openPartialModal(docId, opts = {}) {
     if (role !== 'Координатор') { toast('Зөвхөн Координатор хэсэгчлэн батлах эрхтэй', 'err'); return; }
     if (a.status !== 'pending' || (a.step || 0) !== 0) { toast('Зөвхөн анхны шалгалтын үед хэсэгчлэн батлах боломжтой', 'err'); return; }
 
-    // ★ ШИНЭ: Нотариат шалгаагүй бол блоклох
-    if (!a.notaryStatus && !opts.fromNotaryUnpaid) {
-        toast('Эхлээд "Нотариат шалгах" товч дээр дарна уу!', 'err');
-        return;
-    }
-
     currentPartialActId = docId;
 
-    // ★ ШИНЭ: Нотариат төлөөгүй бол анхааруулга харуулна
     const notaryWarn = e('pmNotaryWarn');
+    if (notaryWarn) notaryWarn.style.display = 'none';
     const originalLabel = e('pmOriginalLabel');
     const originalSub = e('pmOriginalSub');
-
-    if (a.notaryStatus === 'unpaid' && a.originalAmountBeforeNotary) {
-        notaryWarn.style.display = 'flex';
-        originalLabel.textContent = 'Шинэ үндсэн дүн (нотариат -20%)';
-        originalSub.style.display = 'block';
-        originalSub.innerHTML = `Анхны дүн: <s>₮${fmtN(a.originalAmountBeforeNotary)}</s> · Хасагдсан: -₮${fmtN(a.notaryDeductedAmount)}`;
-    } else {
-        notaryWarn.style.display = 'none';
-        originalLabel.textContent = 'Нийт ажлын дүн';
-        originalSub.style.display = 'none';
-    }
+    if (originalLabel) originalLabel.textContent = 'Нийт ажлын дүн';
+    if (originalSub) originalSub.style.display = 'none';
 
     e('pmActId').textContent = a.actId;
     e('pmOriginalAmt').textContent = '₮' + fmtN(a.amount);
 
-    // ★ ШИНЭ: Нотариат төлөөгүй бол default 80%, бусад тохиолдолд 85%
-    const defaultPct = (a.notaryStatus === 'unpaid' || opts.fromNotaryUnpaid) ? 80 : 85;
-    e('pmSlider').value = defaultPct;
-    e('pmReason').value = (a.notaryStatus === 'unpaid')
-        ? `Нотариатын төлбөр төлөгдөөгүй тул 20% хасагдсан. Үлдэгдэл ажлыг гүйцээж дахин илгээнэ үү.`
-        : '';
+    e('pmSlider').value = 85;
+    e('pmReason').value = '';
     updatePartialPreview();
     e('partialModal').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1010,8 +996,8 @@ async function confirmPartialApprove() {
     btn.textContent = 'Боловсруулж байна...';
 
     try {
-        const notaryNote = (a.notaryStatus === 'unpaid')
-            ? ` [Нотариат төлөгдөөгүй — нийт дүнгээс 20% (₮${fmtN(a.notaryDeductedAmount)}) хасагдсан]`
+        const notaryNote = (a.ebrStatus === 'unpaid')
+            ? ` [Е-баримт төлөгдөөгүй — нийт дүнгээс ${EBR_DEDUCT_PERCENT}% (₮${fmtN(a.ebrDeductedAmount)}) хасагдсан]`
             : '';
 
         const newEvs = [...(a.evs || []), {
@@ -1049,10 +1035,10 @@ async function confirmPartialApprove() {
             partialReason: reason,
             pdfs: [],
             pdfCount: 0,
-            notaryPdfs: [],
-            notaryPdfCount: 0,
-            hasNotaryAttachment: false,
-            notaryStatus: null,
+            ebrPdfs: [],
+            ebrPdfCount: 0,
+            hasEbrAttachment: false,
+            ebrStatus: null,
             step: 0,
             status: 'remaining',
             submittedBy: a.submittedBy,
@@ -1338,16 +1324,16 @@ async function generateFinalPdf(act) {
     drawMetaRow('Ажлын хугацаа', (act.dateFrom || '—') + ' — ' + (act.dateTo || '—'));
     drawMetaRow('Илгээсэн', act.submittedByName || act.submittedBy);
 
-    // ★ ШИНЭ: Нотариатын мэдээлэл
-    if (act.notaryStatus) {
+    // Е-баримтын мэдээлэл
+    if (act.ebrStatus) {
         drawMetaSeparator();
-        if (act.notaryStatus === 'paid') {
-            drawMetaRow('Нотариат', '✓ Төлөгдсөн', rgb(0.06, 0.4, 0.27), 10.5);
-        } else if (act.notaryStatus === 'unpaid') {
-            drawMetaRow('Нотариат', '✗ Төлөгдөөгүй (-20%)', rgb(0.85, 0.18, 0.18), 10.5);
-            if (act.originalAmountBeforeNotary) {
-                drawMetaRow('Анхны дүн (хасалт өмнө)', '₮ ' + fmtN(act.originalAmountBeforeNotary), rgb(0.42, 0.45, 0.5), 10.5);
-                drawMetaRow('Хасагдсан 20%', '-₮ ' + fmtN(act.notaryDeductedAmount), rgb(0.85, 0.18, 0.18), 10.5);
+        if (act.ebrStatus === 'paid') {
+            drawMetaRow('Е-баримт', '✓ Төлөгдсөн', rgb(0.06, 0.4, 0.27), 10.5);
+        } else if (act.ebrStatus === 'unpaid') {
+            drawMetaRow('Е-баримт', `✗ Төлөгдөөгүй (-${EBR_DEDUCT_PERCENT}%)`, rgb(0.85, 0.18, 0.18), 10.5);
+            if (act.originalAmountBeforeEbr) {
+                drawMetaRow('Анхны дүн (хасалт өмнө)', '₮ ' + fmtN(act.originalAmountBeforeEbr), rgb(0.42, 0.45, 0.5), 10.5);
+                drawMetaRow(`Хасагдсан ${EBR_DEDUCT_PERCENT}%`, '-₮ ' + fmtN(act.ebrDeductedAmount), rgb(0.85, 0.18, 0.18), 10.5);
             }
         }
     }
@@ -1405,8 +1391,8 @@ async function generateFinalPdf(act) {
     if (act.pdfCount) {
         drawMetaRow('Хавсралт', act.pdfCount + ' ажлын PDF', rgb(0.42, 0.45, 0.5));
     }
-    if (act.notaryPdfCount) {
-        drawMetaRow('Нотариатын баримт', act.notaryPdfCount + ' PDF', rgb(0.42, 0.45, 0.5));
+    if (act.ebrPdfCount) {
+        drawMetaRow('Е-баримт', act.ebrPdfCount + ' PDF', rgb(0.42, 0.45, 0.5));
     }
 
     if (act.parentActId) {
@@ -1476,7 +1462,7 @@ async function generateFinalPdf(act) {
         const isApprove = ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit';
         const isReject = ev.type === 'reject';
         const isPartial = ev.type === 'partial' || ev.type === 'remaining_created';
-        const isNotary = ev.type === 'notary_check';
+        const isNotary = ev.type === 'ebr_check';
         const dotColor = isApprove ? rgb(0.11, 0.62, 0.46)
             : isReject ? rgb(0.88, 0.29, 0.29)
                 : isPartial ? rgb(0.96, 0.62, 0.04)
@@ -1523,11 +1509,11 @@ async function generateFinalPdf(act) {
     y -= 12;
     drawText('Talst Act System · Blockchain-style Audit Trail', margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
     y -= 12;
-    const totalPdfCount = (act.pdfCount || 0) + (act.notaryPdfCount || 0);
+    const totalPdfCount = (act.pdfCount || 0) + (act.ebrPdfCount || 0);
     drawText(`Нийт ${events.length} арга хэмжээ · ${totalPdfCount} хавсралт`, margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
 
-    // ★ ШИНЭ: ажлын болон нотариатын PDF хоёуланг хавсаргах
-    const allPdfs = [...(act.pdfs || []), ...(act.notaryPdfs || [])];
+    // ажлын болон е-баримтын PDF хоёуланг хавсаргах
+    const allPdfs = [...(act.pdfs || []), ...(act.ebrPdfs || [])];
     if (allPdfs.length) {
         for (const pdf of allPdfs) {
             try {
@@ -1634,8 +1620,8 @@ function evH(ev, isLast) {
     let dc, ic, lk;
     if (ev.type === 'partial' || ev.type === 'remaining_created') {
         dc = 'dpartial'; ic = '⚠'; lk = '🔓';
-    } else if (ev.type === 'notary_check') {
-        dc = 'dnotary'; ic = '📜'; lk = '🔒';
+    } else if (ev.type === 'ebr_check') {
+        dc = 'dnotary'; ic = '📄'; lk = '🔒';
     } else if (ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit') {
         dc = 'dd'; ic = '✓'; lk = '🔒';
     } else if (ev.type === 'reject') {
@@ -1679,29 +1665,33 @@ function detH(idx) {
     const canComplete = a.status === 'remaining' && a.submittedBy === cu?.email;
     const canComment = isViewer(role);
 
-    // ★ ШИНЭ: Координатор + step 0 + нотариат шалгаагүй
-    const needsNotaryCheck = a.status === 'pending'
-        && role === 'Координатор'
-        && step === 0
-        && !a.notaryStatus;
+    // Нягтлан + step 3 + е-баримт шалгаагүй
+    const needsNotaryCheck = (a.status === 'pending' || a.status === 'partial')
+        && role === 'Нягтлан'
+        && step === 3
+        && !a.ebrStatus;
+
+    // Бүх алхамд е-баримтыг inline харуулах эсэх (read-only preview)
+    const showEbrInlineReadonly = a.ebrPdfs && a.ebrPdfs.length
+        && (role === 'Координатор' || role === 'Инженер' || role === 'Захирал')
+        && (a.step || 0) < 3;
 
     const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : a.dateFrom || a.dateTo || '—';
 
-    // ★ ШИНЭ: Нотариатын PDF inline preview (зөвхөн Координатор, нотариат шалгаагүй үед)
     let notaryPreviewHtml = '';
-    if (needsNotaryCheck && a.notaryPdfs && a.notaryPdfs.length) {
+    if (needsNotaryCheck && a.ebrPdfs && a.ebrPdfs.length) {
         notaryPreviewHtml = `<div class="det-notary-preview">
             <div class="det-notary-header">
-                <span style="font-size:18px">📜</span>
+                <span style="font-size:18px">📄</span>
                 <div>
-                    <div class="det-notary-title">Нотариатын баримт (${a.notaryPdfs.length})</div>
+                    <div class="det-notary-title">Е-баримт (${a.ebrPdfs.length})</div>
                     <div class="det-notary-sub">Доороос харж шалгана уу — татах шаардлагагүй</div>
                 </div>
             </div>
-            ${a.notaryPdfs.map((pdf, i) => `
+            ${a.ebrPdfs.map((pdf, i) => `
                 <div class="det-notary-doc">
                     <div class="det-notary-doc-head">
-                        <span class="det-notary-doc-name">📜 ${esc(pdf.name)}</span>
+                        <span class="det-notary-doc-name">📄 ${esc(pdf.name)}</span>
                         <span class="det-notary-doc-size">${pdf.sizeKb}KB</span>
                     </div>
                     <iframe src="${pdf.base64}#toolbar=0&navpanes=0&view=FitH"
@@ -1710,25 +1700,44 @@ function detH(idx) {
                 </div>
             `).join('')}
         </div>`;
-    } else if (needsNotaryCheck && (!a.notaryPdfs || !a.notaryPdfs.length)) {
+    } else if (needsNotaryCheck && (!a.ebrPdfs || !a.ebrPdfs.length)) {
         notaryPreviewHtml = `<div class="det-notary-preview det-notary-empty">
             <div class="det-notary-empty-icon">📭</div>
-            <div class="det-notary-empty-title">Нотариатын баримт хавсраагүй</div>
-            <div class="det-notary-empty-text">Гүйцэтгэгч нотариатын баримт ороогүй байна. Та өөрөө шалгаж, "Төлсөн" эсвэл "Төлөөгүй" гэж сонгоно уу.</div>
+            <div class="det-notary-empty-title">Е-баримт хавсраагүй</div>
+            <div class="det-notary-empty-text">Гүйцэтгэгч е-баримт ороогүй байна. Та өөрөө шалгаж, "Төлсөн" эсвэл "Төлөөгүй" гэж сонгоно уу.</div>
+        </div>`;
+    } else if (showEbrInlineReadonly) {
+        notaryPreviewHtml = `<div class="det-notary-preview det-notary-readonly">
+            <div class="det-notary-header">
+                <span style="font-size:18px">📄</span>
+                <div>
+                    <div class="det-notary-title">Е-баримт (${a.ebrPdfs.length}) <span class="det-notary-badge">Зөвхөн харах</span></div>
+                    <div class="det-notary-sub">Нягтлан шалгана</div>
+                </div>
+            </div>
+            ${a.ebrPdfs.map((pdf, i) => `
+                <div class="det-notary-doc">
+                    <div class="det-notary-doc-head">
+                        <span class="det-notary-doc-name">📄 ${esc(pdf.name)}</span>
+                        <span class="det-notary-doc-size">${pdf.sizeKb}KB</span>
+                    </div>
+                    <iframe src="${pdf.base64}#toolbar=0&navpanes=0&view=FitH"
+                            class="det-notary-iframe"
+                            title="${esc(pdf.name)}"></iframe>
+                </div>
+            `).join('')}
         </div>`;
     }
 
-    // ★ ШИНЭ: Нотариатын товч (зөвхөн нотариат шалгаагүй үед)
     let notaryActionHtml = '';
     if (needsNotaryCheck) {
         notaryActionHtml = `<div class="abtns" style="border-bottom:1px solid var(--border-subtle)">
-            <button class="bnotary-check" onclick="openNotaryModal('${a.id}')">
-                📜 Нотариат шалгах
+            <button class="bnotary-check" onclick="openEbrModal('${a.id}')">
+                📄 Е-баримт шалгах
             </button>
         </div>`;
     }
 
-    // Ажлын PDF — заавал download товчтой
     let pdfsHtml = '';
     if (a.pdfs && a.pdfs.length) {
         pdfsHtml = '<div class="det-pdfs">' + a.pdfs.map(pdf => `
@@ -1740,12 +1749,11 @@ function detH(idx) {
       </div>`).join('') + '</div>';
     }
 
-    // ★ ШИНЭ: Нотариатын PDF хэсэг — Координатор шалгасны дараа л download товчтой
     let notaryDocsHtml = '';
-    if (!needsNotaryCheck && a.notaryPdfs && a.notaryPdfs.length) {
-        notaryDocsHtml = '<div class="det-pdfs det-pdfs-notary">' + a.notaryPdfs.map(pdf => `
+    if (!needsNotaryCheck && !showEbrInlineReadonly && a.ebrPdfs && a.ebrPdfs.length) {
+        notaryDocsHtml = '<div class="det-pdfs det-pdfs-notary">' + a.ebrPdfs.map(pdf => `
       <div class="det-pdf-item">
-        <span style="font-size:18px">📜</span>
+        <span style="font-size:18px">📄</span>
         <span class="det-pdf-name">${esc(pdf.name)}</span>
         <span class="det-pdf-size">${pdf.sizeKb}KB</span>
         <a class="det-pdf-open" href="${pdf.base64}" download="${esc(pdf.name)}" onclick="event.stopPropagation()">Татах</a>
@@ -1770,12 +1778,11 @@ function detH(idx) {
 
     const statusBadge = `<span class="badge ${bc(a)}">${bt(a)}</span>`;
 
-    // ★ ШИНЭ: Нотариатын статус badge (баримтын дэргэд)
-    let notaryStatusBadge = '';
-    if (a.notaryStatus === 'paid') {
-        notaryStatusBadge = `<div class="notary-status-pill notary-paid">📜 ✓ Нотариат төлөгдсөн</div>`;
-    } else if (a.notaryStatus === 'unpaid') {
-        notaryStatusBadge = `<div class="notary-status-pill notary-unpaid">📜 ✗ Нотариат төлөгдөөгүй · 20% хасагдсан (-₮${fmtN(a.notaryDeductedAmount)})</div>`;
+    let ebrStatusBadge = '';
+    if (a.ebrStatus === 'paid') {
+        ebrStatusBadge = `<div class="notary-status-pill notary-paid">📄 ✓ Е-баримт төлөгдсөн</div>`;
+    } else if (a.ebrStatus === 'unpaid') {
+        ebrStatusBadge = `<div class="notary-status-pill notary-unpaid">📄 ✗ Е-баримт төлөгдөөгүй · ${EBR_DEDUCT_PERCENT}% хасагдсан (-₮${fmtN(a.ebrDeductedAmount)})</div>`;
     }
 
     let actionBtns = '';
@@ -1807,9 +1814,9 @@ function detH(idx) {
         amountDisplay = `<div class="row"><span class="rl">Үндсэн дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>
            <div class="row"><span class="rl">Батлагдсан дүн (${a.approvedPercent}%)</span><span class="rv" style="color:#059669;font-weight:700">₮ ${fmtN(a.approvedAmount)}</span></div>
            <div class="row"><span class="rl">Үлдэгдэл (${100 - a.approvedPercent}%)</span><span class="rv" style="color:#d97706;font-weight:600">₮ ${fmtN(remainingPart)}</span></div>`;
-    } else if (a.notaryStatus === 'unpaid' && a.originalAmountBeforeNotary) {
-        amountDisplay = `<div class="row"><span class="rl">Анхны дүн</span><span class="rv" style="text-decoration:line-through;color:var(--text-tertiary)">₮ ${fmtN(a.originalAmountBeforeNotary)}</span></div>
-           <div class="row"><span class="rl">Нотариат -20%</span><span class="rv" style="color:#dc2626;font-weight:600">-₮ ${fmtN(a.notaryDeductedAmount)}</span></div>
+    } else if (a.ebrStatus === 'unpaid' && a.originalAmountBeforeEbr) {
+        amountDisplay = `<div class="row"><span class="rl">Анхны дүн</span><span class="rv" style="text-decoration:line-through;color:var(--text-tertiary)">₮ ${fmtN(a.originalAmountBeforeEbr)}</span></div>
+           <div class="row"><span class="rl">Е-баримт -${EBR_DEDUCT_PERCENT}%</span><span class="rv" style="color:#dc2626;font-weight:600">-₮ ${fmtN(a.ebrDeductedAmount)}</span></div>
            <div class="row"><span class="rl">Үндсэн дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
     } else {
         amountDisplay = `<div class="row"><span class="rl">Дүн</span><span class="rv amt">₮ ${fmtN(a.amount)}</span></div>`;
@@ -1845,9 +1852,9 @@ function detH(idx) {
       <div class="row"><span class="rl">Илгээсэн</span><span class="rv">${esc(a.submittedByName || a.submittedBy || '—')}</span></div>
       ${a.parentActId ? `<div class="row"><span class="rl">Эх акт</span><span class="rv">${esc(a.parentActId)}</span></div>` : ''}
       ${a.pdfCount ? `<div class="row"><span class="rl">Ажлын баримт</span><span class="rv">${a.pdfCount} PDF файл</span></div>` : ''}
-      ${a.notaryPdfCount ? `<div class="row"><span class="rl">Нотариатын баримт</span><span class="rv">${a.notaryPdfCount} PDF файл</span></div>` : ''}
+      ${a.ebrPdfCount ? `<div class="row"><span class="rl">Е-баримт</span><span class="rv">${a.ebrPdfCount} PDF файл</span></div>` : ''}
     </div>
-    ${notaryStatusBadge}
+    ${ebrStatusBadge}
     ${partialReasonHtml}
     ${notaryPreviewHtml}
     ${pdfsHtml}
@@ -1866,9 +1873,11 @@ function liH(a, idx, from) {
     const p = pct(a); const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : '';
     const cls = a.status === 'partial' ? 'li partial' : 'li';
 
-    // ★ ШИНЭ: Нотариат шалгах хэрэгтэй гэдэг тэмдэг
-    const needsCheck = role === 'Координатор' && a.status === 'pending' && (a.step || 0) === 0 && !a.notaryStatus;
-    const notaryFlag = needsCheck ? '<span class="li-notary-flag" title="Нотариат шалгах">📜</span>' : '';
+    const needsCheck = role === 'Нягтлан'
+        && (a.status === 'pending' || a.status === 'partial')
+        && (a.step || 0) === 3
+        && !a.ebrStatus;
+    const notaryFlag = needsCheck ? '<span class="li-notary-flag" title="Е-баримт шалгах">📄</span>' : '';
 
     return `<div class="${cls}" onclick="opd(${idx},${from})">
     <div class="li-top">
@@ -1903,7 +1912,7 @@ function liHDone(a, idx, from) {
 function liHRejected(a, idx, from) {
     const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : '';
     const now = Date.now();
-    const rejTime = a.rejectedAt ? a.rejectedAt.toMillis?.() || a.rejectedAt : null;
+    const rejTime = a.rejectedAt ? (typeof a.rejectedAt.toMillis === 'function' ? a.rejectedAt.toMillis() : a.rejectedAt) : null;
 
     let timerHtml = '';
     let timerColor = '#e74c3c';
@@ -1959,8 +1968,12 @@ function rA() {
     if (isViewer(role)) { el.innerHTML = '<div class="empty">Хяналт хэрэглэгч батлах эрхгүй</div>'; return; }
 
     let list;
+    // ★ FIX #4: Нягтлан pending/partial && step===3 болгох
     if (role === 'Нягтлан') {
-        list = acts.filter(a => a.status === 'done' || a.status === 'partial_done');
+        list = acts.filter(a =>
+            (a.status === 'pending' || a.status === 'partial') &&
+            (a.step || 0) === 3
+        );
     } else if (role === 'Координатор') {
         list = acts.filter(a =>
             (a.status === 'pending' && (a.step || 0) === 0)
@@ -2067,7 +2080,7 @@ function renderListBodyHtml() {
         const now = Date.now();
         return acts.filter(a => {
             if (a.status !== 'rejected') return false;
-            const rejTime = a.rejectedAt ? (a.rejectedAt.toMillis?.() || a.rejectedAt) : null;
+            const rejTime = a.rejectedAt ? (typeof a.rejectedAt.toMillis === 'function' ? a.rejectedAt.toMillis() : a.rejectedAt) : null;
             if (!rejTime) return true;
             return (now - rejTime) <= EIGHT_HOURS;
         });

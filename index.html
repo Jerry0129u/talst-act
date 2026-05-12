@@ -164,23 +164,23 @@
       <div class="pdf-list" id="pdfList"></div>
       <div class="compress-info" id="compInfo"></div>
 
-      <!-- ★★★ ШИНЭ: НОТАРИАТЫН БАРИМТ UPLOAD ★★★ -->
+      <!-- Е-БАРИМТЫН БАРИМТ UPLOAD -->
       <div class="fl">
-        Нотариатын баримт (PDF)
+        Е-баримтын баримт (PDF)
         <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-tertiary);font-size:10px">
           · Сонголттой
         </span>
       </div>
       <div class="notary-hint">
-        ℹ️ Нотариатын төлбөрийн баримт хавсаргаагүй бол Координатор баримт төлөгдсөн эсэхийг шалгаж, төлөөгүй тохиолдолд <strong>20%</strong> хасалт тооцох болно.
+        ℹ️ Е-баримтын төлбөрийн баримт хавсаргаагүй бол Нягтлан баримт төлөгдсөн эсэхийг шалгаж, төлөөгүй тохиолдолд <strong>10%</strong> хасалт тооцох болно.
       </div>
-      <label class="file-upload-btn notary-upload" for="fnotary">📜 Нотариатын баримт сонгох (PDF)</label>
+      <label class="file-upload-btn notary-upload" for="fnotary">📜 Е-баримт сонгох (PDF)</label>
       <input type="file"
              id="fnotary"
              class="file-input"
              multiple
              accept="application/pdf"
-             onchange="addNotaryPdfs(this)">
+             onchange="addEbrPdfs(this)">
       <div class="pdf-list" id="notaryList"></div>
       <div class="compress-info" id="notaryInfo"></div>
 
@@ -345,15 +345,15 @@
 </div>
 
 
-<!-- ★★★ ШИНЭ: НОТАРИАТ ШАЛГАХ MODAL ★★★ -->
+<!-- ★★★ Е-БАРИМТ ШАЛГАХ MODAL ★★★ -->
 <div class="modal-overlay" id="notaryModal">
   <div class="modal-card">
     <div class="modal-header">
       <div>
-        <div class="modal-title">📜 Нотариат шалгах</div>
+        <div class="modal-title">📜 Е-баримт шалгах</div>
         <div class="modal-subtitle" id="nmActId">АКТ-2026-XXXX</div>
       </div>
-      <button class="modal-close" onclick="closeNotaryModal()">✕</button>
+      <button class="modal-close" onclick="closeEbrModal()">✕</button>
     </div>
 
     <div class="modal-body">
@@ -362,12 +362,12 @@
         <div class="pm-original-value" id="nmOriginalAmt">0₮</div>
       </div>
 
-      <!-- Нотариатын баримт жагсаалт -->
+      <!-- Е-баримтын баримт жагсаалт -->
       <div id="nmNotaryFilesBlock" class="nm-notary-files">
         <div class="nm-files-header">
           <span class="nm-files-icon">📜</span>
           <div>
-            <div class="nm-files-title" id="nmFilesTitle">Хавсаргасан нотариатын баримт</div>
+            <div class="nm-files-title" id="nmFilesTitle">Хавсаргасан е-баримтын баримт</div>
             <div class="nm-files-sub" id="nmFilesSub">—</div>
           </div>
         </div>
@@ -375,25 +375,25 @@
       </div>
 
       <div class="nm-question">
-        <div class="nm-q-title">❓ Нотариатын төлбөрийг төлсөн үү?</div>
+        <div class="nm-q-title">❓ Е-баримтын төлбөрийг төлсөн үү?</div>
         <div class="nm-q-sub">Доорх сонголтын аль нэгийг сонгоно уу. Сонголт нь дараагийн алхамд нөлөөлнө.</div>
       </div>
 
       <div class="nm-options">
-        <button class="nm-option nm-option-paid" id="nmPaidBtn" onclick="chooseNotaryPaid()">
+        <button class="nm-option nm-option-paid" id="nmPaidBtn" onclick="chooseEbrPaid()">
           <div class="nm-opt-icon">✓</div>
           <div class="nm-opt-body">
-            <div class="nm-opt-title">Нотариат төлсөн</div>
-            <div class="nm-opt-desc">Дүн <strong>хэвээр</strong> үлдэнэ · Бүтэн / Хэсэгчлэн батлах сонгоно</div>
+            <div class="nm-opt-title">Е-баримт төлсөн</div>
+            <div class="nm-opt-desc">Дүн <strong>хэвээр</strong> үлдэнэ · Дараа нь "Батлах" товчийг дарна</div>
             <div class="nm-opt-amount" id="nmPaidAmt">0₮</div>
           </div>
         </button>
 
-        <button class="nm-option nm-option-unpaid" id="nmUnpaidBtn" onclick="chooseNotaryUnpaid()">
+        <button class="nm-option nm-option-unpaid" id="nmUnpaidBtn" onclick="chooseEbrUnpaid()">
           <div class="nm-opt-icon">✗</div>
           <div class="nm-opt-body">
-            <div class="nm-opt-title">Нотариат төлөөгүй</div>
-            <div class="nm-opt-desc"><strong>20% хасагдана</strong> · Хэсэгчлэн модал автоматаар нээгдэнэ</div>
+            <div class="nm-opt-title">Е-баримт төлөөгүй</div>
+            <div class="nm-opt-desc"><strong>10% хасагдана</strong> · Дараа нь "Батлах" товчийг дарна</div>
             <div class="nm-opt-amount" id="nmUnpaidAmt">0₮</div>
             <div class="nm-opt-detail">Хасагдах: <span id="nmDeductAmt">0₮</span></div>
           </div>
@@ -403,13 +403,13 @@
       <div class="pm-info-box">
         <div class="pm-info-icon">ℹ️</div>
         <div class="pm-info-text">
-          Сонголтыг audit log-д тэмдэглэнэ. <strong>Төлөөгүй</strong> бол нийт дүнгээс 20% хасагдан, Хэсэгчлэн модал автоматаар нээгдэж 80% default-аар тохируулагдана.
+          Сонголтыг audit log-д тэмдэглэнэ. <strong>Төлөөгүй</strong> бол нийт дүнгээс 10% хасагдан, эцсийн дүн шинэчлэгдэнэ.
         </div>
       </div>
     </div>
 
     <div class="modal-footer">
-      <button class="modal-btn modal-btn-cancel" onclick="closeNotaryModal()">Цуцлах</button>
+      <button class="modal-btn modal-btn-cancel" onclick="closeEbrModal()">Цуцлах</button>
     </div>
   </div>
 </div>
@@ -427,12 +427,12 @@
     </div>
 
     <div class="modal-body">
-      <!-- Нотариат төлөөгүй бол анхааруулга -->
+      <!-- Е-баримт төлөөгүй бол анхааруулга (хэрэв ирээдүйд хэрэгтэй болбол) -->
       <div id="pmNotaryWarn" class="pm-notary-warn" style="display:none">
         <div class="pm-notary-warn-icon">⚠</div>
         <div class="pm-notary-warn-text">
-          <strong>Нотариатын төлбөр төлөгдөөгүй.</strong>
-          Нийт дүнгээс <strong>20% хасагдсан</strong>. Доорх "Ажлын нийт дүн" нь 20% хасагдсан шинэ үндсэн дүн.
+          <strong>Е-баримтын төлбөр төлөгдөөгүй.</strong>
+          Нийт дүнгээс <strong>10% хасагдсан</strong>.
         </div>
       </div>
 
