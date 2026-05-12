@@ -1,0 +1,512 @@
+/* ================================================================
+   ★ DESKTOP / LAPTOP RESPONSIVE LAYER — v4
+   ────────────────────────────────────────────────────────────────
+   Шинэ засвар:
+   ✓ Form card баруун талдаа тулна (full-width)
+   ✓ Topbar sticky (доош scroll-доход дээд талд хадгалагдана)
+   ================================================================ */
+
+
+/* ================================================================
+   TABLET — 769px ~ 1024px
+   ================================================================ */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+
+    .app {
+        max-width: 900px !important;
+        padding: 26px 28px 80px !important;
+    }
+
+    .login-card {
+        max-width: 480px;
+        padding: 56px 48px;
+    }
+
+    .topbar {
+        padding: 16px 22px;
+        margin-bottom: 24px;
+    }
+
+    .uname { max-width: 180px; font-size: 13px; }
+    .urole { font-size: 11px; }
+
+    .tabs {
+        padding: 6px;
+        margin-bottom: 26px;
+    }
+    .tab {
+        padding: 12px 6px;
+        font-size: 13px;
+    }
+
+    .form-card {
+        padding: 32px 36px;
+        max-width: none;       /* ★ full-width */
+        margin: 0;
+    }
+
+    .ftitle { font-size: 20px; margin-bottom: 26px; }
+    .fl { font-size: 12px; margin: 20px 0 9px; }
+
+    input[type=text],
+    input[type=number],
+    input[type=date],
+    textarea {
+        font-size: 14px;
+        padding: 13px 16px;
+    }
+
+    textarea { height: 96px; }
+
+    /* Жагсаалт — 2 багана */
+    #al,
+    #listBody {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    #al > .seclbl,
+    #al > .empty,
+    #al > .loading,
+    #listBody > .list-header,
+    #listBody > .in-progress-label,
+    #listBody > .done-section-label,
+    #listBody > .rejected-section-label,
+    #listBody > .remaining-section-label,
+    #listBody > .partial-done-section-label,
+    #listBody > .search-result-hint,
+    #listBody > .role-detail-header,
+    #listBody > .role-cards,
+    #listBody > .empty,
+    #listBody > .loading,
+    #listBody > .show-more-btn {
+        grid-column: 1 / -1;
+    }
+
+    .role-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .metric-grid { gap: 14px; }
+    .metric-card { padding: 18px; }
+    .metric-val { font-size: 32px; }
+    .metric-label { font-size: 11px; }
+
+    .chart-card { padding: 22px; }
+    .chart-card > div[style*="height:160px"] { height: 200px !important; }
+
+    #pd { max-width: none; margin: 0; }
+
+    .modal-card { max-width: 540px; }
+    .nm-notary-preview { height: 360px; }
+    .det-notary-iframe { height: 400px; }
+
+    .pdf-name { max-width: 320px; }
+}
+
+
+/* ================================================================
+   LAPTOP / DESKTOP — 1025px+
+   ================================================================ */
+
+@media (min-width: 1025px) {
+
+    /* Login хэвээр төвлөрсөн */
+    .login-card {
+        max-width: 520px;
+        padding: 64px 56px;
+    }
+
+    .login-card .logo {
+        height: 64px !important;
+    }
+
+    .login-sub { font-size: 14px; }
+    .google-btn { padding: 17px 22px; font-size: 15px; }
+
+    /* ============================================
+       ★ APP — Grid layout (sidebar + main)
+       ============================================ */
+    .app {
+        max-width: 1280px !important;
+        padding: 0 36px 80px !important;     /* ★ дээд padding 0 — topbar өөрөө padding-тай */
+        display: grid !important;
+        grid-template-columns: 240px 1fr !important;
+        grid-template-rows: auto auto 1fr !important;
+        column-gap: 28px !important;
+        row-gap: 20px !important;
+        align-items: start !important;
+    }
+
+    /* ============================================
+       ★ TOPBAR — STICKY дээд талд
+       ============================================ */
+    .topbar {
+        grid-column: 1 / -1 !important;
+        grid-row: 1 !important;
+        padding: 14px 24px !important;
+        margin: 0 !important;
+        /* sticky тогтмол */
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 100 !important;
+        /* доороо нь толиор гадарга үлдээх */
+        backdrop-filter: blur(28px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+        /* sticky-д сайхан зайтай харагдахаар дээд талд padding */
+        margin-top: 20px !important;
+    }
+
+    /* Toast — full width */
+    #toast {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+        margin-bottom: 0;
+    }
+
+    /* ============================================
+       ★ Sidebar (Tabs)
+       ============================================ */
+    .tabs {
+        grid-column: 1 !important;
+        grid-row: 3 !important;
+        flex-direction: column !important;
+        gap: 4px;
+        padding: 12px;
+        margin-bottom: 0 !important;
+        position: sticky;
+        top: 90px;          /* ★ topbar-н өндөртэй тэнцэх */
+        align-self: start;
+    }
+
+    .tab {
+        padding: 12px 16px;
+        font-size: 13px;
+        text-align: left;
+        border-radius: 8px;
+        display: flex !important;
+        align-items: center;
+        gap: 11px;
+        width: 100%;
+    }
+
+    .tab::before {
+        content: '';
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        opacity: 0.65;
+        flex-shrink: 0;
+        transition: opacity 0.3s;
+    }
+    .tab.on::before { opacity: 1; }
+
+    /* DARK theme icons */
+    #tb0::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 2L11 13'/><path d='M22 2l-7 20-4-9-9-4 20-7z'/></svg>");
+    }
+    #tb1::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+    }
+    #tb2::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg>");
+    }
+    #tb3::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>");
+    }
+
+    /* LIGHT theme icons */
+    [data-theme="light"] #tb0::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 2L11 13'/><path d='M22 2l-7 20-4-9-9-4 20-7z'/></svg>");
+    }
+    [data-theme="light"] #tb1::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+    }
+    [data-theme="light"] #tb2::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg>");
+    }
+    [data-theme="light"] #tb3::before {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>");
+    }
+
+    .tab.on {
+        background: linear-gradient(135deg, rgba(99, 91, 255, 0.22), rgba(167, 139, 250, 0.12));
+        border: 1px solid rgba(99, 91, 255, 0.32);
+        box-shadow: 0 6px 18px rgba(99, 91, 255, 0.18);
+    }
+
+    /* ============================================
+       ★ MAIN CONTENT
+       ============================================ */
+    #p0, #p1, #p2, #p3, #pd {
+        grid-column: 2 !important;
+        grid-row: 3 !important;
+        min-width: 0;
+        width: 100%;        /* ★ баруун талдаа бүтэн тулна */
+    }
+
+    /* ★★★ FORM CARD — full-width баруун талдаа тулна */
+    .form-card {
+        padding: 36px 40px;
+        max-width: none !important;     /* ★ хязгаар арилгана */
+        width: 100%;
+        margin: 0;
+    }
+
+    .ftitle { font-size: 22px; margin-bottom: 26px; }
+    .date-row { gap: 12px; }
+
+    .fl { font-size: 11px; margin: 18px 0 8px; }
+
+    input[type=text],
+    input[type=number],
+    input[type=date],
+    textarea {
+        font-size: 14px;
+        padding: 13px 16px;
+    }
+
+    textarea { height: 92px; }
+
+    /* ============================================
+       ★ ЖАГСААЛТ — 2 баганат grid
+       ============================================ */
+    #al,
+    #listBody {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    #al > .seclbl,
+    #al > .empty,
+    #al > .loading,
+    #listBody > .list-header,
+    #listBody > .in-progress-label,
+    #listBody > .done-section-label,
+    #listBody > .rejected-section-label,
+    #listBody > .remaining-section-label,
+    #listBody > .partial-done-section-label,
+    #listBody > .search-result-hint,
+    #listBody > .role-detail-header,
+    #listBody > .empty,
+    #listBody > .loading,
+    #listBody > .show-more-btn {
+        grid-column: 1 / -1;
+    }
+
+    #listBody > .role-cards {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+
+    .role-card { padding: 18px 20px; }
+    .role-card-icon { width: 44px; height: 44px; }
+    .role-card-title { font-size: 14px; }
+    .role-card-desc { font-size: 11px; }
+    .role-card-count { font-size: 28px; }
+
+    /* ============================================
+       ★ DASHBOARD
+       ============================================ */
+    .metric-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+
+    .metric-card {
+        padding: 22px;
+        border-radius: 14px;
+    }
+    .metric-label { font-size: 11px; }
+    .metric-val { font-size: 34px; }
+
+    .chart-card { padding: 22px 24px; margin-bottom: 16px; }
+    .chart-card > div[style*="height:160px"] { height: 220px !important; }
+    .chart-title { font-size: 15px; }
+    .chart-subtitle { font-size: 11px; }
+
+    #p3 > div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+    }
+
+    /* ============================================
+       ★ DETAIL PAGE — full-width
+       ============================================ */
+    #pd { max-width: none !important; width: 100%; }
+
+    .card { border-radius: 16px; }
+    .ch { padding: 20px 24px; }
+    .ctitle { font-size: 16px; }
+    .cb { padding: 18px 24px; }
+    .row { padding: 9px 0; font-size: 13px; }
+    .amt { font-size: 16px; }
+
+    .tl { padding: 22px 24px 8px; }
+    .tll { width: 48px; }
+    .dot { width: 34px; height: 34px; font-size: 14px; }
+    .tlch { padding: 14px 16px; }
+    .tltitle { font-size: 13px; }
+    .tlwho { font-size: 11px; }
+    .tlcb { padding: 12px 16px; }
+    .tldtl { font-size: 12px; }
+
+    .det-pdfs { padding: 18px 24px; }
+    .pdf-name, .det-pdf-name { max-width: 380px; font-size: 13px; }
+    .det-notary-iframe { height: 480px; }
+
+    .modal-card { max-width: 600px; }
+    .nm-notary-preview { height: 420px; }
+    #notaryModal .modal-card { max-width: 620px; }
+
+    .abtns { padding: 16px 22px; gap: 10px; }
+    .bok, .bno, .bpartial-btn, .bnotary-check {
+        padding: 14px 18px;
+        font-size: 14px;
+    }
+
+    .li {
+        padding: 16px 18px;
+    }
+    .li-title { font-size: 13px; }
+    .li-sub { font-size: 11.5px; }
+    .li-top { gap: 12px; }
+    .li-top .badge {
+        max-width: none;
+        font-size: 10px;
+    }
+
+    .theme-toggle { width: 40px; height: 40px; }
+    .theme-toggle svg { width: 18px; height: 18px; }
+
+    .uname { font-size: 13px; max-width: 200px; }
+    .urole { font-size: 11px; }
+    .uav { width: 32px; height: 32px; }
+    .uav svg { width: 16px; height: 16px; }
+}
+
+
+/* ================================================================
+   LARGE DESKTOP — 1440px+
+   ================================================================ */
+
+@media (min-width: 1440px) {
+
+    .app {
+        max-width: 1440px !important;
+        grid-template-columns: 260px 1fr !important;
+        column-gap: 36px !important;
+        padding: 0 44px 100px !important;
+    }
+
+    .topbar { padding: 16px 28px !important; }
+    .tabs { padding: 14px; top: 100px; }
+    .tab { padding: 13px 18px; font-size: 14px; }
+
+    /* Жагсаалт — 3 багана */
+    #al,
+    #listBody {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    /* Role cards 5 багана */
+    #listBody > .role-cards {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .form-card {
+        padding: 44px 52px;
+    }
+
+    .ftitle { font-size: 24px; }
+
+    .metric-grid { gap: 18px; }
+    .metric-val { font-size: 38px; }
+
+    .modal-card { max-width: 660px; }
+    .nm-notary-preview { height: 480px; }
+    .det-notary-iframe { height: 540px; }
+}
+
+
+/* ================================================================
+   ULTRA-WIDE — 1920px+
+   ================================================================ */
+
+@media (min-width: 1920px) {
+    .app {
+        max-width: 1600px !important;
+    }
+
+    #al,
+    #listBody {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+
+/* ================================================================
+   ★ Mesh-canvas том дэлгэц дээр илүү тод
+   ================================================================ */
+
+@media (min-width: 1025px) {
+    #meshCanvas { opacity: 0.85; }
+    [data-theme="light"] #meshCanvas { opacity: 0.5; }
+}
+
+
+/* ================================================================
+   ★ Print
+   ================================================================ */
+
+@media print {
+    #meshCanvas,
+    body::before,
+    body::after,
+    .topbar,
+    .tabs,
+    .theme-toggle,
+    .abtns,
+    .sbtn,
+    .bok, .bno, .bpartial-btn,
+    .modal-overlay {
+        display: none !important;
+    }
+    body { background: #fff !important; color: #000 !important; }
+    .app {
+        display: block !important;
+        max-width: none !important;
+        padding: 0 !important;
+    }
+    .card, .form-card {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+        page-break-inside: avoid;
+    }
+}
+
+
+/* ================================================================
+   ★ Touch device — hover хаах
+   ================================================================ */
+
+@media (hover: none) {
+    .li:hover,
+    .card:hover,
+    .role-card:hover:not(.empty),
+    .metric-card:hover {
+        transform: none;
+    }
+}

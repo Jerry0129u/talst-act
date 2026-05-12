@@ -22,18 +22,18 @@ emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
     { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
-    { name: 'Инженер', email: 'unursaikhan@talstgroup.mn' },
+    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
     { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'naranzul@talstgroup.mn' },
+    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
 ];
 
 const ROLES = {
     'unumunkh@talstgroup.mn': 'Координатор',
-    'unursaikhan@talstgroup.mn': 'Инженер',
+    'barsbat@talstgroup.mn': 'Инженер',
     'zorigoo@talstgroup.mn': 'Захирал',
     'bayarmaa@talstgroup.mn': 'Нягтлан',
     'ulziisaikhan@talstgroup.mn': 'CEO',
-    'naranzul@talstgroup.mn': 'CFO',
+    'narankhuu@talstgroup.mn': 'CFO',
 };
 
 const VIEWER_ROLES = ['CEO', 'CFO'];
@@ -113,14 +113,15 @@ function bc(a) {
 
 function bt(a) {
     if (a.status === 'done') {
-        if (a.completedViaRemaining) return '✓ 100% дууссан (Нэгдсэн)';
+        if (a.completedViaRemaining) return '✓ 100% дууссан';
         return '✓ Батлагдсан';
     }
-    if (a.status === 'partial_done') return '⚠ Хэсэгчлэн дууссан (' + (a.approvedPercent || 0) + '%)';
+    if (a.status === 'partial_done') return '⚠ Хэсэгчлэн (' + (a.approvedPercent || 0) + '%)';
     if (a.status === 'rejected') return '✕ Буцаагдсан';
-    if (a.status === 'partial') return '⚠ Хэсэгчлэн (' + (a.approvedPercent || 0) + '%) · ' + SN[a.step || 0];
-    if (a.status === 'remaining') return '⏳ Үлдэгдэл гүйцээх';
-    return SN[a.step || 0] + ' хүлээж байна';
+    if (a.status === 'partial') return '⚠ ' + (a.approvedPercent || 0) + '% · ' + SN[a.step || 0];
+    if (a.status === 'remaining') return '⏳ Үлдэгдэл';
+    // Badge богино: "Координатор хүлээж байна" → "Координатор" (мобайлд багтахын тулд)
+    return SN[a.step || 0];
 }
 
 function fmtN(n) { return parseInt(n || 0).toLocaleString('mn-MN') }
@@ -593,6 +594,33 @@ async function submitAct() {
 // ★★★ Е-БАРИМТЫН MODAL — Нягтлангийн шийдэл (сүүлийн алхам) ★★★
 // ════════════════════════════════════════════════════════════
 
+// ★★★ ҮЛДЭГДЭЛ АКТ дээр parent аль хэдийн ebr хасалт хийсэн бол дахин хасахгүйгээр тэмдэглэнэ
+async function autoMarkEbrHandledForRemaining(docId, a, parentAct) {
+    try {
+        const newEvs = [...(a.evs || []), {
+            type: 'ebr_check', who: 'Систем', whoEmail: 'system',
+            title: `📄 Е-баримт: ӨМНӨ НЬ ХАСАГДСАН — Дахин хасахгүй`,
+            detail: `Анхны актын (${parentAct.actId}) хэсэгчилсэн дүнгийн шалгалт дээр е-баримт төлөгдөөгүй гэж тогтоосон. `
+                + `Гэрээний бүтэн дүнгээс ${EBR_DEDUCT_PERCENT}% (₮${fmtN(parentAct.ebrDeductedAmount || 0)}) аль хэдийн хасагдсан. `
+                + `Үлдэгдэл актын дүн ₮${fmtN(a.amount)} хэвээр үлдэв — "Батлах" товчийг дарж эцэслэнэ үү.`,
+            time: ts(), hash: gh()
+        }];
+
+        await updateDoc(doc(db, 'acts', docId), {
+            ebrStatus: 'paid', // Дахин хасахгүй гэдгийг 'paid'-аар тэмдэглэв (UI хувьд хэвийн харагдана)
+            ebrAutoHandled: true, // Систем автоматаар шийдсэн гэж тэмдэг
+            ebrCheckedAt: serverTimestamp(),
+            ebrCheckedBy: 'system',
+            evs: newEvs
+        });
+
+        toast(`ℹ️ Е-баримт: Хэсэгчилсэн дээр аль хэдийн хасагдсан — дахин хасахгүй. "Батлах" товчийг дарна уу.`);
+    } catch (err) {
+        console.error('Auto ebr handle error:', err);
+        toast('Алдаа: ' + err.message, 'err');
+    }
+}
+
 function openEbrModal(docId) {
     const a = acts.find(x => x.id === docId);
     if (!a) return;
@@ -601,16 +629,44 @@ function openEbrModal(docId) {
     if (a.status !== 'pending' && a.status !== 'partial') { toast('Энэ актыг шалгах боломжгүй', 'err'); return; }
     if (a.ebrStatus) { toast('Е-баримт аль хэдийн шалгагдсан', 'err'); return; }
 
+    // ★★★ ҮЛДЭГДЭЛ АКТ: parent дээр аль хэдийн е-баримтын хасалт хийгдсэн эсэхийг шалгана
+    // Хэрэв тийм бол ДАХИН хасахгүй, автоматаар "paid (handled)" гэж тэмдэглэнэ
+    if (a.parentDocId) {
+        const parentAct = acts.find(x => x.id === a.parentDocId);
+        if (parentAct && parentAct.ebrStatus === 'unpaid_applied_partial') {
+            // Аль хэдийн хэсэгчилсэн актын дээр хасагдсан → үлдэгдэл дээр дахин хасахгүй
+            autoMarkEbrHandledForRemaining(docId, a, parentAct);
+            return;
+        }
+    }
+
     currentNotaryActId = docId;
-    const total = parseInt(a.amount);
-    const deduction = Math.round(total * EBR_DEDUCT_PERCENT / 100);
-    const afterDeduction = total - deduction;
+    const currentAmt = parseInt(a.amount); // Энэ хэсэгчилсэн актын дүн (80% эсвэл бүтэн)
+    // ★★★ ЧУХАЛ: 10% хасалт нь АНХНЫ БҮТЭН ГЭРЭЭНИЙ ДҮНГЭЭС (100%-аас) тооцогдоно
+    // — хэсэгчилсэн дүнгээс БИШ. Гэрээний дүн нэг л удаа 10% хасагдана.
+    const contractTotal = parseInt(a.originalAmount || a.amount); // Анхны 100% дүн
+    const deduction = Math.round(contractTotal * EBR_DEDUCT_PERCENT / 100);
+    const afterDeduction = currentAmt - deduction;
 
     e('nmActId').textContent = a.actId;
-    e('nmOriginalAmt').textContent = '₮' + fmtN(total);
-    e('nmPaidAmt').textContent = '₮' + fmtN(total);
+    e('nmOriginalAmt').textContent = '₮' + fmtN(currentAmt);
+    e('nmPaidAmt').textContent = '₮' + fmtN(currentAmt);
     e('nmUnpaidAmt').textContent = '₮' + fmtN(afterDeduction);
     e('nmDeductAmt').textContent = '₮' + fmtN(deduction);
+
+    // Хэсэгчилсэн акт бол: бүтэн гэрээний дүнг тусад нь сануулна
+    const isPartialAct = !!(a.originalAmount && a.approvedPercent);
+    const contractHintEl = e('nmContractHint');
+    if (contractHintEl) {
+        if (isPartialAct) {
+            contractHintEl.innerHTML = `<strong>Анхаар:</strong> Энэ нь хэсэгчилсэн (${a.approvedPercent}%) акт. `
+                + `10% хасалт нь <strong>гэрээний бүтэн дүн ₮${fmtN(contractTotal)}-аас</strong> тооцогдоно `
+                + `(-₮${fmtN(deduction)}), хэсэгчилсэн дүнгээс БИШ. Үлдэгдэл ажил ирэхэд дахин хасахгүй.`;
+            contractHintEl.style.display = 'block';
+        } else {
+            contractHintEl.style.display = 'none';
+        }
+    }
 
     // Е-баримт inline харуулах
     const notaryList = e('nmNotaryList');
@@ -701,15 +757,28 @@ async function chooseEbrUnpaid() {
     btn.style.opacity = '0.6';
 
     try {
-        const originalAmt = parseInt(a.amount);
-        const deduction = Math.round(originalAmt * EBR_DEDUCT_PERCENT / 100);
-        const newAmount = originalAmt - deduction;
+        const currentAmt = parseInt(a.amount); // Энэ актын одоогийн дүн (80% бол 80% дүн)
+        // ★★★ ЧУХАЛ ЛОГИК: 10% хасалт нь АНХНЫ ГЭРЭЭНИЙ БҮТЭН ДҮНГЭЭС (100%-аас) тооцогдоно
+        // — хэсэгчилсэн дүнгээс БИШ. Нэг гэрээ дээр нэг л удаа хасагдана.
+        // Жишээ: 100,000₮ → 80% хэсэгчилсэн → энэ актын amount = 80,000
+        //        10% хасалт = 100,000 × 10% = 10,000 (БҮХ дүнгээс)
+        //        Эцсийн = 80,000 - 10,000 = 70,000
+        //        Үлдэгдэл 20% (20,000) ирэхэд дахин хасахгүй
+        const contractTotal = parseInt(a.originalAmount || a.amount);
+        const deduction = Math.round(contractTotal * EBR_DEDUCT_PERCENT / 100);
+        const newAmount = currentAmt - deduction;
+        const isPartialAct = !!(a.originalAmount && a.approvedPercent);
 
         const newEvs = [...(a.evs || []), {
             type: 'ebr_check', who: cu.displayName || cu.email, whoEmail: cu.email,
             title: `📄 Е-баримт шалгасан: ТӨЛӨӨГҮЙ — ${EBR_DEDUCT_PERCENT}% хасагдав`,
-            detail: `Нягтлан е-баримтын төлбөр төлөгдөөгүйг тогтоов. `
-                + `Анхны дүн: ₮${fmtN(originalAmt)} → Хасагдах ${EBR_DEDUCT_PERCENT}%: -₮${fmtN(deduction)} → `
+            detail: isPartialAct
+                ? `Нягтлан е-баримтын төлбөр төлөгдөөгүйг тогтоов. `
+                + `Гэрээний бүтэн дүн: ₮${fmtN(contractTotal)} → Хасагдах ${EBR_DEDUCT_PERCENT}% (бүтэн дүнгээс): -₮${fmtN(deduction)}. `
+                + `Энэ хэсэгчилсэн актын дүн ₮${fmtN(currentAmt)} → Эцсийн дүн: ₮${fmtN(newAmount)}. `
+                + `Үлдэгдэл ажил ирэхэд дахин хасахгүй. "Батлах" товчийг дарж эцэслэнэ үү.`
+                : `Нягтлан е-баримтын төлбөр төлөгдөөгүйг тогтоов. `
+                + `Анхны дүн: ₮${fmtN(currentAmt)} → Хасагдах ${EBR_DEDUCT_PERCENT}%: -₮${fmtN(deduction)} → `
                 + `Эцсийн дүн: ₮${fmtN(newAmount)}. Одоо "Батлах" товчийг дарж эцэслэнэ үү.`,
             time: ts(), hash: gh()
         }];
@@ -718,25 +787,45 @@ async function chooseEbrUnpaid() {
             ebrStatus: 'unpaid',
             ebrCheckedAt: serverTimestamp(),
             ebrCheckedBy: cu.email,
-            originalAmountBeforeEbr: String(originalAmt),
+            originalAmountBeforeEbr: String(currentAmt),
+            ebrContractTotal: String(contractTotal), // Хасалт тооцсон үндсэн дүн
             ebrDeductedAmount: String(deduction),
             amount: String(newAmount), // ★ Эцсийн дүн (хасалт хийгдсэн)
             evs: newEvs
         });
 
+        // ★★★ ХЭСЭГЧИЛСЭН АКТ бол: parent (анхны акт)-ыг "ebrStatus: unpaid_applied" гэж тэмдэглэх
+        //     ингэснээр үлдэгдэл акт Нягтлан дээр ирэхэд "аль хэдийн хасагдсан" гэдгийг мэдэх боломжтой
+        if (isPartialAct && a.parentDocId) {
+            try {
+                await updateDoc(doc(db, 'acts', a.parentDocId), {
+                    ebrStatus: 'unpaid_applied_partial', // Хэсэгчилсэн дээр аль хэдийн хасагдсан
+                    ebrDeductedAmount: String(deduction),
+                    ebrContractTotal: String(contractTotal),
+                });
+            } catch (e) { console.error('Parent ebr mark:', e); }
+        }
+
         // Гүйцэтгэгчид мэдэгдэх (е-баримт төлөөгүй тул хасагдсан)
         if (a.submittedBy) {
             try {
                 const subject = `📄 Таны актын е-баримтын төлбөр төлөгдөөгүй: ${a.actId}`;
+                const breakdown = isPartialAct
+                    ? `Гэрээний бүтэн дүн: ₮${fmtN(contractTotal)}\n`
+                    + `Хасагдах ${EBR_DEDUCT_PERCENT}% (бүтэн дүнгээс): -₮${fmtN(deduction)}\n`
+                    + `Энэ хэсэгчилсэн актын дүн: ₮${fmtN(currentAmt)}\n`
+                    + `Эцсийн дүн: ₮${fmtN(newAmount)}\n\n`
+                    + `Үлдэгдэл ажил ирэхэд ДАХИН ХАСАХГҮЙ (нэг гэрээнд нэг удаа).`
+                    : `Анхны дүн: ₮${fmtN(currentAmt)}\n`
+                    + `Хасагдах (${EBR_DEDUCT_PERCENT}%): -₮${fmtN(deduction)}\n`
+                    + `Эцсийн дүн: ₮${fmtN(newAmount)}`;
                 const message = `Хүндэт ${a.submittedByName || 'гүйцэтгэгч'},\n\n`
-                    + `Таны илгээсэн актын е-баримтын төлбөр төлөгдөөгүй тул эцсийн дүнгээс ${EBR_DEDUCT_PERCENT}% хасагдлаа.\n\n`
+                    + `Таны илгээсэн актын е-баримтын төлбөр төлөгдөөгүй тул гэрээний нийт дүнгээс ${EBR_DEDUCT_PERCENT}% хасагдлаа.\n\n`
                     + `АКТ: ${a.actId}\n`
                     + `Компани: ${a.company}\n`
                     + `Ажил: ${a.work}\n\n`
                     + `═══════════════════════════════════\n`
-                    + `Анхны дүн: ₮${fmtN(originalAmt)}\n`
-                    + `Хасагдах (${EBR_DEDUCT_PERCENT}%): -₮${fmtN(deduction)}\n`
-                    + `Эцсийн дүн: ₮${fmtN(newAmount)}\n`
+                    + breakdown + `\n`
                     + `═══════════════════════════════════\n\n`
                     + `Нягтлан: ${cu.displayName || cu.email}`;
                 await sendMail(a.submittedBy, a.submittedByName || 'Гүйцэтгэгч',
@@ -746,7 +835,7 @@ async function chooseEbrUnpaid() {
             } catch (e) { console.error('Е-баримт mail:', e); }
         }
 
-        toast(`⚠ ${EBR_DEDUCT_PERCENT}% хасагдлаа (-₮${fmtN(deduction)}). Одоо "Батлах" товчийг дарж эцэслэнэ үү.`);
+        toast(`⚠ ${EBR_DEDUCT_PERCENT}% хасагдлаа (-₮${fmtN(deduction)} гэрээний бүтэн дүнгээс). "Батлах" товчийг дарж эцэслэнэ үү.`);
         closeEbrModal();
     } catch (err) {
         console.error('Е-баримт unpaid error:', err);

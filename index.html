@@ -1,11 +1,57 @@
 <!DOCTYPE html>
 <html lang="mn">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="responsive.css">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Гүйцэтгэлийн Акт — Talst Group</title>
 
   <link rel="stylesheet" href="style.css">
+
+  <!-- ★ Mobile badge overflow fix — style.css-г өөрчлөхгүйгээр override -->
+  <style>
+    /* Акт картын header (li-top) — badge нэг мөрөнд багтахын тулд */
+    .li-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+    }
+    .li-top > div:first-child {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .li-top .badge {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      max-width: 45%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Card дотор урт текст (URL, title) wrap болгох */
+    .li-title, .li-sub, .li-id {
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    /* Маш жижиг экранд (430px ба түүнээс бага) badge-ийн font багасгах */
+    @media (max-width: 480px) {
+      .li-top .badge {
+        font-size: 10px;
+        padding: 3px 7px;
+        max-width: 42%;
+      }
+    }
+    @media (max-width: 380px) {
+      .li-top .badge {
+        font-size: 9px;
+        max-width: 40%;
+      }
+    }
+  </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -172,7 +218,7 @@
         </span>
       </div>
       <div class="notary-hint">
-        ℹ️ Е-баримтын төлбөрийн баримт хавсаргаагүй бол Нягтлан баримт төлөгдсөн эсэхийг шалгаж, төлөөгүй тохиолдолд <strong>10%</strong> хасалт тооцох болно.
+        ℹ️ Е-баримтын төлбөрийн баримт хавсаргаагүй бол Нягтлан баримт төлөгдсөн эсэхийг шалгаж, төлөөгүй тохиолдолд <strong>гэрээний бүтэн дүнгээс 10%</strong> хасалт тооцох болно. Хэсэгчилсэн төлбөр байсан ч хасалт <strong>нэг л удаа</strong> хийгдэнэ.
       </div>
       <label class="file-upload-btn notary-upload" for="fnotary">📜 Е-баримт сонгох (PDF)</label>
       <input type="file"
@@ -362,6 +408,9 @@
         <div class="pm-original-value" id="nmOriginalAmt">0₮</div>
       </div>
 
+      <!-- Хэсэгчилсэн актын тохиолдолд гэрээний бүтэн дүнгээс хасна гэдгийг сануулах -->
+      <div id="nmContractHint" class="nm-contract-hint" style="display:none"></div>
+
       <!-- Е-баримтын баримт жагсаалт -->
       <div id="nmNotaryFilesBlock" class="nm-notary-files">
         <div class="nm-files-header">
@@ -393,7 +442,7 @@
           <div class="nm-opt-icon">✗</div>
           <div class="nm-opt-body">
             <div class="nm-opt-title">Е-баримт төлөөгүй</div>
-            <div class="nm-opt-desc"><strong>10% хасагдана</strong> · Дараа нь "Батлах" товчийг дарна</div>
+            <div class="nm-opt-desc"><strong>Гэрээний бүтэн дүнгээс 10% хасагдана</strong> · Нэг гэрээнд нэг л удаа</div>
             <div class="nm-opt-amount" id="nmUnpaidAmt">0₮</div>
             <div class="nm-opt-detail">Хасагдах: <span id="nmDeductAmt">0₮</span></div>
           </div>
