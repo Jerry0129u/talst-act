@@ -21,14 +21,14 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'unumunkh@talstgroup.mn' },
+    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
     { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
     { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
     { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'unumunkh@talstgroup.mn': 'Координатор',
+    'zolzaya@talstgroup.mn': 'Координатор',
     'barsbat@talstgroup.mn': 'Инженер',
     'zorigoo@talstgroup.mn': 'Захирал',
     'bayarmaa@talstgroup.mn': 'Нягтлан',
@@ -42,7 +42,7 @@ function isViewer(r) { return VIEWER_ROLES.includes(r); }
 const ROLE_COLORS = {
     'Координатор': '#e74c3c', 'Инженер': '#3498db',
     'Захирал': '#8e44ad', 'Нягтлан': '#27ae60', 'Гүйцэтгэгч': '#e67e22',
-    'CEO': '#0f172a', 'CFO': '#1e293b',
+    'CEO': '#0f172a', 'CFO': '#FF66CC',
 };
 
 const ROLE_AVATAR_BG = {
@@ -58,7 +58,11 @@ const ROLE_AVATAR_BG = {
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
 // ★ FIX #1: SE[2] typo засагдсан ('zorigootalstgroup.mn' → 'zorigoo@talstgroup.mn')
-const SE = ['unumunkh@talstgroup.mn', 'barsbat@talstgroup.mn', 'zorigoo@talstgroup.mn', 'bayarmaa@talstgroup.mn'];
+const SE = [
+    'zolzaya@talstgroup.mn',
+    'barsbat@talstgroup.mn',
+    'zorigoo@talstgroup.mn',
+    'bayarmaa@talstgroup.mn'];
 
 const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
