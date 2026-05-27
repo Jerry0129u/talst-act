@@ -1,17 +1,15 @@
 <!DOCTYPE html>
 <html lang="mn">
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="responsive.css">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Гүйцэтгэлийн Акт — Talst Group</title>
 
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="responsive.css">
 
-  <!-- ★ Mobile badge overflow fix — style.css-г өөрчлөхгүйгээр override -->
+  <!-- ★ Mobile badge overflow fix -->
   <style>
-    /* Акт картын header (li-top) — badge нэг мөрөнд багтахын тулд */
     .li-top {
       display: flex;
       align-items: flex-start;
@@ -32,12 +30,10 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    /* Card дотор урт текст (URL, title) wrap болгох */
     .li-title, .li-sub, .li-id {
       word-break: break-word;
       overflow-wrap: break-word;
     }
-    /* Маш жижиг экранд (430px ба түүнээс бага) badge-ийн font багасгах */
     @media (max-width: 480px) {
       .li-top .badge {
         font-size: 10px;
@@ -51,7 +47,108 @@
         max-width: 40%;
       }
     }
+
+    /* ★ Гэрээ дэлгэрэнгүй — цэвэр минимал */
+    #contractList.cdt-detail-mode {
+      display: block !important;
+      grid-template-columns: none !important;
+    }
+    .cdt-wrap { max-width: 720px; }
+    .cdt-back {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 6px 0;
+      margin-bottom: 14px;
+      font-weight: 500;
+    }
+    .cdt-back:hover { color: var(--text-primary); }
+
+    .cdt-summary {
+      background: var(--bg-card, rgba(255,255,255,0.04));
+      border: 1px solid var(--border-default, rgba(255,255,255,0.1));
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-bottom: 24px;
+    }
+    .cdt-sum-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .cdt-sum-no { font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+    .cdt-sum-company { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+    .cdt-sum-badge {
+      font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 20px; white-space: nowrap;
+    }
+    .cdt-badge-green { background: rgba(5,150,105,0.12); color: #059669; }
+    .cdt-badge-red { background: rgba(220,38,38,0.12); color: #dc2626; }
+
+    .cdt-sum-rows { margin-bottom: 14px; }
+    .cdt-sum-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 0; font-size: 13px; color: var(--text-secondary);
+    }
+    .cdt-sum-row strong { color: var(--text-primary); font-feature-settings: 'tnum'; font-size: 14px; }
+    .cdt-sum-row.cdt-sum-balance { border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); margin-top: 4px; padding-top: 11px; }
+    .cdt-sum-row.cdt-sum-balance strong { font-size: 17px; }
+    .cdt-ok { color: #059669; }
+
+    .cdt-sum-bar {
+      height: 6px; border-radius: 20px;
+      background: rgba(125,125,125,0.15); overflow: hidden; margin-bottom: 12px;
+    }
+    .cdt-sum-fill { height: 100%; border-radius: 20px; transition: width 0.6s ease; }
+    .cdt-sum-by { font-size: 11px; color: var(--text-tertiary); }
+
+    .cdt-section-label {
+      font-size: 11px; font-weight: 700; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin: 0 0 12px 2px;
+    }
+
+    .cdt-act-row {
+      background: var(--bg-card, rgba(255,255,255,0.03));
+      border: 1px solid var(--border-default, rgba(255,255,255,0.08));
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 10px;
+    }
+    .cdt-act-row.cdt-pending { opacity: 0.7; border-style: dashed; }
+    .cdt-act-head {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 10px; margin-bottom: 8px;
+    }
+    .cdt-act-id { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .cdt-act-amt { font-size: 15px; font-weight: 800; color: #dc2626; font-feature-settings: 'tnum'; white-space: nowrap; }
+    .cdt-act-amt.cdt-muted { color: var(--text-tertiary); font-weight: 600; }
+    .cdt-act-work { font-size: 13px; color: var(--text-primary); margin-bottom: 14px; line-height: 1.45; }
+
+    .cdt-act-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 18px;
+    }
+    .cdt-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .cdt-k { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+    .cdt-v { font-size: 12.5px; color: var(--text-primary); font-weight: 500; }
+    .cdt-v.cdt-ok { color: #059669; font-weight: 600; }
+
+    .cdt-empty { padding: 28px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+
+    @media (max-width: 560px) {
+      .cdt-act-grid { grid-template-columns: 1fr; gap: 10px; }
+    }
+
+    [data-theme="light"] .cdt-summary,
+    [data-theme="light"] .cdt-act-row { background: #f8fafc; border-color: #e2e8f0; }
   </style>
+
+
 
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -168,6 +265,7 @@
     <button class="tab on" id="tb0" onclick="go(0)">Илгээх</button>
     <button class="tab"    id="tb1" onclick="go(1)">Батлах</button>
     <button class="tab"    id="tb2" onclick="go(2)">Актууд</button>
+    <button class="tab"    id="tb4" onclick="go(4)">Гэрээ</button>
     <button class="tab"    id="tb3" onclick="go(3)">Дашборд</button>
   </div>
 
@@ -181,7 +279,8 @@
       <input type="text" id="fc" placeholder="Модун Констракшн ХХК">
 
       <div class="fl">Гэрээний дугаар</div>
-      <input type="text" id="fg" placeholder="ГЭР-2026-14">
+      <input type="text" id="fg" placeholder="ГЭР-2026-14" oninput="checkContractBalance()">
+      <div id="contractInfo" class="contract-info-box" style="display:none"></div>
 
       <div class="fl">Ажлын тайлбар</div>
       <textarea id="fw" placeholder="Хийсэн ажлын дэлгэрэнгүй..."></textarea>
@@ -252,6 +351,36 @@
   <!-- TAB 2: АКТУУД -->
   <div id="p2" style="display:none">
     <div id="ll">
+      <div class="loading"><div class="spin"></div></div>
+    </div>
+  </div>
+
+
+  <!-- TAB 4: ГЭРЭЭ -->
+  <div id="p4" style="display:none">
+
+    <!-- Гэрээ бүртгэх форм (зөвхөн Координатор) -->
+    <div id="contractFormCard" class="form-card" style="margin-bottom:14px">
+      <div class="ftitle">Шинэ гэрээ бүртгэх</div>
+
+      <div class="fl">Компанийн нэр</div>
+      <input type="text" id="cfCompany" placeholder="Модун Констракшн ХХК">
+
+      <div class="fl">Гэрээний дугаар</div>
+      <input type="text" id="cfNo" placeholder="ГЭР-2026-14">
+
+      <div class="fl">Гэрээний нийт дүн (₮)</div>
+      <div class="amount-wrap">
+        <input type="number" id="cfAmount" placeholder="1000000000" oninput="fmtContractAmt()">
+        <div class="amt-fmt" id="cfAmtFmt"></div>
+      </div>
+
+      <button class="sbtn" id="cfBtn" onclick="submitContract()">Гэрээ бүртгэх</button>
+    </div>
+
+    <!-- Бүртгэлтэй гэрээний жагсаалт -->
+    <div class="seclbl">Бүртгэлтэй гэрээнүүд</div>
+    <div id="contractList">
       <div class="loading"><div class="spin"></div></div>
     </div>
   </div>
@@ -379,6 +508,19 @@
         <div style="font-size:13px;font-weight:600;color:#6ee7b7;margin-top:4px;word-break:break-all" id="dDoneAmt">—</div>
       </div>
     </div>
+
+    <!-- ★ Гэрээний үлдэгдэл -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Гэрээний үлдэгдэл</div>
+          <div class="chart-subtitle">Нийт дүн · батлагдсан · үлдэгдэл</div>
+        </div>
+      </div>
+      <div id="dContractList">
+        <div class="empty" style="padding:24px">Ачааллаж байна...</div>
+      </div>
+    </div>
   </div>
 
 
@@ -408,10 +550,8 @@
         <div class="pm-original-value" id="nmOriginalAmt">0₮</div>
       </div>
 
-      <!-- Хэсэгчилсэн актын тохиолдолд гэрээний бүтэн дүнгээс хасна гэдгийг сануулах -->
       <div id="nmContractHint" class="nm-contract-hint" style="display:none"></div>
 
-      <!-- Е-баримтын баримт жагсаалт -->
       <div id="nmNotaryFilesBlock" class="nm-notary-files">
         <div class="nm-files-header">
           <span class="nm-files-icon">📜</span>
@@ -476,7 +616,6 @@
     </div>
 
     <div class="modal-body">
-      <!-- Е-баримт төлөөгүй бол анхааруулга (хэрэв ирээдүйд хэрэгтэй болбол) -->
       <div id="pmNotaryWarn" class="pm-notary-warn" style="display:none">
         <div class="pm-notary-warn-icon">⚠</div>
         <div class="pm-notary-warn-text">
@@ -594,6 +733,65 @@
       <button class="modal-btn modal-btn-cancel" onclick="closeRemainingModal()">Цуцлах</button>
       <button class="modal-btn modal-btn-confirm" id="rmConfirmBtn" onclick="confirmSubmitRemaining()">
         📤 Илгээх
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- БУЦААГДСАН АКТ ЗАСААД ДАХИН ИЛГЭЭХ MODAL -->
+<div class="modal-overlay" id="resubmitModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Засаад дахин илгээх</div>
+        <div class="modal-subtitle" id="rsActId">АКТ-2026-XXXX</div>
+      </div>
+      <button class="modal-close" onclick="closeResubmitModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="rm-prev-reason" style="border-left-color:#dc2626;background:rgba(254,226,226,0.4)">
+        <div class="rm-prev-label" style="color:#b91c1c">❌ Буцаасан шалтгаан:</div>
+        <div class="rm-prev-text" id="rsRejectReason">—</div>
+      </div>
+
+      <div class="pm-reason-label" style="margin-top:14px">Компанийн нэр <span style="color:#ff5757">*</span></div>
+      <input type="text" id="rsCompany" class="pm-reason-input" style="min-height:auto;height:auto" placeholder="Модун Констракшн ХХК">
+
+      <div class="pm-reason-label" style="margin-top:14px">Ажлын тайлбар <span style="color:#ff5757">*</span></div>
+      <textarea id="rsWork" class="pm-reason-input" placeholder="Хийсэн ажлын дэлгэрэнгүй..."></textarea>
+
+      <div class="pm-reason-label" style="margin-top:14px">Дүн (₮) <span style="color:#ff5757">*</span></div>
+      <input type="number" id="rsAmount" class="pm-reason-input" style="min-height:auto;height:auto" placeholder="48500000">
+
+      <div class="pm-reason-label" style="margin-top:14px">Засварын тэмдэглэл (заавал биш)</div>
+      <textarea id="rsNote" class="pm-reason-input" placeholder="Юу зассан тухай тайлбар... (Координаторт харагдана)"></textarea>
+
+      <div class="pm-reason-label" style="margin-top:14px">Нэмэлт баримт бичиг (PDF)</div>
+      <div class="rm-prev-text" id="rsOldPdfInfo" style="margin-bottom:8px;font-size:11px;color:var(--text-tertiary)"></div>
+      <label class="file-upload-btn" for="rsPdfs">📄 PDF файл нэмэх</label>
+      <input type="file" id="rsPdfs" class="file-input" multiple accept="application/pdf" onchange="addResubmitPdfs(this)">
+      <div class="pdf-list" id="rsPdfList"></div>
+
+      <div class="pm-reason-label" style="margin-top:14px">Е-баримтын баримт (PDF)</div>
+      <div class="rm-prev-text" id="rsOldEbrInfo" style="margin-bottom:8px;font-size:11px;color:var(--text-tertiary)"></div>
+      <label class="file-upload-btn notary-upload" for="rsEbr">📜 Е-баримт нэмэх (PDF)</label>
+      <input type="file" id="rsEbr" class="file-input" multiple accept="application/pdf" onchange="addResubmitEbr(this)">
+      <div class="pdf-list" id="rsEbrList"></div>
+
+      <div class="pm-info-box">
+        <div class="pm-info-icon">ℹ️</div>
+        <div class="pm-info-text">
+          Засаж илгээсний дараа акт <strong>Координатораас эхлэн</strong> дахин батлагдана. Устгах таймер цуцлагдана.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeResubmitModal()">Цуцлах</button>
+      <button class="modal-btn modal-btn-confirm" id="rsConfirmBtn" onclick="confirmResubmit()">
+        🔄 Дахин илгээх
       </button>
     </div>
   </div>

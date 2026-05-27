@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, onAuthStateChanged, signOut as fbOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, onAuthStateChanged, signOut as fbOut, setPersistence, browserLocalPersistence, indexedDBLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // --- CAPACITOR DETECT ---
@@ -57,26 +57,39 @@ const ROLE_AVATAR_BG = {
 
 const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
 const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
-// ★ FIX #1: SE[2] typo засагдсан ('zorigootalstgroup.mn' → 'zorigoo@talstgroup.mn')
 const SE = [
     'zolzaya@talstgroup.mn',
     'barsbat@talstgroup.mn',
     'zorigoo@talstgroup.mn',
     'bayarmaa@talstgroup.mn'];
 
-const EIGHT_HOURS = 8 * 60 * 60 * 1000;
+const EIGHT_HOURS = 48 * 60 * 60 * 1000; // 48 цаг
 
 // ★★★ Е-баримтын тогтмол — 10% хасалт ★★★
-const EBR_DEDUCT_PERCENT = 10; // Төлөөгүй бол хасах хувь
+const EBR_DEDUCT_PERCENT = 10;
 
 // --- FIREBASE INIT ---
 const fapp = initializeApp(cfg);
 const auth = getAuth(fapp);
 const db = getFirestore(fapp);
 
+// ★ Persistence — нэвтрэлтийг localStorage/indexedDB-д хадгална (sessionStorage биш)
+// Энэ нь iOS Safari болон in-app browser дээр "Unable to save initial state" алдааг засна
+(async () => {
+    try {
+        await setPersistence(auth, indexedDBLocalPersistence);
+    } catch (e1) {
+        try {
+            await setPersistence(auth, browserLocalPersistence);
+        } catch (e2) {
+            console.warn('Persistence тохируулж чадсангүй:', e2);
+        }
+    }
+})();
+
 let cu = null, role = 'Гүйцэтгэгч', acts = [], prev = 2, ctab = 0, unsub = null;
 let pdfDataList = [];
-let ebrPdfList = []; // Е-баримтын PDF
+let ebrPdfList = [];
 let cachedFont = null;
 let autoDeleteInterval = null;
 let rejectedCountdownInterval = null;
@@ -86,9 +99,18 @@ let currentPartialActId = null;
 let currentRemainingActId = null;
 let currentNotaryActId = null;
 let remainingPdfList = [];
+// ★ Буцаагдсан акт засаж дахин илгээх state
+let currentResubmitActId = null;
+let resubmitPdfList = [];
+let resubmitEbrList = [];
+
+// ★ Гэрээний state
+let contracts = [];
+let unsubContracts = null;
+let contractCheckTimer = null;
 
 // Е-баримтын төлөв
-let pendingNotaryStatus = null; // 'paid' эсвэл 'unpaid'
+let pendingNotaryStatus = null;
 
 const e = id => document.getElementById(id);
 
@@ -124,7 +146,6 @@ function bt(a) {
     if (a.status === 'rejected') return '✕ Буцаагдсан';
     if (a.status === 'partial') return '⚠ ' + (a.approvedPercent || 0) + '% · ' + SN[a.step || 0];
     if (a.status === 'remaining') return '⏳ Үлдэгдэл';
-    // Badge богино: "Координатор хүлээж байна" → "Координатор" (мобайлд багтахын тулд)
     return SN[a.step || 0];
 }
 
@@ -160,7 +181,7 @@ window.rmPdf = (i) => {
     e('compInfo').textContent = pdfDataList.length ? `${pdfDataList.length} PDF · ~${total}KB` : '';
 };
 
-// ★★★ НОТАРИАТЫН PDF (хоёр нэрээр (alias) — index.html-ийн хуучин дуудлагуудтай нийцүүлэв) ★★★
+// ★★★ НОТАРИАТЫН PDF ★★★
 window.addEbrPdfs = async (input) => {
     const files = Array.from(input.files); if (!files.length) return;
     e('notaryInfo').textContent = 'Е-баримтын PDF боловсруулж байна...';
@@ -174,7 +195,6 @@ window.addEbrPdfs = async (input) => {
     input.value = '';
 };
 
-// ★ FIX #2: alias — index.html-д "addNotaryPdfs" гэж дуудаж байгаа
 window.addNotaryPdfs = window.addEbrPdfs;
 
 window.rmEbrPdf = (i) => {
@@ -223,6 +243,12 @@ function renderRemainingPdfList() {
 }
 
 // === GOOGLE SIGN-IN ===
+// Жинхэнэ гар утасны browser эсэхийг таних (desktop биш)
+function isMobileBrowser() {
+    const ua = (navigator.userAgent || '').toLowerCase();
+    return /android|iphone|ipod|ipad|mobile|fban|fbav|instagram|line|micromessenger/.test(ua);
+}
+
 window.signInGoogle = async () => {
     try {
         if (isNative) {
@@ -242,18 +268,47 @@ window.signInGoogle = async () => {
             } else {
                 toast('Google-аас хариу ирсэнгүй', 'err');
             }
-        } else {
-            await signInWithPopup(auth, new GoogleAuthProvider());
+            return;
+        }
+
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        // Гар утасны browser дээр redirect найдвартай.
+        // Desktop/laptop (localhost ч мөн адил) дээр popup ашиглана — redirect руу УНАХГҮЙ.
+        if (isMobileBrowser()) {
+            await signInWithRedirect(auth, provider);
+            return;
+        }
+
+        // Desktop: зөвхөн popup. Хэрэглэгч цонхыг хаасан бол дахин оролдоно гэдгийг л хэлнэ.
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (popupErr) {
+            console.error('Popup алдаа:', popupErr?.code, popupErr?.message);
+            if (popupErr?.code === 'auth/popup-closed-by-user'
+                || popupErr?.code === 'auth/cancelled-popup-request') {
+                toast('Нэвтрэх цонх хаагдсан. Дахин оролдоно уу.', 'err');
+            } else if (popupErr?.code === 'auth/popup-blocked') {
+                toast('Browser popup-ийг хаасан байна. Popup зөвшөөрөөд дахин оролдоно уу.', 'err');
+            } else {
+                throw popupErr;
+            }
         }
     } catch (err) {
         console.error('SIGN-IN ERROR:', err);
-        toast('Алдаа: ' + (err?.message || 'Тодорхойгүй'), 'err');
+        if (err?.code === 'auth/unauthorized-domain') {
+            toast('Энэ домэйн зөвшөөрөгдөөгүй. Firebase Console → Authentication → Settings → Authorized domains дээр нэмнэ үү.', 'err');
+        } else {
+            toast('Алдаа: ' + (err?.message || 'Тодорхойгүй'), 'err');
+        }
     }
 };
 
 window.doSignOut = async () => {
     if (!confirm('Гарах уу?')) return;
     if (unsub) unsub();
+    if (unsubContracts) unsubContracts();
     if (autoDeleteInterval) { clearInterval(autoDeleteInterval); autoDeleteInterval = null; }
     if (rejectedCountdownInterval) { clearInterval(rejectedCountdownInterval); rejectedCountdownInterval = null; }
     try {
@@ -275,15 +330,28 @@ window.confirmPartialApprove = confirmPartialApprove;
 window.openRemainingModal = openRemainingModal;
 window.closeRemainingModal = closeRemainingModal;
 window.confirmSubmitRemaining = confirmSubmitRemaining;
+window.openResubmitModal = openResubmitModal;
+window.closeResubmitModal = closeResubmitModal;
+window.confirmResubmit = confirmResubmit;
+window.addResubmitPdfs = addResubmitPdfs;
+window.rmResubmitPdf = rmResubmitPdf;
+window.addResubmitEbr = addResubmitEbr;
+window.rmResubmitEbr = rmResubmitEbr;
 window.submitComment = submitComment;
 
-// ★★★ НОТАРИАТЫН MODAL функцууд (alias-аар хоёр нэр) ★★★
+// ★ Гэрээний функцууд
+window.submitContract = submitContract;
+window.fmtContractAmt = fmtContractAmt;
+window.checkContractBalance = checkContractBalance;
+window.openContract = openContract;
+window.closeContractDetail = closeContractDetail;
+
+// ★★★ НОТАРИАТЫН MODAL функцууд ★★★
 window.openEbrModal = openEbrModal;
 window.closeEbrModal = closeEbrModal;
 window.chooseEbrPaid = chooseEbrPaid;
 window.chooseEbrUnpaid = chooseEbrUnpaid;
 
-// ★ FIX #3: index.html-д "closeNotaryModal/chooseNotaryPaid/chooseNotaryUnpaid" гэж дуудаж байгаа
 window.openNotaryModal = openEbrModal;
 window.closeNotaryModal = closeEbrModal;
 window.chooseNotaryPaid = chooseEbrPaid;
@@ -342,11 +410,9 @@ function sendMail(toEmail, toName, act, fromName, opts = {}) {
         .catch(err => { console.error('❌ Email error:', err); throw err; });
 }
 
-function sendRejectionMail(act, reason, rejectorName, rejectorRole) {
-    if (!act.submittedBy) return Promise.resolve();
-    const subject = `❌ Таны акт буцаагдлаа: ${act.actId}`;
-    const message = `Хүндэт ${act.submittedByName || 'гүйцэтгэгч'},\n\n`
-        + `Таны илгээсэн акт буцаагдлаа.\n\n`
+async function sendRejectionMail(act, reason, rejectorName, rejectorRole) {
+    const subject = `❌ Акт буцаагдлаа: ${act.actId}`;
+    const message = `Акт буцаагдлаа.\n\n`
         + `АКТ: ${act.actId}\n`
         + `Компани: ${act.company}\n`
         + `Гэрээ: ${act.contract}\n`
@@ -354,10 +420,43 @@ function sendRejectionMail(act, reason, rejectorName, rejectorRole) {
         + `Дүн: ₮${fmtN(act.amount)}\n\n`
         + `Буцаасан: ${rejectorName} (${rejectorRole})\n`
         + `ШАЛТГААН: ${reason}\n\n`
-        + `Та шалтгааныг нягталж дахин илгээнэ үү.`;
-    return sendMail(act.submittedBy, act.submittedByName || 'Гүйцэтгэгч', act, rejectorName, {
-        subject, message, type: 'rejection', reason: reason,
+        + `Гүйцэтгэгч шалтгааныг нягталж дахин илгээнэ үү.`;
+
+    // ★ Хүлээн авагчид: гүйцэтгэгч + бүх дотоод хүн (Координатор, Инженер, Захирал, Нягтлан)
+    const recipients = [];
+    // Гүйцэтгэгч
+    if (act.submittedBy) {
+        recipients.push({ email: act.submittedBy, name: act.submittedByName || 'Гүйцэтгэгч' });
+    }
+    // Бүх дотоод баталгч (CHAIN — Координатор, Инженер, Захирал, Нягтлан)
+    CHAIN.forEach(role => {
+        recipients.push({ email: role.email, name: role.name });
     });
+
+    // Давхардсан имэйл устгах
+    const seen = new Set();
+    const unique = recipients.filter(r => {
+        if (!r.email || seen.has(r.email)) return false;
+        seen.add(r.email);
+        return true;
+    });
+
+    // ★ Тус бүрд ДАРААЛАН илгээх (EmailJS rate limit-ээс сэргийлж хооронд нь хүлээнэ)
+    let sentCount = 0;
+    for (const r of unique) {
+        try {
+            await sendMail(r.email, r.name, act, rejectorName, {
+                subject, message, type: 'rejection', reason: reason,
+            });
+            sentCount++;
+            // Дараагийн имэйл хүртэл 600ms хүлээх (rate limit-ээс сэргийлнэ)
+            await new Promise(res => setTimeout(res, 600));
+        } catch (err) {
+            console.error('Буцаалт имэйл алдаа (' + r.email + '):', err);
+        }
+    }
+    console.log(`✉️ Буцаалтын имэйл ${sentCount}/${unique.length} хүнд илгээгдлээ`);
+    return sentCount;
 }
 
 function sendPartialMail(act, approvedPct, approvedAmt, remainingAmt, reason, coordinatorName) {
@@ -395,6 +494,22 @@ const ROLE_AVATAR_ICONS = {
     'CFO': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
 };
 
+// ★ Redirect-ээс буцаж ирэхэд үр дүнг шалгах (signInWithRedirect-ийн дараа)
+getRedirectResult(auth)
+    .then(result => {
+        if (result && result.user) {
+            console.log('✅ Redirect нэвтрэлт амжилттай:', result.user.email);
+        }
+    })
+    .catch(err => {
+        console.error('Redirect result error:', err);
+        if (err?.code === 'auth/unauthorized-domain') {
+            toast('Энэ домэйн Firebase дээр зөвшөөрөгдөөгүй байна.', 'err');
+        } else if (err?.code) {
+            toast('Нэвтрэх алдаа: ' + err.code, 'err');
+        }
+    });
+
 onAuthStateChanged(auth, u => {
     if (u) {
         cu = u; role = ROLES[u.email] || 'Гүйцэтгэгч';
@@ -421,12 +536,21 @@ onAuthStateChanged(auth, u => {
     } else {
         cu = null; e('loginPage').style.display = 'flex'; e('appPage').style.display = 'none';
         if (unsub) { unsub(); unsub = null; }
+        if (unsubContracts) { unsubContracts(); unsubContracts = null; }
         if (autoDeleteInterval) { clearInterval(autoDeleteInterval); autoDeleteInterval = null; }
         if (rejectedCountdownInterval) { clearInterval(rejectedCountdownInterval); rejectedCountdownInterval = null; }
     }
 });
 
 function listen() {
+    // ★ Гэрээнүүдийг сонсох
+    const qc = query(collection(db, 'contracts'), orderBy('createdAt', 'desc'));
+    unsubContracts = onSnapshot(qc, snap => {
+        contracts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (ctab === 4) rContracts();
+        if (ctab === 3) renderContractBalances();
+    });
+
     const q = query(collection(db, 'acts'), orderBy('createdAt', 'desc'));
     unsub = onSnapshot(q, snap => {
         acts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -447,7 +571,7 @@ async function cleanupExpiredRejected() {
     const expired = acts.filter(a => {
         if (a.status !== 'rejected') return false;
         const rejTime = a.rejectedAt ? (typeof a.rejectedAt.toMillis === 'function' ? a.rejectedAt.toMillis() : a.rejectedAt) : null;
-        if (!rejTime) return true;
+        if (!rejTime) return false; // ★ rejectedAt хараахан тавигдаагүй бол УСТГАХГҮЙ (шинэ буцаалт)
         return (now - rejTime) > EIGHT_HOURS;
     });
     if (!expired.length) return;
@@ -476,13 +600,14 @@ function startRejectedCountdownRefresh() {
 
 function go(n) {
     if (isViewer(role) && (n === 0 || n === 1)) n = 2;
-    [0, 1, 2, 3].forEach(i => { e('p' + i).style.display = 'none'; e('tb' + i).classList.remove('on') });
+    [0, 1, 2, 3, 4].forEach(i => { const p = e('p' + i); const t = e('tb' + i); if (p) p.style.display = 'none'; if (t) t.classList.remove('on'); });
     e('pd').style.display = 'none';
     e('p' + n).style.display = 'block'; e('tb' + n).classList.add('on'); ctab = n;
     if (n === 0) rA0();
     if (n === 1) rA();
     if (n === 2) rL();
     if (n === 3) rD();
+    if (n === 4) rContracts();
 }
 
 function bk() {
@@ -492,20 +617,22 @@ function bk() {
 
 function opd(idx, from) {
     prev = from;
-    [0, 1, 2, 3].forEach(i => { e('p' + i).style.display = 'none'; e('tb' + i).classList.remove('on') });
+    [0, 1, 2, 3, 4].forEach(i => { const p = e('p' + i); const t = e('tb' + i); if (p) p.style.display = 'none'; if (t) t.classList.remove('on'); });
     e('pd').style.display = 'block'; e('dc').dataset.idx = idx; e('dc').innerHTML = detH(idx);
 }
 
 function applyViewerMode() {
     if (isViewer(role)) {
-        const tab0 = e('tb0'); const tab1 = e('tb1');
+        const tab0 = e('tb0'); const tab1 = e('tb1'); const tab4 = e('tb4');
         if (tab0) tab0.style.display = 'none';
         if (tab1) tab1.style.display = 'none';
+        if (tab4) tab4.style.display = 'none';
         go(2);
     } else {
-        const tab0 = e('tb0'); const tab1 = e('tb1');
+        const tab0 = e('tb0'); const tab1 = e('tb1'); const tab4 = e('tb4');
         if (tab0) tab0.style.display = '';
         if (tab1) tab1.style.display = '';
+        if (tab4) tab4.style.display = '';
     }
 }
 
@@ -548,6 +675,20 @@ async function submitAct() {
     const notaryKb = ebrPdfList.reduce((s, x) => s + x.sizeKb, 0);
     const grandTotalKb = totalKb + notaryKb;
     if (grandTotalKb > 4096) { toast(`PDF нийт ${grandTotalKb}KB — 4MB-аас бага байх ёстой.`, 'err'); return; }
+
+    // ★ Гэрээний үлдэгдэл шалгах (бүртгэлтэй бол)
+    const matchedContract = findContract(g);
+    if (matchedContract) {
+        const balance = parseInt(matchedContract.totalAmount || 0) - parseInt(matchedContract.usedAmount || 0);
+        if (balance <= 0) {
+            toast(`⚠ "${g}" гэрээний дүн бүрэн ашиглагдсан байна (үлдэгдэл ₮${fmtN(balance)})`, 'err');
+            return;
+        }
+        if (parseInt(a) > balance) {
+            if (!confirm(`Анхааруулга: Илгээх дүн (₮${fmtN(a)}) гэрээний үлдэгдэл (₮${fmtN(balance)})-ээс их байна. Үргэлжлүүлэх үү?`)) return;
+        }
+    }
+
     const btn = e('sbtn'); btn.disabled = true; btn.textContent = 'Илгээж байна...';
     e('progWrap').style.display = 'block'; e('progText').style.display = 'block';
     e('progBar').style.width = '20%'; e('progText').textContent = 'Мэдээлэл бэлдэж байна...';
@@ -560,7 +701,6 @@ async function submitAct() {
             company: c, contract: g, work: w, dateFrom: e('fd1').value, dateTo: e('fd2').value, amount: a,
             pdfs: pdfDataList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb })),
             pdfCount: pdfDataList.length,
-            // Е-баримтын талбарууд
             ebrPdfs: ebrPdfList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb })),
             ebrPdfCount: ebrPdfList.length,
             hasEbrAttachment: hasNotary,
@@ -589,16 +729,325 @@ async function submitAct() {
         e('pdfList').innerHTML = ''; e('compInfo').textContent = '';
         e('notaryList').innerHTML = ''; e('notaryInfo').textContent = '';
         e('amtFmt').textContent = '';
+        const ci = e('contractInfo'); if (ci) ci.style.display = 'none';
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); console.error(err); }
     btn.disabled = false; btn.textContent = 'Акт илгээх';
     setTimeout(() => { e('progWrap').style.display = 'none'; e('progText').style.display = 'none'; e('progBar').style.width = '0%'; }, 1500);
 }
 
 // ════════════════════════════════════════════════════════════
+// ★★★ ГЭРЭЭ ★★★
+// ════════════════════════════════════════════════════════════
+
+function fmtContractAmt() {
+    const v = e('cfAmount').value;
+    e('cfAmtFmt').textContent = v && !isNaN(v) ? '₮ ' + parseInt(v).toLocaleString() : '';
+}
+
+async function submitContract() {
+    if (role !== 'Координатор') { toast('Зөвхөн Координатор гэрээ бүртгэх эрхтэй', 'err'); return; }
+    const company = e('cfCompany').value.trim();
+    const no = e('cfNo').value.trim();
+    const amount = e('cfAmount').value.trim();
+    if (!company || !no || !amount) { toast('Бүх талбарыг бөглөнө үү', 'err'); return; }
+    if (isNaN(amount) || parseInt(amount) <= 0) { toast('Дүн зөв оруулна уу', 'err'); return; }
+
+    if (contracts.some(c => (c.contractNo || '').toLowerCase() === no.toLowerCase())) {
+        toast('Энэ гэрээний дугаар аль хэдийн бүртгэлтэй байна', 'err');
+        return;
+    }
+
+    const btn = e('cfBtn'); btn.disabled = true; btn.textContent = 'Бүртгэж байна...';
+    try {
+        await addDoc(collection(db, 'contracts'), {
+            contractNo: no,
+            company: company,
+            totalAmount: String(amount),
+            usedAmount: '0',
+            createdBy: cu.email,
+            createdByName: cu.displayName || cu.email,
+            createdAt: serverTimestamp()
+        });
+        toast('✅ Гэрээ бүртгэгдлээ!');
+        e('cfCompany').value = '';
+        e('cfNo').value = '';
+        e('cfAmount').value = '';
+        e('cfAmtFmt').textContent = '';
+    } catch (err) {
+        toast('Алдаа: ' + err.message, 'err');
+    }
+    btn.disabled = false; btn.textContent = 'Гэрээ бүртгэх';
+}
+
+function findContract(no) {
+    if (!no) return null;
+    const n = no.toLowerCase().trim();
+    return contracts.find(c => (c.contractNo || '').toLowerCase().trim() === n) || null;
+}
+
+function checkContractBalance() {
+    if (contractCheckTimer) clearTimeout(contractCheckTimer);
+    contractCheckTimer = setTimeout(() => {
+        const no = e('fg').value.trim();
+        const box = e('contractInfo');
+        if (!box) return;
+        if (!no) { box.style.display = 'none'; return; }
+
+        const c = findContract(no);
+        if (!c) {
+            box.style.display = 'block';
+            box.className = 'contract-info-box ci-unknown';
+            box.innerHTML = `ℹ️ Энэ гэрээ бүртгэлд алга. Илгээж болно — гэрээний үлдэгдэл хянагдахгүй.`;
+            return;
+        }
+
+        const total = parseInt(c.totalAmount || 0);
+        const used = parseInt(c.usedAmount || 0);
+        const balance = total - used;
+        const pctUsed = total > 0 ? Math.round(used / total * 100) : 0;
+
+        let cls = 'ci-ok';
+        if (balance <= 0) cls = 'ci-empty';
+        else if (pctUsed >= 80) cls = 'ci-warn';
+
+        box.style.display = 'block';
+        box.className = 'contract-info-box ' + cls;
+        box.innerHTML = `
+            <div class="ci-company">${esc(c.company)}</div>
+            <div class="ci-row"><span>Гэрээний нийт</span><strong>₮${fmtN(total)}</strong></div>
+            <div class="ci-row"><span>Батлагдсан (ашигласан)</span><strong>₮${fmtN(used)}</strong></div>
+            <div class="ci-bar"><div class="ci-bar-fill" style="width:${Math.min(pctUsed, 100)}%"></div></div>
+            <div class="ci-row ci-balance"><span>Үлдэгдэл</span><strong>₮${fmtN(balance)}</strong></div>
+            ${balance <= 0 ? '<div class="ci-alert">⚠ Гэрээний дүн дууссан байна!</div>' : ''}
+        `;
+    }, 250);
+}
+
+function rContracts() {
+    const formCard = e('contractFormCard');
+    if (formCard) formCard.style.display = (role === 'Координатор') ? 'block' : 'none';
+
+    const el = e('contractList');
+    if (!el) return;
+    if (!contracts.length) {
+        el.innerHTML = '<div class="empty">Бүртгэлтэй гэрээ байхгүй байна</div>';
+        return;
+    }
+    el.innerHTML = contracts.map(c => {
+        const total = parseInt(c.totalAmount || 0);
+        const used = parseInt(c.usedAmount || 0);
+        const balance = total - used;
+        const pctUsed = total > 0 ? Math.round(used / total * 100) : 0;
+        let barColor = '#00d9a3';
+        if (pctUsed >= 100) barColor = '#ff5757';
+        else if (pctUsed >= 80) barColor = '#ffb547';
+        // Энэ гэрээтэй холбоотой батлагдсан актын тоо
+        const linkedCount = acts.filter(a =>
+            (a.status === 'done' || a.status === 'partial_done') &&
+            (a.contract || '').toLowerCase().trim() === (c.contractNo || '').toLowerCase().trim()
+        ).length;
+        return `<div class="contract-card" onclick="openContract('${c.id}')" style="cursor:pointer">
+            <div class="cc-top">
+                <div>
+                    <div class="cc-no">${esc(c.contractNo)}</div>
+                    <div class="cc-company">${esc(c.company)}</div>
+                </div>
+                <div class="cc-balance ${balance <= 0 ? 'cc-empty' : ''}">
+                    <div class="cc-balance-label">Үлдэгдэл</div>
+                    <div class="cc-balance-val">₮${fmtN(balance)}</div>
+                </div>
+            </div>
+            <div class="cc-bar"><div class="cc-bar-fill" style="width:${Math.min(pctUsed, 100)}%;background:${barColor};color:${barColor}"></div></div>
+            <div class="cc-meta">
+                <span>Нийт: ₮${fmtN(total)}</span>
+                <span>Ашигласан: ₮${fmtN(used)} (${pctUsed}%)</span>
+            </div>
+            <div class="cc-meta" style="margin-top:6px">
+                <span style="color:var(--brand,#635bff)">📋 ${linkedCount} батлагдсан акт · дэлгэрэнгүй харах →</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// ★ ГЭРЭЭ ДЭЛГЭРЭНГҮЙ — ямар акт хэзээ батлагдсан
+// ════════════════════════════════════════════════════════════
+function openContract(contractId) {
+    const c = contracts.find(x => x.id === contractId);
+    if (!c) { toast('Гэрээ олдсонгүй', 'err'); return; }
+
+    const total = parseInt(c.totalAmount || 0);
+    const used = parseInt(c.usedAmount || 0);
+    const balance = total - used;
+    const pctUsed = total > 0 ? Math.round(used / total * 100) : 0;
+
+    const cNo = (c.contractNo || '').toLowerCase().trim();
+    const linked = acts.filter(a => (a.contract || '').toLowerCase().trim() === cNo);
+    const approved = linked.filter(a => a.status === 'done' || a.status === 'partial_done');
+
+    let barColor = '#00d9a3';
+    if (pctUsed >= 100) barColor = '#ff5757';
+    else if (pctUsed >= 80) barColor = '#ffb547';
+
+    const approvedRows = approved.length ? approved.map(a => {
+        const deducted = (a.status === 'partial_done')
+            ? parseInt(a.approvedAmount || a.amount || 0)
+            : parseInt(a.amount || 0);
+        const evs = a.evs || [];
+        const lastApprove = [...evs].reverse().find(ev =>
+            ev.type === 'done' || ev.type === 'merged_done' || ev.type === 'partial_done'
+            || (ev.type === 'approve' && (ev.title || '').includes('Нягтлан')));
+        const approveTime = lastApprove ? lastApprove.time : (evs.length ? evs[evs.length - 1].time : '—');
+        const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : (a.dateFrom || a.dateTo || '—');
+        const statusLabel = a.status === 'partial_done'
+            ? `Хэсэгчлэн ${a.approvedPercent || 0}%`
+            : (a.completedViaRemaining ? '100% нэгдсэн' : 'Бүрэн батлагдсан');
+
+        return `<div class="cdt-act-row">
+            <div class="cdt-act-head">
+                <span class="cdt-act-id">${esc(a.actId)}</span>
+                <span class="cdt-act-amt">−₮${fmtN(deducted)}</span>
+            </div>
+            <div class="cdt-act-work">${esc(a.work || '')}</div>
+            <div class="cdt-act-grid">
+                <div class="cdt-cell"><span class="cdt-k">Компани</span><span class="cdt-v">${esc(a.company || '—')}</span></div>
+                <div class="cdt-cell"><span class="cdt-k">Ажлын хугацаа</span><span class="cdt-v">${esc(dr)}</span></div>
+                <div class="cdt-cell"><span class="cdt-k">Төлөв</span><span class="cdt-v cdt-ok">${statusLabel}</span></div>
+                <div class="cdt-cell"><span class="cdt-k">Батлагдсан</span><span class="cdt-v">${esc(approveTime)}</span></div>
+            </div>
+        </div>`;
+    }).join('') : '<div class="cdt-empty">Батлагдсан акт байхгүй байна</div>';
+
+    const pendingLinked = linked.filter(a =>
+        a.status === 'pending' || a.status === 'partial' || a.status === 'remaining');
+    const pendingRows = pendingLinked.length ? `
+        <div class="cdt-section-label">Явцад яваа · хараахан хасагдаагүй</div>
+        ${pendingLinked.map(a => `<div class="cdt-act-row cdt-pending">
+            <div class="cdt-act-head">
+                <span class="cdt-act-id">${esc(a.actId)}</span>
+                <span class="cdt-act-amt cdt-muted">₮${fmtN(a.amount)}</span>
+            </div>
+            <div class="cdt-act-work">${esc(a.work || '')}</div>
+            <div class="cdt-act-grid">
+                <div class="cdt-cell"><span class="cdt-k">Төлөв</span><span class="cdt-v">${bt(a)}</span></div>
+            </div>
+        </div>`).join('')}` : '';
+
+    const html = `
+        <div class="cdt-wrap">
+            <button class="cdt-back" onclick="closeContractDetail()">← Гэрээ рүү буцах</button>
+
+            <div class="cdt-summary">
+                <div class="cdt-sum-head">
+                    <div>
+                        <div class="cdt-sum-no">${esc(c.contractNo)}</div>
+                        <div class="cdt-sum-company">${esc(c.company)}</div>
+                    </div>
+                    <span class="cdt-sum-badge ${balance <= 0 ? 'cdt-badge-red' : 'cdt-badge-green'}">${pctUsed}% ашигласан</span>
+                </div>
+                <div class="cdt-sum-rows">
+                    <div class="cdt-sum-row"><span>Гэрээний нийт</span><strong>₮${fmtN(total)}</strong></div>
+                    <div class="cdt-sum-row"><span>Ашигласан</span><strong class="cdt-ok">₮${fmtN(used)}</strong></div>
+                    <div class="cdt-sum-row cdt-sum-balance"><span>Үлдэгдэл</span><strong style="color:${balance <= 0 ? '#dc2626' : '#059669'}">₮${fmtN(balance)}</strong></div>
+                </div>
+                <div class="cdt-sum-bar"><div class="cdt-sum-fill" style="width:${Math.min(pctUsed, 100)}%;background:${barColor}"></div></div>
+                <div class="cdt-sum-by">Бүртгэсэн: ${esc(c.createdByName || c.createdBy || '—')}</div>
+            </div>
+
+            <div class="cdt-section-label">Батлагдсан актууд (${approved.length})</div>
+            ${approvedRows}
+            ${pendingRows}
+        </div>
+    `;
+
+    const formCard = e('contractFormCard');
+    const listEl = e('contractList');
+    const secLbl = document.querySelector('#p4 .seclbl');
+    if (formCard) formCard.style.display = 'none';
+    if (secLbl) secLbl.style.display = 'none';
+    if (listEl) {
+        listEl.classList.add('cdt-detail-mode'); // grid-ийг унтраана
+        listEl.innerHTML = html;
+    }
+}
+
+function closeContractDetail() {
+    const listEl = e('contractList');
+    if (listEl) listEl.classList.remove('cdt-detail-mode');
+    rContracts();
+    const secLbl = document.querySelector('#p4 .seclbl');
+    if (secLbl) secLbl.style.display = '';
+}
+
+function renderContractBalances() {
+    const el = e('dContractList');
+    if (!el) return;
+    if (!contracts.length) {
+        el.innerHTML = '<div class="empty" style="padding:24px">Бүртгэлтэй гэрээ байхгүй</div>';
+        return;
+    }
+    el.innerHTML = contracts.map(c => {
+        const total = parseInt(c.totalAmount || 0);
+        const used = parseInt(c.usedAmount || 0);
+        const balance = total - used;
+        const pctUsed = total > 0 ? Math.round(used / total * 100) : 0;
+        let barColor = '#00d9a3';
+        if (pctUsed >= 100) barColor = '#ff5757';
+        else if (pctUsed >= 80) barColor = '#ffb547';
+        return `<div class="dc-contract-row">
+            <div class="dc-contract-head">
+                <span class="dc-contract-no">${esc(c.contractNo)} · ${esc(c.company)}</span>
+                <span class="dc-contract-bal" style="color:${balance <= 0 ? '#ff5757' : '#6ee7b7'}">₮${fmtN(balance)}</span>
+            </div>
+            <div class="dc-contract-bar"><div class="dc-contract-fill" style="width:${Math.min(pctUsed, 100)}%;background:${barColor}"></div></div>
+            <div class="dc-contract-meta">
+                <span>Нийт ₮${fmtN(total)}</span>
+                <span>${pctUsed}% ашигласан</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Акт бүрэн батлагдах үед гэрээний usedAmount дээр батлагдсан дүнг нэмнэ
+async function applyContractDeduction(a, isPartialAct, isRemainingAct) {
+    try {
+        console.log('[ГЭРЭЭ ХАСАЛТ] Эхэллээ. Актын гэрээний дугаар:', JSON.stringify(a.contract));
+        const c = findContract(a.contract);
+        if (!c) {
+            console.warn('[ГЭРЭЭ ХАСАЛТ] Гэрээ ОЛДСОНГҮЙ. Актын дугаар "' + a.contract + '" нь бүртгэлтэй гэрээтэй таарахгүй байна. Бүртгэлтэй гэрээнүүд:', contracts.map(x => x.contractNo));
+            return;
+        }
+        console.log('[ГЭРЭЭ ХАСАЛТ] Гэрээ олдлоо:', c.contractNo);
+
+        let approvedNow;
+        if (isPartialAct) {
+            approvedNow = parseInt(a.approvedAmount || a.amount || 0);
+        } else {
+            approvedNow = parseInt(a.amount || 0);
+        }
+        if (!approvedNow || approvedNow <= 0) {
+            console.warn('[ГЭРЭЭ ХАСАЛТ] Хасах дүн 0 байна, алгасав.');
+            return;
+        }
+
+        const prevUsed = parseInt(c.usedAmount || 0);
+        const newUsed = prevUsed + approvedNow;
+
+        await updateDoc(doc(db, 'contracts', c.id), {
+            usedAmount: String(newUsed),
+            lastActId: a.actId,
+            lastUpdatedAt: serverTimestamp()
+        });
+        console.log('[ГЭРЭЭ ХАСАЛТ] ✅ Амжилттай. ' + prevUsed + ' → ' + newUsed + ' (₮' + approvedNow + ' нэмэгдсэн)');
+    } catch (err) {
+        console.error('[ГЭРЭЭ ХАСАЛТ] Алдаа:', err);
+    }
+}
+
+// ════════════════════════════════════════════════════════════
 // ★★★ Е-БАРИМТЫН MODAL — Нягтлангийн шийдэл (сүүлийн алхам) ★★★
 // ════════════════════════════════════════════════════════════
 
-// ★★★ ҮЛДЭГДЭЛ АКТ дээр parent аль хэдийн ebr хасалт хийсэн бол дахин хасахгүйгээр тэмдэглэнэ
 async function autoMarkEbrHandledForRemaining(docId, a, parentAct) {
     try {
         const newEvs = [...(a.evs || []), {
@@ -611,8 +1060,8 @@ async function autoMarkEbrHandledForRemaining(docId, a, parentAct) {
         }];
 
         await updateDoc(doc(db, 'acts', docId), {
-            ebrStatus: 'paid', // Дахин хасахгүй гэдгийг 'paid'-аар тэмдэглэв (UI хувьд хэвийн харагдана)
-            ebrAutoHandled: true, // Систем автоматаар шийдсэн гэж тэмдэг
+            ebrStatus: 'paid',
+            ebrAutoHandled: true,
             ebrCheckedAt: serverTimestamp(),
             ebrCheckedBy: 'system',
             evs: newEvs
@@ -633,22 +1082,17 @@ function openEbrModal(docId) {
     if (a.status !== 'pending' && a.status !== 'partial') { toast('Энэ актыг шалгах боломжгүй', 'err'); return; }
     if (a.ebrStatus) { toast('Е-баримт аль хэдийн шалгагдсан', 'err'); return; }
 
-    // ★★★ ҮЛДЭГДЭЛ АКТ: parent дээр аль хэдийн е-баримтын хасалт хийгдсэн эсэхийг шалгана
-    // Хэрэв тийм бол ДАХИН хасахгүй, автоматаар "paid (handled)" гэж тэмдэглэнэ
     if (a.parentDocId) {
         const parentAct = acts.find(x => x.id === a.parentDocId);
         if (parentAct && parentAct.ebrStatus === 'unpaid_applied_partial') {
-            // Аль хэдийн хэсэгчилсэн актын дээр хасагдсан → үлдэгдэл дээр дахин хасахгүй
             autoMarkEbrHandledForRemaining(docId, a, parentAct);
             return;
         }
     }
 
     currentNotaryActId = docId;
-    const currentAmt = parseInt(a.amount); // Энэ хэсэгчилсэн актын дүн (80% эсвэл бүтэн)
-    // ★★★ ЧУХАЛ: 10% хасалт нь АНХНЫ БҮТЭН ГЭРЭЭНИЙ ДҮНГЭЭС (100%-аас) тооцогдоно
-    // — хэсэгчилсэн дүнгээс БИШ. Гэрээний дүн нэг л удаа 10% хасагдана.
-    const contractTotal = parseInt(a.originalAmount || a.amount); // Анхны 100% дүн
+    const currentAmt = parseInt(a.amount);
+    const contractTotal = parseInt(a.originalAmount || a.amount);
     const deduction = Math.round(contractTotal * EBR_DEDUCT_PERCENT / 100);
     const afterDeduction = currentAmt - deduction;
 
@@ -658,7 +1102,6 @@ function openEbrModal(docId) {
     e('nmUnpaidAmt').textContent = '₮' + fmtN(afterDeduction);
     e('nmDeductAmt').textContent = '₮' + fmtN(deduction);
 
-    // Хэсэгчилсэн акт бол: бүтэн гэрээний дүнг тусад нь сануулна
     const isPartialAct = !!(a.originalAmount && a.approvedPercent);
     const contractHintEl = e('nmContractHint');
     if (contractHintEl) {
@@ -672,7 +1115,6 @@ function openEbrModal(docId) {
         }
     }
 
-    // Е-баримт inline харуулах
     const notaryList = e('nmNotaryList');
     const titleEl = e('nmFilesTitle');
     const subEl = e('nmFilesSub');
@@ -716,14 +1158,14 @@ function closeEbrModal() {
     pendingNotaryStatus = null;
 }
 
-// "Е-баримт төлсөн" товч
 async function chooseEbrPaid() {
     const a = acts.find(x => x.id === currentNotaryActId);
-    if (!a) return;
+    if (!a) { toast('Акт олдсонгүй', 'err'); return; }
 
     const btn = e('nmPaidBtn');
-    btn.disabled = true;
-    btn.style.opacity = '0.6';
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+    const savedId = currentNotaryActId;
 
     try {
         const newEvs = [...(a.evs || []), {
@@ -734,24 +1176,35 @@ async function chooseEbrPaid() {
             time: ts(), hash: gh()
         }];
 
-        await updateDoc(doc(db, 'acts', currentNotaryActId), {
+        await updateDoc(doc(db, 'acts', savedId), {
             ebrStatus: 'paid',
             ebrCheckedAt: serverTimestamp(),
             ebrCheckedBy: cu.email,
             evs: newEvs
         });
 
-        toast('✅ Е-баримт төлсөн — Дүн хэвээр үлдлээ. Одоо "Батлах" товчийг дарна уу.');
+        // Local-д тэмдэглэнэ
+        const localAct = acts.find(x => x.id === savedId);
+        if (localAct) localAct.ebrStatus = 'paid';
+
         closeEbrModal();
+        toast('✅ Е-баримт төлсөн — Батлаж байна...');
     } catch (err) {
         console.error('Е-баримт paid error:', err);
-        toast('Алдаа: ' + err.message, 'err');
-        btn.disabled = false;
-        btn.style.opacity = '1';
+        toast('Алдаа: ' + (err.message || err), 'err');
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+        return;
+    }
+
+    // ★ Тусдаа try — батлах үе шатанд алдаа гарсан ч е-баримт нь хадгалагдсан
+    try {
+        await approve(savedId, true);
+    } catch (err2) {
+        console.error('Батлах алдаа (е-баримт төлсөн дараа):', err2);
+        toast('Е-баримт хадгалагдсан. Батлахад алдаа гарлаа — "Батлах" товч дахин дарна уу.', 'err');
     }
 }
 
-// "Е-баримт төлөөгүй" товч — Нягтлан: 10% хасаад үлдсэн дүнг тооцоолно
 async function chooseEbrUnpaid() {
     const a = acts.find(x => x.id === currentNotaryActId);
     if (!a) return;
@@ -761,13 +1214,7 @@ async function chooseEbrUnpaid() {
     btn.style.opacity = '0.6';
 
     try {
-        const currentAmt = parseInt(a.amount); // Энэ актын одоогийн дүн (80% бол 80% дүн)
-        // ★★★ ЧУХАЛ ЛОГИК: 10% хасалт нь АНХНЫ ГЭРЭЭНИЙ БҮТЭН ДҮНГЭЭС (100%-аас) тооцогдоно
-        // — хэсэгчилсэн дүнгээс БИШ. Нэг гэрээ дээр нэг л удаа хасагдана.
-        // Жишээ: 100,000₮ → 80% хэсэгчилсэн → энэ актын amount = 80,000
-        //        10% хасалт = 100,000 × 10% = 10,000 (БҮХ дүнгээс)
-        //        Эцсийн = 80,000 - 10,000 = 70,000
-        //        Үлдэгдэл 20% (20,000) ирэхэд дахин хасахгүй
+        const currentAmt = parseInt(a.amount);
         const contractTotal = parseInt(a.originalAmount || a.amount);
         const deduction = Math.round(contractTotal * EBR_DEDUCT_PERCENT / 100);
         const newAmount = currentAmt - deduction;
@@ -792,25 +1239,22 @@ async function chooseEbrUnpaid() {
             ebrCheckedAt: serverTimestamp(),
             ebrCheckedBy: cu.email,
             originalAmountBeforeEbr: String(currentAmt),
-            ebrContractTotal: String(contractTotal), // Хасалт тооцсон үндсэн дүн
+            ebrContractTotal: String(contractTotal),
             ebrDeductedAmount: String(deduction),
-            amount: String(newAmount), // ★ Эцсийн дүн (хасалт хийгдсэн)
+            amount: String(newAmount),
             evs: newEvs
         });
 
-        // ★★★ ХЭСЭГЧИЛСЭН АКТ бол: parent (анхны акт)-ыг "ebrStatus: unpaid_applied" гэж тэмдэглэх
-        //     ингэснээр үлдэгдэл акт Нягтлан дээр ирэхэд "аль хэдийн хасагдсан" гэдгийг мэдэх боломжтой
         if (isPartialAct && a.parentDocId) {
             try {
                 await updateDoc(doc(db, 'acts', a.parentDocId), {
-                    ebrStatus: 'unpaid_applied_partial', // Хэсэгчилсэн дээр аль хэдийн хасагдсан
+                    ebrStatus: 'unpaid_applied_partial',
                     ebrDeductedAmount: String(deduction),
                     ebrContractTotal: String(contractTotal),
                 });
             } catch (e) { console.error('Parent ebr mark:', e); }
         }
 
-        // Гүйцэтгэгчид мэдэгдэх (е-баримт төлөөгүй тул хасагдсан)
         if (a.submittedBy) {
             try {
                 const subject = `📄 Таны актын е-баримтын төлбөр төлөгдөөгүй: ${a.actId}`;
@@ -839,8 +1283,19 @@ async function chooseEbrUnpaid() {
             } catch (e) { console.error('Е-баримт mail:', e); }
         }
 
-        toast(`⚠ ${EBR_DEDUCT_PERCENT}% хасагдлаа (-₮${fmtN(deduction)} гэрээний бүтэн дүнгээс). "Батлах" товчийг дарж эцэслэнэ үү.`);
+        const savedId = currentNotaryActId;
+        // ★ Local acts массивыг шинэчилнэ — approve доторх гэрээ хасалт зөв дүн ашиглахын тулд
+        const localAct = acts.find(x => x.id === savedId);
+        if (localAct) {
+            localAct.amount = String(newAmount);
+            localAct.ebrStatus = 'unpaid';
+            localAct.ebrDeductedAmount = String(deduction);
+            localAct.originalAmountBeforeEbr = String(currentAmt);
+        }
+        toast(`⚠ ${EBR_DEDUCT_PERCENT}% хасагдлаа (-₮${fmtN(deduction)}). Батлаж байна...`);
         closeEbrModal();
+        // ★ Шууд эцэслэн батлах
+        await approve(savedId, true);
     } catch (err) {
         console.error('Е-баримт unpaid error:', err);
         toast('Алдаа: ' + err.message, 'err');
@@ -853,13 +1308,12 @@ async function chooseEbrUnpaid() {
 // APPROVE / REJECT
 // ════════════════════════════════════════════════════════════
 
-async function approve(docId) {
+async function approve(docId, ebrAlreadyChecked) {
     const a = acts.find(x => x.id === docId);
     if (!a || (a.status !== 'pending' && a.status !== 'partial')) { toast('Батлах боломжгүй!', 'err'); return; }
     if (RSTEP[role] !== a.step) { toast('Та энэ актыг батлах эрхгүй!', 'err'); return; }
 
-    // Нягтлан — Е-баримт шалгаагүй бол блоклоно
-    if (role === 'Нягтлан' && (a.step || 0) === 3 && !a.ebrStatus) {
+    if (role === 'Нягтлан' && (a.step || 0) === 3 && !a.ebrStatus && !ebrAlreadyChecked) {
         toast('Эхлээд "Е-баримт шалгах" товч дээр дарна уу!', 'err');
         return;
     }
@@ -930,46 +1384,33 @@ async function approve(docId) {
     try {
         await updateDoc(doc(db, 'acts', docId), upd);
         if (finishedAllSteps) {
+            // ★ ГЭРЭЭНИЙ ҮЛДЭГДЭЛ ХАСАХ — эцэст нь батлагдсан дүнгээр
+            await applyContractDeduction(a, isPartialAct, isRemainingAct);
+
             await sendMail(CHAIN[3].email, CHAIN[3].name, a, cu.displayName || cu.email);
 
             if (isPartialAct) {
-                toast(`⚠ Хэсэгчлэн дууслаа (${a.approvedPercent}%)! Үлдэгдэл хүлээгдэж байна.`);
-            } else if (isRemainingAct) {
-                toast('🎉 Үлдэгдэл батлагдан акт 100% болж дууслаа!');
+                toast(`⚠ Хэсэгчлэн батлагдлаа (${a.approvedPercent}%)! PDF бэлдэж байна...`);
+                // ★ 80% хэсэг батлагдмагц тэр даруй PDF хэвлэнэ (мөнгө шилжсэн учир)
                 try {
-                    const parentAct = acts.find(x => x.id === a.parentDocId);
-                    if (parentAct) {
-                        const remainingEvents = (a.evs || []).map(ev => ({
-                            ...ev,
-                            title: '⏳ ' + (ev.title || ''),
-                            detail: '[Үлдэгдэл цикл] ' + (ev.detail || '')
-                        }));
-
-                        const mergedEvents = [
-                            ...(parentAct.evs || []),
-                            {
-                                type: 'cycle_separator', who: 'Систем',
-                                title: '═══════ ҮЛДЭГДЭЛ ЦИКЛ ЭХЭЛЛЭЭ ═══════',
-                                detail: `Үлдэгдэл акт: ${a.actId} · ₮${fmtN(a.amount)}`,
-                                time: ts(), hash: gh()
-                            },
-                            ...remainingEvents
-                        ];
-
-                        const mergedAct = {
-                            ...parentAct,
-                            status: 'done',
-                            completedViaRemaining: true,
-                            remainingActId: a.actId,
-                            pdfs: [...(parentAct.pdfs || []), ...(a.pdfs || [])],
-                            pdfCount: (parentAct.pdfCount || 0) + (a.pdfCount || 0),
-                            evs: mergedEvents
-                        };
-                        await generateFinalPdf(mergedAct);
-                        toast('✅ 100% НЭГДСЭН PDF бэлэн!');
-                    }
+                    const partialActFinal = { ...a, ...upd, evs: finalEvs };
+                    await generateFinalPdf(partialActFinal);
+                    toast(`✅ ${a.approvedPercent}% хэсгийн PDF бэлэн! Үлдэгдэл ${100 - a.approvedPercent}% хүлээгдэж байна.`);
                 } catch (pdfErr) {
-                    console.error('Merged PDF алдаа:', pdfErr);
+                    console.error('Хэсэгчилсэн PDF алдаа:', pdfErr);
+                    toast('⚠️ PDF алдаа: ' + pdfErr.message, 'err');
+                }
+            } else if (isRemainingAct) {
+                toast('🎉 Үлдэгдэл батлагдлаа! PDF бэлдэж байна...');
+                try {
+                    // ★ Зөвхөн ҮЛДЭГДЛИЙН (20%) тусдаа PDF хэвлэнэ — нэгдсэн биш
+                    const remainingActFinal = { ...a, ...upd, evs: finalEvs };
+                    await generateFinalPdf(remainingActFinal);
+                    const remPct = a.remainingPercent || (100 - (a.parentApprovedPercent || 0));
+                    toast(`✅ Үлдэгдэл ${remPct}% хэсгийн PDF бэлэн!`);
+                } catch (pdfErr) {
+                    console.error('Үлдэгдэл PDF алдаа:', pdfErr);
+                    toast('⚠️ PDF алдаа: ' + pdfErr.message, 'err');
                 }
             } else {
                 toast('🎉 Бүрэн батлагдлаа! Final PDF бэлдэж байна...');
@@ -999,13 +1440,22 @@ async function reject(docId) {
     }];
     try {
         await updateDoc(doc(db, 'acts', docId), { status: 'rejected', evs: newEvs, rejectedAt: serverTimestamp() });
-        toast('❌ Акт буцаагдлаа.');
+        // Local-д шууд тэмдэглэнэ (snapshot ирэхээс өмнө жагсаалтад харагдуулна)
+        const localAct = acts.find(x => x.id === docId);
+        if (localAct) { localAct.status = 'rejected'; localAct.rejectedAt = Date.now(); }
+        toast('❌ Акт буцаагдлаа. Бүх хүнд имэйл илгээж байна...');
         try {
             await sendRejectionMail(a, reason, cu.displayName || cu.email, role);
+            toast('✅ Буцаалт дууслаа. Имэйл илгээгдсэн.');
         } catch (mailErr) {
             console.error('❌ Rejection email алдаа:', mailErr);
+            toast('Акт буцаагдсан ч имэйл илгээхэд алдаа гарлаа', 'err');
         }
-        bk();
+        // ★ "Актууд" таб руу аваачаад "Буцаагдсан" хэсгийг харуулна
+        e('pd').style.display = 'none';
+        go(2);
+        listFilter = 'rejected';
+        rL();
     } catch (err) { toast('Алдаа: ' + err.message, 'err'); }
 }
 
@@ -1047,27 +1497,27 @@ function closePartialModal() {
 function updatePartialPreview() {
     const a = acts.find(x => x.id === currentPartialActId);
     if (!a) return;
-    const pct = parseInt(e('pmSlider').value);
+    const pctV = parseInt(e('pmSlider').value);
     const total = parseInt(a.amount);
-    const approved = Math.round(total * pct / 100);
+    const approved = Math.round(total * pctV / 100);
     const remaining = total - approved;
 
-    e('pmPercentVal').textContent = pct + '%';
+    e('pmPercentVal').textContent = pctV + '%';
     e('pmApprovedAmt').textContent = '₮' + fmtN(approved);
-    e('pmApprovedPct').textContent = pct + '% батлагдана';
+    e('pmApprovedPct').textContent = pctV + '% батлагдана';
     e('pmRemainingAmt').textContent = '₮' + fmtN(remaining);
-    e('pmRemainingPct').textContent = (100 - pct) + '% гүйцэтгэгчид буцна';
+    e('pmRemainingPct').textContent = (100 - pctV) + '% гүйцэтгэгчид буцна';
     e('pmInfoApproved').textContent = '₮' + fmtN(approved);
     e('pmInfoRemaining').textContent = '₮' + fmtN(remaining);
 
     const slider = e('pmSlider');
-    slider.style.background = `linear-gradient(to right, #f59e0b 0%, #f59e0b ${pct}%, #e2e8f0 ${pct}%, #e2e8f0 100%)`;
+    slider.style.background = `linear-gradient(to right, #f59e0b 0%, #f59e0b ${pctV}%, #e2e8f0 ${pctV}%, #e2e8f0 100%)`;
 }
 
 async function confirmPartialApprove() {
     const a = acts.find(x => x.id === currentPartialActId);
     if (!a) return;
-    const pct = parseInt(e('pmSlider').value);
+    const pctV = parseInt(e('pmSlider').value);
     const reason = e('pmReason').value.trim();
 
     if (!reason) {
@@ -1075,13 +1525,13 @@ async function confirmPartialApprove() {
         e('pmReason').focus();
         return;
     }
-    if (pct < 1 || pct > 99) {
+    if (pctV < 1 || pctV > 99) {
         toast('Хувь 1-99 хооронд байх ёстой', 'err');
         return;
     }
 
     const total = parseInt(a.amount);
-    const approvedAmount = Math.round(total * pct / 100);
+    const approvedAmount = Math.round(total * pctV / 100);
     const remainingAmount = total - approvedAmount;
 
     const btn = e('pmConfirmBtn');
@@ -1096,14 +1546,14 @@ async function confirmPartialApprove() {
         const newEvs = [...(a.evs || []), {
             type: 'partial', who: cu.displayName || cu.email, whoEmail: cu.email,
             title: 'Координатор хэсэгчлэн батлав ⚠',
-            detail: `${pct}% батлагдсан · ₮${fmtN(approvedAmount)} → Инженер уруу · ₮${fmtN(remainingAmount)} гүйцэтгэгчид буцсан · Шалтгаан: ${reason}${notaryNote}`,
+            detail: `${pctV}% батлагдсан · ₮${fmtN(approvedAmount)} → Инженер уруу · ₮${fmtN(remainingAmount)} гүйцэтгэгчид буцсан · Шалтгаан: ${reason}${notaryNote}`,
             time: ts(), hash: gh()
         }];
 
         const partialUpd = {
             status: 'partial',
             step: 1,
-            approvedPercent: pct,
+            approvedPercent: pctV,
             approvedAmount: approvedAmount,
             partialReason: reason,
             evs: newEvs
@@ -1116,15 +1566,15 @@ async function confirmPartialApprove() {
             date: todayYMD(),
             company: a.company,
             contract: a.contract,
-            work: a.work + ' (Үлдэгдэл ' + (100 - pct) + '%)',
+            work: a.work + ' (Үлдэгдэл ' + (100 - pctV) + '%)',
             dateFrom: a.dateFrom || '',
             dateTo: a.dateTo || '',
             amount: String(remainingAmount),
             originalAmount: String(total),
             parentActId: a.actId,
             parentDocId: currentPartialActId,
-            parentApprovedPercent: pct,
-            remainingPercent: 100 - pct,
+            parentApprovedPercent: pctV,
+            remainingPercent: 100 - pctV,
             partialReason: reason,
             pdfs: [],
             pdfCount: 0,
@@ -1139,8 +1589,8 @@ async function confirmPartialApprove() {
             createdAt: serverTimestamp(),
             evs: [{
                 type: 'remaining_created', who: cu.displayName || cu.email, whoEmail: cu.email,
-                title: '⏳ Үлдэгдэл үүсгэв (' + (100 - pct) + '%)',
-                detail: `Эх акт: ${a.actId} · Үлдэгдэл дүн: ₮${fmtN(remainingAmount)} (${100 - pct}%) · Шалтгаан: ${reason}`,
+                title: '⏳ Үлдэгдэл үүсгэв (' + (100 - pctV) + '%)',
+                detail: `Эх акт: ${a.actId} · Үлдэгдэл дүн: ₮${fmtN(remainingAmount)} (${100 - pctV}%) · Шалтгаан: ${reason}`,
                 time: ts(), hash: gh()
             }]
         };
@@ -1153,12 +1603,12 @@ async function confirmPartialApprove() {
         } catch (e) { console.error('Engineer email:', e); }
 
         try {
-            await sendPartialMail(a, pct, approvedAmount, remainingAmount, reason, cu.displayName || cu.email);
+            await sendPartialMail(a, pctV, approvedAmount, remainingAmount, reason, cu.displayName || cu.email);
         } catch (mailErr) {
             console.error('❌ Partial email алдаа:', mailErr);
         }
 
-        toast('✅ Хэсэгчлэн батлагдлаа! ' + pct + '% Инженер уруу, ' + (100 - pct) + '% гүйцэтгэгчид буцлаа.');
+        toast('✅ Хэсэгчлэн батлагдлаа! ' + pctV + '% Инженер уруу, ' + (100 - pctV) + '% гүйцэтгэгчид буцлаа.');
         closePartialModal();
         bk();
     } catch (err) {
@@ -1248,8 +1698,216 @@ async function confirmSubmitRemaining() {
 }
 
 // ════════════════════════════════════════════════════════════
-// CEO/CFO COMMENT
+// ★ БУЦААГДСАН АКТ ЗАСААД ДАХИН ИЛГЭЭХ
 // ════════════════════════════════════════════════════════════
+
+function addResubmitPdfs(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    (async () => {
+        for (const f of files) {
+            if (f.type !== 'application/pdf') { toast('Зөвхөн PDF: ' + f.name, 'err'); continue; }
+            resubmitPdfList.push(await readPdfAsBase64(f));
+        }
+        renderResubmitPdfList();
+        input.value = '';
+    })();
+}
+
+function rmResubmitPdf(i) {
+    resubmitPdfList.splice(i, 1);
+    renderResubmitPdfList();
+}
+
+// Е-баримт нэмэх/устгах (resubmit)
+function addResubmitEbr(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    (async () => {
+        for (const f of files) {
+            if (f.type !== 'application/pdf') { toast('Зөвхөн PDF: ' + f.name, 'err'); continue; }
+            resubmitEbrList.push(await readPdfAsBase64(f));
+        }
+        renderResubmitEbrList();
+        input.value = '';
+    })();
+}
+
+function rmResubmitEbr(i) {
+    resubmitEbrList.splice(i, 1);
+    renderResubmitEbrList();
+}
+
+function renderResubmitEbrList() {
+    const el = e('rsEbrList');
+    if (!el) return;
+    el.innerHTML = resubmitEbrList.map((d, i) => `
+    <div class="pdf-item pdf-item-notary">
+      <div class="pdf-info"><span class="pdf-icon">📄</span>
+        <span class="pdf-name" title="${esc(d.name)}">${esc(d.name)}</span>
+      </div>
+      <span class="pdf-size">${d.sizeKb}KB</span>
+      <div class="pdf-rm" onclick="rmResubmitEbr(${i})">✕</div>
+    </div>`).join('');
+}
+
+function renderResubmitPdfList() {
+    const el = e('rsPdfList');
+    if (!el) return;
+    el.innerHTML = resubmitPdfList.map((d, i) => `
+    <div class="pdf-item">
+      <div class="pdf-info"><span class="pdf-icon">📄</span>
+        <span class="pdf-name" title="${esc(d.name)}">${esc(d.name)}</span>
+      </div>
+      <span class="pdf-size">${d.sizeKb}KB</span>
+      <div class="pdf-rm" onclick="rmResubmitPdf(${i})">✕</div>
+    </div>`).join('');
+}
+
+function openResubmitModal(docId) {
+    const a = acts.find(x => x.id === docId);
+    if (!a) return;
+    if (a.status !== 'rejected') { toast('Энэ акт буцаагдаагүй байна', 'err'); return; }
+    if (a.submittedBy !== cu.email) { toast('Зөвхөн өөрийн актыг засах боломжтой', 'err'); return; }
+
+    currentResubmitActId = docId;
+    // ★ Хуучин PDF/е-баримтыг засварлаж болохуйц жагсаалтад ачаална
+    resubmitPdfList = (a.pdfs || []).map(p => ({ name: p.name, base64: p.base64, sizeKb: p.sizeKb }));
+    resubmitEbrList = (a.ebrPdfs || []).map(p => ({ name: p.name, base64: p.base64, sizeKb: p.sizeKb }));
+
+    // Буцаасан шалтгааныг олох
+    const rejectEv = (a.evs || []).slice().reverse().find(ev => ev.type === 'reject');
+    const reasonText = rejectEv ? rejectEv.detail.replace(/^Шалтгаан:\s*/, '') : 'Тодорхойгүй';
+    const rejectorName = rejectEv ? rejectEv.who : '';
+
+    e('rsActId').textContent = a.actId;
+    e('rsRejectReason').textContent = reasonText + (rejectorName ? ` — ${rejectorName}` : '');
+    e('rsCompany').value = a.company || '';
+    e('rsWork').value = a.work || '';
+    e('rsAmount').value = a.amount || '';
+    e('rsNote').value = '';
+    // ★ Хуучин файлуудыг жагсаалтад харуулна (устгаж/нэмж болно)
+    renderResubmitPdfList();
+    renderResubmitEbrList();
+    const oldPdfInfo = e('rsOldPdfInfo');
+    if (oldPdfInfo) {
+        oldPdfInfo.textContent = resubmitPdfList.length
+            ? `Доорх ${resubmitPdfList.length} файл хадгалагдсан. ✕ дарж устгаж, шинээр нэмж болно.`
+            : 'Файл байхгүй. Шаардлагатай бол нэмнэ үү.';
+    }
+    const oldEbrInfo = e('rsOldEbrInfo');
+    if (oldEbrInfo) {
+        oldEbrInfo.textContent = resubmitEbrList.length
+            ? `Доорх ${resubmitEbrList.length} е-баримт хадгалагдсан. ✕ дарж устгаж, шинээр нэмж болно.`
+            : 'Е-баримт байхгүй. Шаардлагатай бол нэмнэ үү.';
+    }
+
+    e('resubmitModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeResubmitModal() {
+    e('resubmitModal').classList.remove('open');
+    document.body.style.overflow = '';
+    currentResubmitActId = null;
+    resubmitPdfList = [];
+    resubmitEbrList = [];
+}
+
+async function confirmResubmit() {
+    const a = acts.find(x => x.id === currentResubmitActId);
+    if (!a) return;
+
+    const company = e('rsCompany').value.trim();
+    const work = e('rsWork').value.trim();
+    const amount = e('rsAmount').value.trim();
+    const note = e('rsNote').value.trim();
+
+    if (!company || !work || !amount) {
+        toast('Компани, ажил, дүн заавал бөглөнө үү', 'err');
+        return;
+    }
+    if (isNaN(amount) || parseInt(amount) <= 0) {
+        toast('Дүн зөв оруулна уу', 'err');
+        return;
+    }
+
+    const totalKb = resubmitPdfList.reduce((s, x) => s + x.sizeKb, 0)
+        + resubmitEbrList.reduce((s, x) => s + x.sizeKb, 0);
+    if (totalKb > 4096) { toast(`PDF нийт ${totalKb}KB — 4MB-аас бага байх ёстой`, 'err'); return; }
+
+    const btn = e('rsConfirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Илгээж байн...';
+
+    try {
+        // ★ Жагсаалт дахь файлууд = хуучин (устгаагүй) + шинэ. Давхарлахгүй.
+        const finalPdfs = resubmitPdfList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb }));
+        const finalEbr = resubmitEbrList.map(d => ({ name: d.name, base64: d.base64, sizeKb: d.sizeKb }));
+
+        const newEvs = [...(a.evs || []), {
+            type: 'submit', who: cu.displayName || cu.email, whoEmail: cu.email,
+            title: '🔄 Засаад дахин илгээв',
+            detail: `Гүйцэтгэгч буцаалтын дараа засаж дахин илгээв.`
+                + (note ? ` Тайлбар: ${note}.` : '')
+                + ` Дүн: ₮${fmtN(amount)}`
+                + ` · ${finalPdfs.length} ажлын PDF`
+                + ` · ${finalEbr.length} е-баримт`,
+            time: ts(), hash: gh()
+        }];
+
+        const upd = {
+            status: 'pending',
+            step: 0,
+            company: company,
+            work: work,
+            amount: String(amount),
+            pdfs: finalPdfs,
+            pdfCount: finalPdfs.length,
+            ebrPdfs: finalEbr,
+            ebrPdfCount: finalEbr.length,
+            hasEbrAttachment: finalEbr.length > 0,
+            ebrStatus: null, // ★ Е-баримтын шалгалтыг дахин шинэчилнэ (Нягтлан дахин шалгана)
+            resubmittedAt: serverTimestamp(),
+            rejectedAt: null, // ★ Буцаалтын устгах таймерыг цуцлана
+            evs: newEvs
+        };
+        await updateDoc(doc(db, 'acts', currentResubmitActId), upd);
+
+        // Local-д тэмдэглэнэ
+        const localAct = acts.find(x => x.id === currentResubmitActId);
+        if (localAct) { localAct.status = 'pending'; localAct.step = 0; localAct.rejectedAt = null; }
+
+        // Координаторт мэдэгдэнэ
+        try {
+            await sendMail(CHAIN[0].email, CHAIN[0].name,
+                { ...a, company, work, amount: String(amount) },
+                cu.displayName || cu.email, {
+                    subject: `🔄 Засаж дахин илгээсэн акт: ${a.actId}`,
+                    message: `Хүндэт ${CHAIN[0].name},\n\n`
+                        + `Буцаагдсан актыг гүйцэтгэгч засаж дахин илгээлээ.\n\n`
+                        + `АКТ: ${a.actId}\n`
+                        + `Компани: ${company}\n`
+                        + `Ажил: ${work}\n`
+                        + `Дүн: ₮${fmtN(amount)}\n\n`
+                        + (note ? `Гүйцэтгэгчийн тайлбар: ${note}\n\n` : '')
+                        + `Дахин шалгаж батлуулна уу.`,
+                    type: 'resubmit'
+                });
+        } catch (e) { console.error('Resubmit mail error:', e); }
+
+        toast('✅ Засаж дахин илгээгдлээ! Координаторт мэдэгдэл очлоо.');
+        closeResubmitModal();
+        // Актууд таб руу буцаана
+        e('pd').style.display = 'none';
+        go(2);
+    } catch (err) {
+        console.error('Resubmit error:', err);
+        toast('Алдаа: ' + err.message, 'err');
+    }
+    btn.disabled = false;
+    btn.textContent = '🔄 Дахин илгээх';
+}
 
 async function submitComment(docId) {
     if (!isViewer(role)) { toast('Зөвхөн CEO/CFO тэмдэглэл бичих эрхтэй', 'err'); return; }
@@ -1371,12 +2029,16 @@ async function generateFinalPdf(act) {
 
     const isPartial = act.approvedPercent && act.approvedPercent < 100;
     const isMerged = act.completedViaRemaining;
+    const isRemaining = act.parentApprovedPercent && act.originalAmount; // ★ үлдэгдэл акт
+    const remPct = isRemaining ? (act.remainingPercent || (100 - act.parentApprovedPercent)) : 0;
     const statusText = isPartial
         ? `ХЭСЭГЧЛЭН ${act.approvedPercent}%`
-        : isMerged
-            ? '100% БҮРЭН (НЭГДСЭН)'
-            : 'БҮРЭН БАТЛАГДСАН';
-    const statusColor = isPartial
+        : isRemaining
+            ? `ҮЛДЭГДЭЛ ${remPct}%`
+            : isMerged
+                ? '100% БҮРЭН (НЭГДСЭН)'
+                : 'БҮРЭН БАТЛАГДСАН';
+    const statusColor = (isPartial || isRemaining)
         ? rgb(0.96, 0.62, 0.04)
         : rgb(0.06, 0.73, 0.51);
 
@@ -1386,7 +2048,7 @@ async function generateFinalPdf(act) {
         y: y - 4,
         width: badgeWidth,
         height: 18,
-        color: isPartial ? rgb(1, 0.95, 0.85) : rgb(0.86, 0.96, 0.91),
+        color: (isPartial || isRemaining) ? rgb(1, 0.95, 0.85) : rgb(0.86, 0.96, 0.91),
         borderColor: statusColor,
         borderWidth: 0.8,
     });
@@ -1417,7 +2079,6 @@ async function generateFinalPdf(act) {
     drawMetaRow('Ажлын хугацаа', (act.dateFrom || '—') + ' — ' + (act.dateTo || '—'));
     drawMetaRow('Илгээсэн', act.submittedByName || act.submittedBy);
 
-    // Е-баримтын мэдээлэл
     if (act.ebrStatus) {
         drawMetaSeparator();
         if (act.ebrStatus === 'paid') {
@@ -1554,14 +2215,14 @@ async function generateFinalPdf(act) {
         checkNewPage(70);
         const isApprove = ev.type === 'approve' || ev.type === 'done' || ev.type === 'submit';
         const isReject = ev.type === 'reject';
-        const isPartial = ev.type === 'partial' || ev.type === 'remaining_created';
+        const isPartialEv = ev.type === 'partial' || ev.type === 'remaining_created';
         const isNotary = ev.type === 'ebr_check';
         const dotColor = isApprove ? rgb(0.11, 0.62, 0.46)
             : isReject ? rgb(0.88, 0.29, 0.29)
-                : isPartial ? rgb(0.96, 0.62, 0.04)
+                : isPartialEv ? rgb(0.96, 0.62, 0.04)
                     : isNotary ? rgb(0.4, 0.4, 0.85)
                         : rgb(0.5, 0.5, 0.5);
-        const icon = isApprove ? '✓' : isReject ? '✕' : isPartial ? '⚠' : isNotary ? '§' : '→';
+        const icon = isApprove ? '✓' : isReject ? '✕' : isPartialEv ? '⚠' : isNotary ? '§' : '→';
         page.drawCircle({ x: margin + 6, y: y + 4, size: 7, color: dotColor });
         drawText(icon, margin + 3, y + 1, { size: 10, color: rgb(1, 1, 1) });
         drawText(`${i + 1}. ${ev.title || ''}`, margin + 22, y, { size: 12, color: dotColor });
@@ -1605,7 +2266,6 @@ async function generateFinalPdf(act) {
     const totalPdfCount = (act.pdfCount || 0) + (act.ebrPdfCount || 0);
     drawText(`Нийт ${events.length} арга хэмжээ · ${totalPdfCount} хавсралт`, margin, y, { size: 9, color: rgb(0.5, 0.5, 0.5) });
 
-    // ажлын болон е-баримтын PDF хоёуланг хавсаргах
     const allPdfs = [...(act.pdfs || []), ...(act.ebrPdfs || [])];
     if (allPdfs.length) {
         for (const pdf of allPdfs) {
@@ -1665,7 +2325,7 @@ async function generateFinalPdf(act) {
 async function downloadFinalPdf(docId) {
     const a = acts.find(x => x.id === docId);
     if (!a) { toast('Акт олдсонгүй', 'err'); return; }
-    if (a.status !== 'done') { toast('Зөвхөн бүрэн батлагдсан актыг татах боломжтой', 'err'); return; }
+    if (a.status !== 'done' && a.status !== 'partial_done') { toast('Зөвхөн батлагдсан актыг татах боломжтой', 'err'); return; }
     try {
         toast('PDF бэлдэж байна...');
         await generateFinalPdf(a);
@@ -1757,14 +2417,14 @@ function detH(idx) {
     const canPartial = a.status === 'pending' && role === 'Координатор' && step === 0;
     const canComplete = a.status === 'remaining' && a.submittedBy === cu?.email;
     const canComment = isViewer(role);
+    // ★ Буцаагдсан актыг гүйцэтгэгч засаж дахин илгээх боломж
+    const canResubmit = a.status === 'rejected' && a.submittedBy === cu?.email;
 
-    // Нягтлан + step 3 + е-баримт шалгаагүй
     const needsNotaryCheck = (a.status === 'pending' || a.status === 'partial')
         && role === 'Нягтлан'
         && step === 3
         && !a.ebrStatus;
 
-    // Бүх алхамд е-баримтыг inline харуулах эсэх (read-only preview)
     const showEbrInlineReadonly = a.ebrPdfs && a.ebrPdfs.length
         && (role === 'Координатор' || role === 'Инженер' || role === 'Захирал')
         && (a.step || 0) < 3;
@@ -1861,6 +2521,11 @@ function detH(idx) {
         <button class="bok" onclick="downloadFinalPdf('${a.id}')" style="background:#1d9e75">
           📥 Бүрэн PDF татах
         </button>
+      </div>` : a.status === 'partial_done' ? `
+      <div class="abtns" style="margin-top:10px">
+        <button class="bok" onclick="downloadFinalPdf('${a.id}')" style="background:#d97706">
+          📥 ${a.approvedPercent}% хэсгийн PDF татах
+        </button>
       </div>` : '';
 
     const partialReasonHtml = (a.status === 'partial' || a.status === 'remaining' || a.partialReason) && a.partialReason ? `
@@ -1878,6 +2543,18 @@ function detH(idx) {
         ebrStatusBadge = `<div class="notary-status-pill notary-unpaid">📄 ✗ Е-баримт төлөгдөөгүй · ${EBR_DEDUCT_PERCENT}% хасагдсан (-₮${fmtN(a.ebrDeductedAmount)})</div>`;
     }
 
+    // ★ Гэрээний үлдэгдэл badge (detail дээр)
+    let contractBalanceHtml = '';
+    const matchedC = findContract(a.contract);
+    if (matchedC) {
+        const total = parseInt(matchedC.totalAmount || 0);
+        const used = parseInt(matchedC.usedAmount || 0);
+        const bal = total - used;
+        contractBalanceHtml = `<div class="notary-status-pill ${bal <= 0 ? 'notary-unpaid' : 'notary-paid'}">
+            📋 Гэрээ "${esc(matchedC.contractNo)}" · Үлдэгдэл ₮${fmtN(bal)} / ₮${fmtN(total)}
+        </div>`;
+    }
+
     let actionBtns = '';
     if (canApprove && canPartial && !needsNotaryCheck) {
         actionBtns = `<div class="abtns">
@@ -1893,6 +2570,10 @@ function detH(idx) {
     } else if (canComplete) {
         actionBtns = `<div class="abtns">
             <button class="bcomplete" onclick="openRemainingModal('${a.id}')">+ Гүйцээх ажил илгээх</button>
+        </div>`;
+    } else if (canResubmit) {
+        actionBtns = `<div class="abtns">
+            <button class="bcomplete" onclick="openResubmitModal('${a.id}')">✎ Засаад дахин илгээх</button>
         </div>`;
     }
 
@@ -1947,6 +2628,7 @@ function detH(idx) {
       ${a.pdfCount ? `<div class="row"><span class="rl">Ажлын баримт</span><span class="rv">${a.pdfCount} PDF файл</span></div>` : ''}
       ${a.ebrPdfCount ? `<div class="row"><span class="rl">Е-баримт</span><span class="rv">${a.ebrPdfCount} PDF файл</span></div>` : ''}
     </div>
+    ${contractBalanceHtml}
     ${ebrStatusBadge}
     ${partialReasonHtml}
     ${notaryPreviewHtml}
@@ -2061,7 +2743,6 @@ function rA() {
     if (isViewer(role)) { el.innerHTML = '<div class="empty">Хяналт хэрэглэгч батлах эрхгүй</div>'; return; }
 
     let list;
-    // ★ FIX #4: Нягтлан pending/partial && step===3 болгох
     if (role === 'Нягтлан') {
         list = acts.filter(a =>
             (a.status === 'pending' || a.status === 'partial') &&
@@ -2200,7 +2881,7 @@ function renderListBodyHtml() {
         engineer: 'Инженерийн баталгаажуулалт',
         director: 'Захирлын батламж',
         accountant: 'Гүйлгээ хийгдэх гэж байгаа',
-        rejected: '8 цагийн дотор автоматаар устана',
+        rejected: '48 цагийн дотор автоматаар устана',
     };
 
     function matchSearch(a) {
@@ -2351,6 +3032,9 @@ function rD() {
     const doneAmt = done.reduce((s, a) => s + parseInt(a.approvedAmount || a.amount || 0), 0);
     e('dTotalAmt').textContent = fmtM(totalAmt);
     e('dDoneAmt').textContent = fmtM(doneAmt);
+
+    // ★ Гэрээний үлдэгдэл хэсгийг render
+    renderContractBalances();
 
     if (typeof Chart === 'undefined') return;
 

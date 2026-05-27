@@ -26,7 +26,7 @@ exports.deleteRejectedActs = functions.scheduler.onSchedule(
       const rejectedAt = data.rejectedAt;
       if (!rejectedAt) return;
       const rejectedMs = typeof rejectedAt.toMillis === "function"
-        ? rejectedAt.toMillis()
+        ? rejectedAt.toMillis() 
         : rejectedAt;
       if (now - rejectedMs > EIGHT_HOURS) {
         batch.delete(doc.ref);

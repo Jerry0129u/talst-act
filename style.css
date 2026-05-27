@@ -4342,3 +4342,212 @@ textarea {
     vertical-align: middle;
 }
 
+/* ================================================================
+   ★ ГЭРЭЭ — Contract balance UI
+   ================================================================ */
+
+/* Илгээх формын доорх үлдэгдэл мэдээлэл */
+.contract-info-box {
+    margin: 8px 0 6px;
+    padding: 13px 15px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border-default);
+    background: var(--bg-elevated);
+    backdrop-filter: blur(10px);
+    font-size: 12px;
+    animation: cardFadeIn 0.4s var(--ease-smooth);
+}
+
+.contract-info-box.ci-ok {
+    border-color: rgba(0, 217, 163, 0.3);
+    background: linear-gradient(135deg, rgba(0, 217, 163, 0.08), rgba(0, 217, 163, 0.02));
+}
+.contract-info-box.ci-warn {
+    border-color: rgba(255, 181, 71, 0.4);
+    background: linear-gradient(135deg, rgba(255, 181, 71, 0.1), rgba(245, 158, 11, 0.03));
+}
+.contract-info-box.ci-empty {
+    border-color: rgba(255, 87, 87, 0.4);
+    background: linear-gradient(135deg, rgba(255, 87, 87, 0.1), rgba(220, 38, 38, 0.03));
+}
+.contract-info-box.ci-unknown {
+    border-color: var(--border-default);
+    color: var(--text-secondary);
+}
+
+.ci-company {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.ci-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    color: var(--text-secondary);
+}
+.ci-row strong {
+    color: var(--text-primary);
+    font-feature-settings: 'tnum';
+}
+.ci-balance {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-subtle);
+}
+.ci-balance strong {
+    font-size: 15px;
+    color: var(--accent-success-light);
+}
+.contract-info-box.ci-empty .ci-balance strong { color: #fca5a5; }
+.contract-info-box.ci-warn .ci-balance strong { color: #fcd34d; }
+
+.ci-bar {
+    height: 5px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    margin: 6px 0;
+}
+.ci-bar-fill {
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, var(--brand), var(--accent-success));
+    transition: width 0.6s var(--ease-smooth);
+}
+.ci-alert {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fca5a5;
+}
+
+/* Гэрээний картууд (Гэрээ таб) */
+.contract-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+    padding: 16px 18px;
+    margin-bottom: 11px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s var(--ease-smooth);
+    animation: cardFadeIn 0.5s var(--ease-smooth);
+}
+.contract-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+.cc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.cc-no {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+.cc-company {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+}
+.cc-balance { text-align: right; flex-shrink: 0; }
+.cc-balance-label {
+    font-size: 9px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+.cc-balance-val {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--accent-success-light);
+    font-feature-settings: 'tnum';
+    letter-spacing: -0.02em;
+    margin-top: 2px;
+}
+.cc-balance.cc-empty .cc-balance-val { color: #fca5a5; }
+
+.cc-bar {
+    height: 6px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    margin-bottom: 9px;
+}
+.cc-bar-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.8s var(--ease-smooth);
+    box-shadow: 0 0 8px currentColor;
+}
+.cc-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    font-feature-settings: 'tnum';
+}
+
+/* Дашбордын гэрээний мөрүүд */
+.dc-contract-row {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.dc-contract-row:last-child { border-bottom: none; }
+.dc-contract-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 7px;
+}
+.dc-contract-no {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dc-contract-bal {
+    font-size: 13px;
+    font-weight: 700;
+    font-feature-settings: 'tnum';
+    flex-shrink: 0;
+}
+.dc-contract-bar {
+    height: 5px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+.dc-contract-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.8s var(--ease-smooth);
+}
+.dc-contract-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-feature-settings: 'tnum';
+}
+
+/* Light theme */
+[data-theme="light"] .contract-info-box { background: var(--bg-elevated); }
+[data-theme="light"] .ci-balance strong { color: #047857; }
+[data-theme="light"] .cc-balance-val { color: #047857; }
+[data-theme="light"] .dc-contract-bal { color: #047857 !important; }
