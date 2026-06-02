@@ -21,48 +21,56 @@ const EJS_TPL = 'template_k05csyl';
 emailjs.init('Bck-y_wlCHwjWp7pA');
 
 const CHAIN = [
-    { name: 'Координатор', email: 'zolzaya@talstgroup.mn' },
-    { name: 'Инженер', email: 'barsbat@talstgroup.mn' },
-    { name: 'Захирал', email: 'zorigoo@talstgroup.mn' },
-    { name: 'Нягтлан', email: 'bayarmaa@talstgroup.mn' },
+    { name: 'Координатор',        email: 'zolzaya@talstgroup.mn' },
+    { name: 'Б.Инженер',          email: 'dalaitseren@talstgroup.mn' },
+    { name: 'Инженер',            email: 'barsbat@talstgroup.mn' },
+    { name: 'Захирал',            email: 'zorigoo@talstgroup.mn' },
+    { name: 'Нягтлан',            email: 'bayarmaa@talstgroup.mn' },
 ];
 
 const ROLES = {
-    'zolzaya@talstgroup.mn': 'Координатор',
-    'barsbat@talstgroup.mn': 'Инженер',
-    'zorigoo@talstgroup.mn': 'Захирал',
-    'bayarmaa@talstgroup.mn': 'Нягтлан',
-    'ulziisaikhan@talstgroup.mn': 'CEO',
-    'narankhuu@talstgroup.mn': 'CFO',
+    'zolzaya@talstgroup.mn':     'Координатор',
+    'dalaitseren@talstgroup.mn': 'Б.Инженер',
+    'barsbat@talstgroup.mn':     'Инженер',
+    'zorigoo@talstgroup.mn':     'Захирал',
+    'bayarmaa@talstgroup.mn':    'Нягтлан',
+    'ulziisaikhan@talstgroup.mn':'CEO',
+    'narankhuu@talstgroup.mn':   'CFO',
 };
 
 const VIEWER_ROLES = ['CEO', 'CFO'];
 function isViewer(r) { return VIEWER_ROLES.includes(r); }
 
 const ROLE_COLORS = {
-    'Координатор': '#e74c3c', 'Инженер': '#3498db',
-    'Захирал': '#8e44ad', 'Нягтлан': '#27ae60', 'Гүйцэтгэгч': '#e67e22',
-    'CEO': '#0f172a', 'CFO': '#FF66CC',
+    'Координатор':       '#e74c3c',
+    'Б.Инженер': '#00c3af',
+    'Инженер':           '#3498db',
+    'Захирал':           '#8e44ad',
+    'Нягтлан':           '#27ae60',
+    'Гүйцэтгэгч':        '#e67e22',
+    'CEO':               '#0f172a',
+    'CFO':               '#FF66CC',
 };
-
 const ROLE_AVATAR_BG = {
-    'Координатор': 'linear-gradient(135deg, #ef4444, #dc2626)',
-    'Инженер':     'linear-gradient(135deg, #3b82f6, #2563eb)',
-    'Захирал':     'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-    'Нягтлан':     'linear-gradient(135deg, #10b981, #059669)',
-    'Гүйцэтгэгч':  'linear-gradient(135deg, #f59e0b, #d97706)',
-    'CEO':         'linear-gradient(135deg, #1e293b, #0f172a)',
-    'CFO':         'linear-gradient(135deg, #334155, #1e293b)',
+    'Координатор':       'linear-gradient(135deg, #ef4444, #dc2626)',
+    'Б.Инженер':         'linear-gradient(135deg, #f59e0b, #d97706)',
+    'Инженер':           'linear-gradient(135deg, #3b82f6, #2563eb)',
+    'Захирал':           'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+    'Нягтлан':           'linear-gradient(135deg, #10b981, #059669)',
+    'Гүйцэтгэгч':        'linear-gradient(135deg, #f59e0b, #d97706)',
+    'CEO':               'linear-gradient(135deg, #1e293b, #0f172a)',
+    'CFO':               'linear-gradient(135deg, #334155, #1e293b)',
 };
 
-const RSTEP = { 'Координатор': 0, 'Инженер': 1, 'Захирал': 2, 'Нягтлан': 3 };
-const SN = ['Координатор', 'Инженер', 'Захирал', 'Нягтлан'];
+const RSTEP = { 'Координатор': 0, 'Б.Инженер': 1, 'Инженер': 2, 'Захирал': 3, 'Нягтлан': 4 };
+const SN = ['Координатор', 'Б.Инженер', 'Инженер', 'Захирал', 'Нягтлан'];
 const SE = [
     'zolzaya@talstgroup.mn',
+    'dalaitseren@talstgroup.mn',
     'barsbat@talstgroup.mn',
     'zorigoo@talstgroup.mn',
-    'bayarmaa@talstgroup.mn'];
-
+    'bayarmaa@talstgroup.mn',
+];
 const EIGHT_HOURS = 48 * 60 * 60 * 1000; // 48 цаг
 
 // ★★★ Е-баримтын тогтмол — 10% хасалт ★★★
@@ -486,6 +494,7 @@ function sendPartialMail(act, approvedPct, approvedAmt, remainingAmt, reason, co
 
 const ROLE_AVATAR_ICONS = {
     'Координатор': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M3 21v-2a7 7 0 0 1 14 0v2"></path></svg>',
+    'Б.Инженер': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
     'Инженер': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
     'Захирал': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-3-3"></path><path d="M19 14V6"></path></svg>',
     'Нягтлан': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
@@ -519,6 +528,7 @@ onAuthStateChanged(auth, u => {
         e('uav').style.color = '#fff';
         const SHORT_NAMES = {
             'unumunkh@talstgroup.mn': 'Б.Өнөмөнх',
+            'dalaitseren@talstgroup.mn': 'З.Далайцэрэн',
             'unursaikhan@talstgroup.mn': 'Инженер',
             'enkhtuul@talstgroup.mn': 'Захирал',
             'naranzul@talstgroup.mn': 'Нягтлан',
@@ -1078,11 +1088,11 @@ function openEbrModal(docId) {
     const a = acts.find(x => x.id === docId);
     if (!a) return;
     if (role !== 'Нягтлан') { toast('Зөвхөн Нягтлан е-баримт шалгах эрхтэй', 'err'); return; }
-    if ((a.step || 0) !== 3) { toast('Зөвхөн Нягтлангийн алхамд боломжтой', 'err'); return; }
+    if ((a.step || 0) !== 4) { toast('Зөвхөн Нягтлангийн алхамд боломжтой', 'err'); return; }
     if (a.status !== 'pending' && a.status !== 'partial') { toast('Энэ актыг шалгах боломжгүй', 'err'); return; }
     if (a.ebrStatus) { toast('Е-баримт аль хэдийн шалгагдсан', 'err'); return; }
 
-    if (a.parentDocId) {
+    if (a.parentDocId) {const needsNotaryCheck = (a.status === 'pending' || a.status === 'partial');
         const parentAct = acts.find(x => x.id === a.parentDocId);
         if (parentAct && parentAct.ebrStatus === 'unpaid_applied_partial') {
             autoMarkEbrHandledForRemaining(docId, a, parentAct);
@@ -1313,7 +1323,7 @@ async function approve(docId, ebrAlreadyChecked) {
     if (!a || (a.status !== 'pending' && a.status !== 'partial')) { toast('Батлах боломжгүй!', 'err'); return; }
     if (RSTEP[role] !== a.step) { toast('Та энэ актыг батлах эрхгүй!', 'err'); return; }
 
-    if (role === 'Нягтлан' && (a.step || 0) === 3 && !a.ebrStatus && !ebrAlreadyChecked) {
+    if (role === 'Нягтлан' && (a.step || 0) === 4 && !a.ebrStatus && !ebrAlreadyChecked) {
         toast('Эхлээд "Е-баримт шалгах" товч дээр дарна уу!', 'err');
         return;
     }
@@ -1330,7 +1340,7 @@ async function approve(docId, ebrAlreadyChecked) {
         time: ts(), hash: gh()
     }];
     const ns = (a.step || 0) + 1;
-    const finishedAllSteps = ns >= 4;
+    const finishedAllSteps = ns >= 5;
     const upd = { step: ns, evs: newEvs };
     let finalEvs = newEvs;
 
@@ -2422,12 +2432,12 @@ function detH(idx) {
 
     const needsNotaryCheck = (a.status === 'pending' || a.status === 'partial')
         && role === 'Нягтлан'
-        && step === 3
+        && step === 4
         && !a.ebrStatus;
 
     const showEbrInlineReadonly = a.ebrPdfs && a.ebrPdfs.length
         && (role === 'Координатор' || role === 'Инженер' || role === 'Захирал')
-        && (a.step || 0) < 3;
+        && (a.step || 0) < 4;
 
     const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : a.dateFrom || a.dateTo || '—';
 
@@ -2752,6 +2762,11 @@ function rA() {
         list = acts.filter(a =>
             (a.status === 'pending' && (a.step || 0) === 0)
         );
+    } else if (role === 'Б.Инженер') {
+        list = acts.filter(a =>
+            (a.status === 'pending' || a.status === 'partial') &&
+            (a.step || 0) === 1
+        );
     } else {
         list = acts.filter(a =>
             (a.status === 'pending' || a.status === 'partial') &&
@@ -2774,6 +2789,7 @@ const ICONS = {
     close: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
     arrowLeft: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>',
     coordinator: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M3 21v-2a7 7 0 0 1 14 0v2"></path><circle cx="18" cy="6" r="2.5" fill="currentColor" stroke="none" opacity="0.4"></circle></svg>',
+    barilga: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
     engineer: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
     director: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-3-3"></path><path d="M19 14V6"></path></svg>',
     accountant: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
@@ -2862,26 +2878,29 @@ function renderListBodyHtml() {
 
     const stepLists = {
         coordinator: actsAtStep(0),
-        engineer: actsAtStep(1),
-        director: actsAtStep(2),
-        accountant: actsAtStep(3),
-        rejected: actsRejected(),
+        barilga:     actsAtStep(1),   // ★ НЭМЭХ
+        engineer:    actsAtStep(2),
+        director:    actsAtStep(3),
+        accountant:  actsAtStep(4),
+        rejected:    actsRejected(),
     };
 
     const stepLabels = {
         coordinator: 'Координатор',
-        engineer: 'Инженер',
-        director: 'Захирал',
-        accountant: 'Нягтлан',
-        rejected: 'Буцаагдсан',
+        barilga:     'Б.Инженер',
+        engineer:    'Инженер',
+        director:    'Захирал',
+        accountant:  'Нягтлан',
+        rejected:    'Буцаагдсан',
     };
 
     const stepDescriptions = {
         coordinator: 'Анхны шалгалт хийгдэж байгаа',
-        engineer: 'Инженерийн баталгаажуулалт',
-        director: 'Захирлын батламж',
-        accountant: 'Гүйлгээ хийгдэх гэж байгаа',
-        rejected: '48 цагийн дотор автоматаар устана',
+        barilga:     'Б.Инженерийн баталгаажуулалт',
+        engineer:    'Инженерийн баталгаажуулалт',
+        director:    'Захирлын батламж',
+        accountant:  'Гүйлгээ хийгдэх гэж байгаа',
+        rejected:    '48 цагийн дотор автоматаар устана',
     };
 
     function matchSearch(a) {
@@ -2912,13 +2931,14 @@ function renderListBodyHtml() {
     }
 
     if (!listFilter) {
-        const cards = ['coordinator', 'engineer', 'director', 'accountant', 'rejected'];
+        const cards = ['coordinator', 'barilga', 'engineer', 'director', 'accountant', 'rejected'];
         const colors = {
-            coordinator: { bg: 'rgba(239, 68, 68, 0.06)', border: 'rgba(239, 68, 68, 0.2)', accent: '#dc2626' },
-            engineer:    { bg: 'rgba(59, 130, 246, 0.06)', border: 'rgba(59, 130, 246, 0.2)', accent: '#2563eb' },
-            director:    { bg: 'rgba(139, 92, 246, 0.06)', border: 'rgba(139, 92, 246, 0.2)', accent: '#7c3aed' },
-            accountant:  { bg: 'rgba(16, 185, 129, 0.06)', border: 'rgba(16, 185, 129, 0.2)', accent: '#059669' },
-            rejected:    { bg: 'rgba(220, 38, 38, 0.08)', border: 'rgba(220, 38, 38, 0.3)', accent: '#b91c1c' },
+            coordinator: { bg: 'rgba(239, 68, 68, 0.06)',   border: 'rgba(239, 68, 68, 0.2)',   accent: '#dc2626' },
+            barilga:     { bg: 'rgba(245, 158, 11, 0.06)',  border: 'rgba(245, 158, 11, 0.2)',  accent: '#d97706' },  // ★ НЭМЭХ
+            engineer:    { bg: 'rgba(59, 130, 246, 0.06)',  border: 'rgba(59, 130, 246, 0.2)',  accent: '#2563eb' },
+            director:    { bg: 'rgba(139, 92, 246, 0.06)',  border: 'rgba(139, 92, 246, 0.2)',  accent: '#7c3aed' },
+            accountant:  { bg: 'rgba(16, 185, 129, 0.06)',  border: 'rgba(16, 185, 129, 0.2)',  accent: '#059669' },
+            rejected:    { bg: 'rgba(220, 38, 38, 0.08)',   border: 'rgba(220, 38, 38, 0.3)',   accent: '#b91c1c' },
         };
 
         return `<div class="role-cards">
@@ -3009,11 +3029,11 @@ function rD() {
     e('s2sub').textContent = done.length + 'ш бүрэн батлагдсан';
 
     const allActiveActs = [...pending, ...partial];
-    const steps = [0, 1, 2, 3].map(i => allActiveActs.filter(a => (a.step || 0) === i).length);
+    const steps = [0, 1, 2, 3, 4].map(i => allActiveActs.filter(a => (a.step || 0) === i).length);
     const partialCount = partial.length;
     const maxS = Math.max(...steps, done.length, partialCount, remainingActs.length, 1);
 
-    [0, 1, 2, 3].forEach(i => {
+    [0, 1, 2, 3, 4].forEach(i => {
         if (e('dBar' + i)) {
             e('dBar' + i).style.width = Math.round(steps[i] / maxS * 100) + '%';
             e('dV' + i).textContent = steps[i];
