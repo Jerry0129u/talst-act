@@ -1,10 +1,5 @@
 /* ================================================================
-   ★ DESKTOP / LAPTOP RESPONSIVE LAYER — v4
-   ────────────────────────────────────────────────────────────────
-   Шинэ засвар:
-   ✓ Form card баруун талдаа тулна (full-width)
-   ✓ Topbar sticky (доош scroll-доход дээд талд хадгалагдана)
-   ✓ tb4 (Гэрээ) таб нэмэгдсэн
+   TALST ACT — RESPONSIVE v8
    ================================================================ */
 
 
@@ -32,46 +27,26 @@
     .uname { max-width: 180px; font-size: 13px; }
     .urole { font-size: 11px; }
 
-    .tabs {
-        padding: 6px;
-        margin-bottom: 26px;
-    }
-    .tab {
-        padding: 12px 6px;
-        font-size: 13px;
-    }
+    .tabs { padding: 6px; margin-bottom: 26px; }
+    .tab { padding: 12px 6px; font-size: 13px; }
 
-    .form-card {
-        padding: 32px 36px;
-        max-width: none;       /* ★ full-width */
-        margin: 0;
-    }
-
+    .form-card { padding: 32px 36px; max-width: none; margin: 0; }
     .ftitle { font-size: 20px; margin-bottom: 26px; }
     .fl { font-size: 12px; margin: 20px 0 9px; }
 
     input[type=text],
     input[type=number],
     input[type=date],
-    textarea {
-        font-size: 14px;
-        padding: 13px 16px;
-    }
-
+    textarea { font-size: 14px; padding: 13px 16px; }
     textarea { height: 96px; }
 
-    /* Жагсаалт — 2 багана */
-    #al,
-    #listBody,
-    #contractList {
+    #al, #listBody, #contractList {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
     }
 
-    #al > .seclbl,
-    #al > .empty,
-    #al > .loading,
+    #al > .seclbl, #al > .empty, #al > .loading,
     #listBody > .list-header,
     #listBody > .in-progress-label,
     #listBody > .done-section-label,
@@ -81,34 +56,38 @@
     #listBody > .search-result-hint,
     #listBody > .role-detail-header,
     #listBody > .role-cards,
-    #listBody > .empty,
-    #listBody > .loading,
+    #listBody > .empty, #listBody > .loading,
     #listBody > .show-more-btn,
-    #contractList > .empty,
-    #contractList > .loading {
+    #contractList > .empty, #contractList > .loading {
         grid-column: 1 / -1;
     }
 
     .role-cards {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
     }
+
+    .role-card {
+        padding: 14px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .role-card-title { font-size: 12px; white-space: normal; word-break: keep-all; line-height: 1.35; }
+    .role-card-desc { font-size: 10px; white-space: normal; word-break: keep-all; line-height: 1.4; margin-top: 3px; }
+    .role-card-count { font-size: 22px; flex-shrink: 0; margin-top: 4px; }
 
     .metric-grid { gap: 14px; }
     .metric-card { padding: 18px; }
     .metric-val { font-size: 32px; }
-    .metric-label { font-size: 11px; }
-
     .chart-card { padding: 22px; }
     .chart-card > div[style*="height:160px"] { height: 200px !important; }
-
-    #pd { max-width: none; margin: 0; }
 
     .modal-card { max-width: 540px; }
     .nm-notary-preview { height: 360px; }
     .det-notary-iframe { height: 400px; }
-
     .pdf-name { max-width: 320px; }
 }
 
@@ -119,25 +98,17 @@
 
 @media (min-width: 1025px) {
 
-    /* Login хэвээр төвлөрсөн */
-    .login-card {
-        max-width: 520px;
-        padding: 64px 56px;
-    }
+    body { overflow-y: scroll; }
 
-    .login-card .logo {
-        height: 64px !important;
-    }
-
+    .login-card { max-width: 520px; padding: 64px 56px; }
+    .login-card .logo { height: 64px !important; }
     .login-sub { font-size: 14px; }
     .google-btn { padding: 17px 22px; font-size: 15px; }
 
-    /* ============================================
-       ★ APP — Grid layout (sidebar + main)
-       ============================================ */
+    /* APP grid */
     .app {
         max-width: 1280px !important;
-        padding: 0 36px 80px !important;     /* ★ дээд padding 0 — topbar өөрөө padding-тай */
+        padding: 0 36px 80px !important;
         display: grid !important;
         grid-template-columns: 240px 1fr !important;
         grid-template-rows: auto auto 1fr !important;
@@ -146,45 +117,58 @@
         align-items: start !important;
     }
 
-    /* ============================================
-       ★ TOPBAR — STICKY дээд талд
-       ============================================ */
+    /* TOPBAR sticky */
     .topbar {
         grid-column: 1 / -1 !important;
         grid-row: 1 !important;
         padding: 14px 24px !important;
-        margin: 0 !important;
-        /* sticky тогтмол */
+        margin: 20px 0 0 0 !important;
         position: sticky !important;
         top: 0 !important;
         z-index: 100 !important;
-        /* доороо нь толиор гадарга үлдээх */
         backdrop-filter: blur(28px) saturate(180%) !important;
         -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-        /* sticky-д сайхан зайтай харагдахаар дээд талд padding */
-        margin-top: 20px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-wrap: nowrap !important;
+        gap: 0 !important;
+        border-radius: var(--r-lg) !important;
     }
 
-    /* Toast — full width */
+    .user-pill {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 9px !important;
+    }
+
+    .uname { white-space: nowrap; max-width: 160px; font-size: 13px; }
+    .urole { font-size: 11px; }
+    .uav { width: 32px; height: 32px; }
+    .uav svg { width: 16px; height: 16px; }
+
+    /* Toast */
     #toast {
         grid-column: 1 / -1 !important;
         grid-row: 2 !important;
         margin-bottom: 0;
     }
 
-    /* ============================================
-       ★ Sidebar (Tabs)
-       ============================================ */
+    /* SIDEBAR sticky */
     .tabs {
         grid-column: 1 !important;
         grid-row: 3 !important;
         flex-direction: column !important;
-        gap: 4px;
-        padding: 12px;
-        margin-bottom: 0 !important;
-        position: sticky;
-        top: 90px;          /* ★ topbar-н өндөртэй тэнцэх */
-        align-self: start;
+        gap: 4px !important;
+        padding: 12px !important;
+        margin: 0 !important;
+        position: sticky !important;
+        top: 80px !important;
+        align-self: start !important;
+        max-height: calc(100vh - 110px) !important;
+        overflow-y: auto !important;
     }
 
     .tab {
@@ -210,42 +194,20 @@
         flex-shrink: 0;
         transition: opacity 0.3s;
     }
+
     .tab.on::before { opacity: 1; }
 
-    /* DARK theme icons */
-    #tb0::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 2L11 13'/><path d='M22 2l-7 20-4-9-9-4 20-7z'/></svg>");
-    }
-    #tb1::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
-    }
-    #tb2::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg>");
-    }
-    /* ★ tb4 — Гэрээ (документ дүрс) */
-    #tb4::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><line x1='10' y1='9' x2='8' y2='9'/></svg>");
-    }
-    #tb3::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>");
-    }
+    #tb0::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 2L11 13'/><path d='M22 2l-7 20-4-9-9-4 20-7z'/></svg>"); }
+    #tb1::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); }
+    #tb2::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg>"); }
+    #tb4::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><line x1='10' y1='9' x2='8' y2='9'/></svg>"); }
+    #tb3::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>"); }
 
-    /* LIGHT theme icons */
-    [data-theme="light"] #tb0::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 2L11 13'/><path d='M22 2l-7 20-4-9-9-4 20-7z'/></svg>");
-    }
-    [data-theme="light"] #tb1::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
-    }
-    [data-theme="light"] #tb2::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg>");
-    }
-    [data-theme="light"] #tb4::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><line x1='10' y1='9' x2='8' y2='9'/></svg>");
-    }
-    [data-theme="light"] #tb3::before {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>");
-    }
+    [data-theme="light"] #tb0::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 2L11 13'/><path d='M22 2l-7 20-4-9-9-4 20-7z'/></svg>"); }
+    [data-theme="light"] #tb1::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); }
+    [data-theme="light"] #tb2::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg>"); }
+    [data-theme="light"] #tb4::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><line x1='10' y1='9' x2='8' y2='9'/></svg>"); }
+    [data-theme="light"] #tb3::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>"); }
 
     .tab.on {
         background: linear-gradient(135deg, rgba(99, 91, 255, 0.22), rgba(167, 139, 250, 0.12));
@@ -253,53 +215,35 @@
         box-shadow: 0 6px 18px rgba(99, 91, 255, 0.18);
     }
 
-    /* ============================================
-       ★ MAIN CONTENT
-       ============================================ */
+    /* MAIN CONTENT */
     #p0, #p1, #p2, #p3, #p4, #pd {
         grid-column: 2 !important;
         grid-row: 3 !important;
         min-width: 0;
-        width: 100%;        /* ★ баруун талдаа бүтэн тулна */
-    }
-
-    /* ★★★ FORM CARD — full-width баруун талдаа тулна */
-    .form-card {
-        padding: 36px 40px;
-        max-width: none !important;     /* ★ хязгаар арилгана */
         width: 100%;
-        margin: 0;
+        padding-bottom: 40px;
     }
 
+    /* FORM */
+    .form-card { padding: 36px 40px; max-width: none !important; width: 100%; margin: 0; }
     .ftitle { font-size: 22px; margin-bottom: 26px; }
     .date-row { gap: 12px; }
-
     .fl { font-size: 11px; margin: 18px 0 8px; }
 
     input[type=text],
     input[type=number],
     input[type=date],
-    textarea {
-        font-size: 14px;
-        padding: 13px 16px;
-    }
-
+    textarea { font-size: 14px; padding: 13px 16px; }
     textarea { height: 92px; }
 
-    /* ============================================
-       ★ ЖАГСААЛТ — 2 баганат grid
-       ============================================ */
-    #al,
-    #listBody,
-    #contractList {
+    /* LIST */
+    #al, #listBody, #contractList {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 14px;
     }
 
-    #al > .seclbl,
-    #al > .empty,
-    #al > .loading,
+    #al > .seclbl, #al > .empty, #al > .loading,
     #listBody > .list-header,
     #listBody > .in-progress-label,
     #listBody > .done-section-label,
@@ -308,40 +252,57 @@
     #listBody > .partial-done-section-label,
     #listBody > .search-result-hint,
     #listBody > .role-detail-header,
-    #listBody > .empty,
-    #listBody > .loading,
+    #listBody > .empty, #listBody > .loading,
     #listBody > .show-more-btn,
-    #contractList > .empty,
-    #contractList > .loading {
+    #contractList > .empty, #contractList > .loading {
         grid-column: 1 / -1;
     }
 
+    /* ROLE CARDS */
     #listBody > .role-cards {
         grid-column: 1 / -1;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
     }
 
-    .role-card { padding: 18px 20px; }
-    .role-card-icon { width: 44px; height: 44px; }
-    .role-card-title { font-size: 14px; }
-    .role-card-desc { font-size: 11px; }
-    .role-card-count { font-size: 28px; }
-
-    /* ============================================
-       ★ DASHBOARD
-       ============================================ */
-    .metric-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        margin-bottom: 18px;
+    .role-card {
+        padding: 14px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        min-height: 100px;
     }
 
-    .metric-card {
-        padding: 22px;
-        border-radius: 14px;
+    .role-card-icon { width: 36px; height: 36px; flex-shrink: 0; }
+
+    .role-card-body { flex: 1; min-width: 0; width: 100%; overflow: visible; }
+
+    .role-card-title {
+        font-size: 12px !important;
+        font-weight: 700;
+        white-space: normal !important;
+        word-break: keep-all !important;
+        line-height: 1.35;
+        margin-bottom: 4px;
     }
+
+    .role-card-desc {
+        font-size: 10px !important;
+        white-space: normal !important;
+        word-break: keep-all !important;
+        line-height: 1.45;
+    }
+
+    .role-card-count {
+        font-size: 26px !important;
+        flex-shrink: 0;
+        margin-top: 6px;
+    }
+
+    /* DASHBOARD */
+    .metric-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 18px; }
+    .metric-card { padding: 22px; border-radius: 14px; }
     .metric-label { font-size: 11px; }
     .metric-val { font-size: 34px; }
 
@@ -355,11 +316,8 @@
         gap: 16px !important;
     }
 
-    /* ============================================
-       ★ DETAIL PAGE — full-width
-       ============================================ */
+    /* DETAIL */
     #pd { max-width: none !important; width: 100%; }
-
     .card { border-radius: 16px; }
     .ch { padding: 20px 24px; }
     .ctitle { font-size: 16px; }
@@ -380,34 +338,29 @@
     .pdf-name, .det-pdf-name { max-width: 380px; font-size: 13px; }
     .det-notary-iframe { height: 480px; }
 
+    /* MODAL */
     .modal-card { max-width: 600px; }
     .nm-notary-preview { height: 420px; }
     #notaryModal .modal-card { max-width: 620px; }
 
+    /* BUTTONS */
     .abtns { padding: 16px 22px; gap: 10px; }
-    .bok, .bno, .bpartial-btn, .bnotary-check {
-        padding: 14px 18px;
-        font-size: 14px;
-    }
+    .bok, .bno, .bpartial-btn, .bnotary-check { padding: 14px 18px; font-size: 14px; }
 
-    .li {
-        padding: 16px 18px;
-    }
+    /* LIST ITEMS */
+    .li { padding: 16px 18px; }
     .li-title { font-size: 13px; }
     .li-sub { font-size: 11.5px; }
     .li-top { gap: 12px; }
-    .li-top .badge {
-        max-width: none;
-        font-size: 10px;
-    }
+    .li-top .badge { max-width: none; font-size: 10px; }
 
+    /* THEME */
     .theme-toggle { width: 40px; height: 40px; }
     .theme-toggle svg { width: 18px; height: 18px; }
 
-    .uname { font-size: 13px; max-width: 200px; }
-    .urole { font-size: 11px; }
-    .uav { width: 32px; height: 32px; }
-    .uav svg { width: 16px; height: 16px; }
+    /* MESH */
+    #meshCanvas { opacity: 0.85; }
+    [data-theme="light"] #meshCanvas { opacity: 0.5; }
 }
 
 
@@ -425,28 +378,20 @@
     }
 
     .topbar { padding: 16px 28px !important; }
-    .tabs { padding: 14px; top: 100px; }
+    .tabs { padding: 14px !important; top: 100px !important; }
     .tab { padding: 13px 18px; font-size: 14px; }
 
-    /* Жагсаалт — 3 багана */
-    #al,
-    #listBody,
-    #contractList {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-    }
+    #al, #listBody, #contractList { grid-template-columns: repeat(3, 1fr); gap: 16px; }
 
-    /* Role cards 5 багана */
-    #listBody > .role-cards {
-        grid-template-columns: repeat(5, 1fr);
-    }
+    #listBody > .role-cards { grid-template-columns: repeat(6, 1fr); gap: 14px; }
 
-    .form-card {
-        padding: 44px 52px;
-    }
+    .role-card { padding: 18px 16px !important; min-height: 110px; }
+    .role-card-title { font-size: 13px !important; }
+    .role-card-desc  { font-size: 11px !important; }
+    .role-card-count { font-size: 28px !important; }
 
+    .form-card { padding: 44px 52px; }
     .ftitle { font-size: 24px; }
-
     .metric-grid { gap: 18px; }
     .metric-val { font-size: 38px; }
 
@@ -461,68 +406,36 @@
    ================================================================ */
 
 @media (min-width: 1920px) {
-    .app {
-        max-width: 1600px !important;
-    }
-
-    #al,
-    #listBody,
-    #contractList {
-        grid-template-columns: repeat(3, 1fr);
-    }
+    .app { max-width: 1600px !important; }
+    #al, #listBody, #contractList { grid-template-columns: repeat(3, 1fr); }
+    #listBody > .role-cards { grid-template-columns: repeat(6, 1fr); }
+    .role-card { padding: 20px 18px !important; }
+    .role-card-title { font-size: 14px !important; }
+    .role-card-count { font-size: 30px !important; }
 }
 
 
 /* ================================================================
-   ★ Mesh-canvas том дэлгэц дээр илүү тод
-   ================================================================ */
-
-@media (min-width: 1025px) {
-    #meshCanvas { opacity: 0.85; }
-    [data-theme="light"] #meshCanvas { opacity: 0.5; }
-}
-
-
-/* ================================================================
-   ★ Print
+   PRINT
    ================================================================ */
 
 @media print {
-    #meshCanvas,
-    body::before,
-    body::after,
-    .topbar,
-    .tabs,
-    .theme-toggle,
-    .abtns,
-    .sbtn,
-    .bok, .bno, .bpartial-btn,
-    .modal-overlay {
-        display: none !important;
-    }
+    #meshCanvas, body::before, body::after,
+    .topbar, .tabs, .theme-toggle,
+    .abtns, .sbtn, .bok, .bno, .bpartial-btn,
+    .modal-overlay { display: none !important; }
     body { background: #fff !important; color: #000 !important; }
-    .app {
-        display: block !important;
-        max-width: none !important;
-        padding: 0 !important;
-    }
-    .card, .form-card {
-        box-shadow: none !important;
-        border: 1px solid #ccc !important;
-        page-break-inside: avoid;
-    }
+    .app { display: block !important; max-width: none !important; padding: 0 !important; }
+    .card, .form-card { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
 }
 
 
 /* ================================================================
-   ★ Touch device — hover хаах
+   TOUCH — hover хаах
    ================================================================ */
 
 @media (hover: none) {
-    .li:hover,
-    .card:hover,
+    .li:hover, .card:hover,
     .role-card:hover:not(.empty),
-    .metric-card:hover {
-        transform: none;
-    }
+    .metric-card:hover { transform: none; }
 }

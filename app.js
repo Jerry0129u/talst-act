@@ -29,11 +29,11 @@ const CHAIN = [
 ];
 
 const ROLES = {
-    'zolzaya@talstgroup.mn':     'Координатор',
-    'dalaitseren@talstgroup.mn': 'Б.Инженер',
-    'barsbat@talstgroup.mn':     'Инженер',
-    'zorigoo@talstgroup.mn':     'Захирал',
-    'bayarmaa@talstgroup.mn':    'Нягтлан',
+    'zolzaya@talstgroup.mn':     'Төслийн Координатор',
+    'dalaitseren@talstgroup.mn': 'Барилгийн Инженер',
+    'barsbat@talstgroup.mn':     'Ерөнхий Инженер',
+    'zorigoo@talstgroup.mn':     'Ерөнхий Захирал',
+    'bayarmaa@talstgroup.mn':    'Ерөнхий Нягтлан',
     'ulziisaikhan@talstgroup.mn':'CEO',
     'narankhuu@talstgroup.mn':   'CFO',
 };
@@ -42,28 +42,35 @@ const VIEWER_ROLES = ['CEO', 'CFO'];
 function isViewer(r) { return VIEWER_ROLES.includes(r); }
 
 const ROLE_COLORS = {
-    'Координатор':       '#e74c3c',
-    'Б.Инженер': '#00c3af',
-    'Инженер':           '#3498db',
-    'Захирал':           '#8e44ad',
-    'Нягтлан':           '#27ae60',
-    'Гүйцэтгэгч':        '#e67e22',
-    'CEO':               '#0f172a',
-    'CFO':               '#FF66CC',
-};
-const ROLE_AVATAR_BG = {
-    'Координатор':       'linear-gradient(135deg, #ef4444, #dc2626)',
-    'Б.Инженер':         'linear-gradient(135deg, #f59e0b, #d97706)',
-    'Инженер':           'linear-gradient(135deg, #3b82f6, #2563eb)',
-    'Захирал':           'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-    'Нягтлан':           'linear-gradient(135deg, #10b981, #059669)',
-    'Гүйцэтгэгч':        'linear-gradient(135deg, #f59e0b, #d97706)',
-    'CEO':               'linear-gradient(135deg, #1e293b, #0f172a)',
-    'CFO':               'linear-gradient(135deg, #334155, #1e293b)',
+    'Төслийн Координатор': '#e74c3c',
+    'Барилгийн Инженер':   '#f39c12',
+    'Ерөнхий Инженер':     '#3498db',
+    'Ерөнхий Захирал':     '#8e44ad',
+    'Ерөнхий Нягтлан':     '#27ae60',
+    'Гүйцэтгэгч':          '#e67e22',
+    'CEO':                 '#0f172a',
+    'CFO':                 '#FF66CC',
 };
 
-const RSTEP = { 'Координатор': 0, 'Б.Инженер': 1, 'Инженер': 2, 'Захирал': 3, 'Нягтлан': 4 };
-const SN = ['Координатор', 'Б.Инженер', 'Инженер', 'Захирал', 'Нягтлан'];
+const ROLE_AVATAR_BG = {
+    'Төслийн Координатор': 'linear-gradient(135deg, #ef4444, #dc2626)',
+    'Барилгийн Инженер':   'linear-gradient(135deg, #f59e0b, #d97706)',
+    'Ерөнхий Инженер':     'linear-gradient(135deg, #3b82f6, #2563eb)',
+    'Ерөнхий Захирал':     'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+    'Ерөнхий Нягтлан':     'linear-gradient(135deg, #10b981, #059669)',
+    'Гүйцэтгэгч':          'linear-gradient(135deg, #f59e0b, #d97706)',
+    'CEO':                 'linear-gradient(135deg, #1e293b, #0f172a)',
+    'CFO':                 'linear-gradient(135deg, #334155, #1e293b)',
+};
+
+const RSTEP = {
+    'Төслийн Координатор': 0,
+    'Барилгийн Инженер':   1,
+    'Ерөнхий Инженер':     2,
+    'Ерөнхий Захирал':     3,
+    'Ерөнхий Нягтлан':     4
+};
+const SN = ['Координатор', 'Барилгийн Инженер', 'Ерөнхий Инженер', 'Ерөнхий Захирал', 'Ерөнхий Нягтлан'];
 const SE = [
     'zolzaya@talstgroup.mn',
     'dalaitseren@talstgroup.mn',
@@ -493,11 +500,11 @@ function sendPartialMail(act, approvedPct, approvedAmt, remainingAmt, reason, co
 }
 
 const ROLE_AVATAR_ICONS = {
-    'Координатор': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M3 21v-2a7 7 0 0 1 14 0v2"></path></svg>',
-    'Б.Инженер': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
-    'Инженер': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
-    'Захирал': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-3-3"></path><path d="M19 14V6"></path></svg>',
-    'Нягтлан': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
+    'Төслийн Координатор': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M3 21v-2a7 7 0 0 1 14 0v2"></path><circle cx="18" cy="6" r="2.5" fill="currentColor" stroke="none" opacity="0.4"></circle></svg>',
+    'Барилгийн Инженер': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
+    'Ерөнхий Инженер': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
+    'Ерөнхий Захирал': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 11l-3 3-3-3"></path><path d="M19 14V6"></path></svg>',
+    'Ерөнхий Нягтлан': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
     'Гүйцэтгэгч': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg>',
     'CEO': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zM5 20h14"></path></svg>',
     'CFO': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
@@ -527,11 +534,11 @@ onAuthStateChanged(auth, u => {
         e('uav').style.background = ROLE_AVATAR_BG[role] || 'linear-gradient(135deg, #6b7280, #4b5563)';
         e('uav').style.color = '#fff';
         const SHORT_NAMES = {
-            'unumunkh@talstgroup.mn': 'Б.Өнөмөнх',
+            'zolzaya@talstgroup.mn': 'А.Золзаяа',
             'dalaitseren@talstgroup.mn': 'З.Далайцэрэн',
-            'unursaikhan@talstgroup.mn': 'Инженер',
-            'enkhtuul@talstgroup.mn': 'Захирал',
-            'naranzul@talstgroup.mn': 'Нягтлан',
+            'barsbat@talstgroup.mn': 'Д.Барсбат',
+            'zorigoo@talstgroup.mn': 'Ө.Зоригоо',
+            'bayarmaa@talstgroup.mn': 'Д.Баярмаа',
             'ulziisaikhan@talstgroup.mn': 'CEO',
             'narankhuu@talstgroup.mn': 'CFO',
         };
@@ -906,7 +913,7 @@ function openContract(contractId) {
         const evs = a.evs || [];
         const lastApprove = [...evs].reverse().find(ev =>
             ev.type === 'done' || ev.type === 'merged_done' || ev.type === 'partial_done'
-            || (ev.type === 'approve' && (ev.title || '').includes('Нягтлан')));
+            || (ev.type === 'approve' && (ev.title || '').includes('Ерөнхий Нягтлан')));
         const approveTime = lastApprove ? lastApprove.time : (evs.length ? evs[evs.length - 1].time : '—');
         const dr = a.dateFrom && a.dateTo ? a.dateFrom + ' — ' + a.dateTo : (a.dateFrom || a.dateTo || '—');
         const statusLabel = a.status === 'partial_done'
@@ -1087,7 +1094,8 @@ async function autoMarkEbrHandledForRemaining(docId, a, parentAct) {
 function openEbrModal(docId) {
     const a = acts.find(x => x.id === docId);
     if (!a) return;
-    if (role !== 'Нягтлан') { toast('Зөвхөн Нягтлан е-баримт шалгах эрхтэй', 'err'); return; }
+    if (role !== 'Ерөнхий Нягтлан') { toast('Зөвхөн Нягтлан е-баримт шалгах эрхтэй', 'err'); return; }
+    if (role !== 'Ерөнхий Нягтлан') { toast('Зөвхөн Нягтлан е-баримт шалгах эрхтэй', 'err'); return; }
     if ((a.step || 0) !== 4) { toast('Зөвхөн Нягтлангийн алхамд боломжтой', 'err'); return; }
     if (a.status !== 'pending' && a.status !== 'partial') { toast('Энэ актыг шалгах боломжгүй', 'err'); return; }
     if (a.ebrStatus) { toast('Е-баримт аль хэдийн шалгагдсан', 'err'); return; }
@@ -1323,7 +1331,7 @@ async function approve(docId, ebrAlreadyChecked) {
     if (!a || (a.status !== 'pending' && a.status !== 'partial')) { toast('Батлах боломжгүй!', 'err'); return; }
     if (RSTEP[role] !== a.step) { toast('Та энэ актыг батлах эрхгүй!', 'err'); return; }
 
-    if (role === 'Нягтлан' && (a.step || 0) === 4 && !a.ebrStatus && !ebrAlreadyChecked) {
+    if (role === 'Ерөнхий Нягтлан' && (a.step || 0) === 4 && !a.ebrStatus && !ebrAlreadyChecked) {
         toast('Эхлээд "Е-баримт шалгах" товч дээр дарна уу!', 'err');
         return;
     }
@@ -2753,7 +2761,7 @@ function rA() {
     if (isViewer(role)) { el.innerHTML = '<div class="empty">Хяналт хэрэглэгч батлах эрхгүй</div>'; return; }
 
     let list;
-    if (role === 'Нягтлан') {
+    if (role === 'Ерөнхий Нягтлан') {
         list = acts.filter(a =>
             (a.status === 'pending' || a.status === 'partial') &&
             (a.step || 0) === 3
@@ -2886,20 +2894,20 @@ function renderListBodyHtml() {
     };
 
     const stepLabels = {
-        coordinator: 'Координатор',
-        barilga:     'Б.Инженер',
-        engineer:    'Инженер',
-        director:    'Захирал',
-        accountant:  'Нягтлан',
+        coordinator: 'Төсөлийн Координатор',
+        barilga:     'Барилгийн Инженер',
+        engineer:    'Ерөнхий Инженер',
+        director:    'Ерөнхий Захирал',
+        accountant:  'Ерөнхий Нягтлан',
         rejected:    'Буцаагдсан',
     };
 
     const stepDescriptions = {
-        coordinator: 'Анхны шалгалт хийгдэж байгаа',
-        barilga:     'Б.Инженерийн баталгаажуулалт',
-        engineer:    'Инженерийн баталгаажуулалт',
-        director:    'Захирлын батламж',
-        accountant:  'Гүйлгээ хийгдэх гэж байгаа',
+        coordinator: 'Төслийн координаторын баталгаажуулалт',
+        barilga:     'Барилгийн инженерийн баталгаажуулалт',
+        engineer:    'Ерөнхий инженерийн баталгаажуулалт',
+        director:    'Ерөнхий захирлын батламж',
+        accountant:  'Ерөнхий нягтлангийн баталгаажуулалт',
         rejected:    '48 цагийн дотор автоматаар устана',
     };
 
