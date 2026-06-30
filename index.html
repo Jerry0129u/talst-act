@@ -1,170 +1,265 @@
 <!DOCTYPE html>
 <html lang="mn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Гүйцэтгэлийн Акт — Talst Group</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Гүйцэтгэлийн Акт — Talst Group</title>
 
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="responsive.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="responsive.css">
 
-  <!-- ★ Mobile badge overflow fix -->
-  <style>
-    .li-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
-      width: 100%;
-      min-width: 0;
-    }
-    .li-top > div:first-child {
-      flex: 1 1 auto;
-      min-width: 0;
-      overflow: hidden;
-    }
-    .li-top .badge {
-      flex: 0 0 auto;
-      white-space: nowrap;
-      max-width: 45%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .li-title, .li-sub, .li-id {
-      word-break: break-word;
-      overflow-wrap: break-word;
-    }
-    @media (max-width: 480px) {
-      .li-top .badge {
-        font-size: 10px;
-        padding: 3px 7px;
-        max-width: 42%;
-      }
-    }
-    @media (max-width: 380px) {
-      .li-top .badge {
-        font-size: 9px;
-        max-width: 40%;
-      }
-    }
-
-    /* ★ Гэрээ дэлгэрэнгүй — цэвэр минимал */
-    #contractList.cdt-detail-mode {
-      display: block !important;
-      grid-template-columns: none !important;
-    }
-    .cdt-wrap { max-width: 720px; }
-    .cdt-back {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 13px;
-      cursor: pointer;
-      padding: 6px 0;
-      margin-bottom: 14px;
-      font-weight: 500;
-    }
-    .cdt-back:hover { color: var(--text-primary); }
-
-    .cdt-summary {
-      background: var(--bg-card, rgba(255,255,255,0.04));
-      border: 1px solid var(--border-default, rgba(255,255,255,0.1));
-      border-radius: 16px;
-      padding: 22px 24px;
-      margin-bottom: 24px;
-    }
-    .cdt-sum-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .cdt-sum-no { font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
-    .cdt-sum-company { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
-    .cdt-sum-badge {
-      font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 20px; white-space: nowrap;
-    }
-    .cdt-badge-green { background: rgba(5,150,105,0.12); color: #059669; }
-    .cdt-badge-red { background: rgba(220,38,38,0.12); color: #dc2626; }
-
-    .cdt-sum-rows { margin-bottom: 14px; }
-    .cdt-sum-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 7px 0; font-size: 13px; color: var(--text-secondary);
-    }
-    .cdt-sum-row strong { color: var(--text-primary); font-feature-settings: 'tnum'; font-size: 14px; }
-    .cdt-sum-row.cdt-sum-balance { border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); margin-top: 4px; padding-top: 11px; }
-    .cdt-sum-row.cdt-sum-balance strong { font-size: 17px; }
-    .cdt-ok { color: #059669; }
-
-    .cdt-sum-bar {
-      height: 6px; border-radius: 20px;
-      background: rgba(125,125,125,0.15); overflow: hidden; margin-bottom: 12px;
-    }
-    .cdt-sum-fill { height: 100%; border-radius: 20px; transition: width 0.6s ease; }
-    .cdt-sum-by { font-size: 11px; color: var(--text-tertiary); }
-
-    .cdt-section-label {
-      font-size: 11px; font-weight: 700; color: var(--text-tertiary);
-      text-transform: uppercase; letter-spacing: 0.6px;
-      margin: 0 0 12px 2px;
-    }
-
-    .cdt-act-row {
-      background: var(--bg-card, rgba(255,255,255,0.03));
-      border: 1px solid var(--border-default, rgba(255,255,255,0.08));
-      border-radius: 14px;
-      padding: 16px 18px;
-      margin-bottom: 10px;
-    }
-    .cdt-act-row.cdt-pending { opacity: 0.7; border-style: dashed; }
-    .cdt-act-head {
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 10px; margin-bottom: 8px;
-    }
-    .cdt-act-id { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-    .cdt-act-amt { font-size: 15px; font-weight: 800; color: #dc2626; font-feature-settings: 'tnum'; white-space: nowrap; }
-    .cdt-act-amt.cdt-muted { color: var(--text-tertiary); font-weight: 600; }
-    .cdt-act-work { font-size: 13px; color: var(--text-primary); margin-bottom: 14px; line-height: 1.45; }
-
-    .cdt-act-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px 18px;
-    }
-    .cdt-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-    .cdt-k { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
-    .cdt-v { font-size: 12.5px; color: var(--text-primary); font-weight: 500; }
-    .cdt-v.cdt-ok { color: #059669; font-weight: 600; }
-
-    .cdt-empty { padding: 28px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
-
-    @media (max-width: 560px) {
-      .cdt-act-grid { grid-template-columns: 1fr; gap: 10px; }
-    }
-
-    [data-theme="light"] .cdt-summary,
-    [data-theme="light"] .cdt-act-row { background: #f8fafc; border-color: #e2e8f0; }
-  </style>
-
-
-
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-  <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
-
-  <script>
-    (function() {
-      try {
-        var saved = localStorage.getItem('talst-theme');
-        if (saved === 'light' || saved === 'dark') {
-          document.documentElement.setAttribute('data-theme', saved);
+    <!-- ★ Mobile badge overflow fix -->
+    <style>
+        .li-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+            min-width: 0;
         }
-      } catch(e) {}
-    })();
-  </script>
+        .li-top > div:first-child {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .li-top .badge {
+            flex: 0 0 auto;
+            white-space: nowrap;
+            max-width: 45%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .li-title, .li-sub, .li-id {
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        @media (max-width: 480px) {
+            .li-top .badge {
+                font-size: 10px;
+                padding: 3px 7px;
+                max-width: 42%;
+            }
+        }
+        @media (max-width: 380px) {
+            .li-top .badge {
+                font-size: 9px;
+                max-width: 40%;
+            }
+        }
+
+        /* ★ Гэрээ дэлгэрэнгүй — цэвэр минимал */
+        #contractList {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #contractList.cdt-detail-mode {
+            display: block !important;
+        }
+
+        .cc-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cc-section-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .cdt-wrap { max-width: 720px; }
+        .cdt-back {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 6px 0;
+            margin-bottom: 14px;
+            font-weight: 500;
+        }
+        .cdt-back:hover { color: var(--text-primary); }
+
+        .cdt-summary {
+            background: var(--bg-card, rgba(255,255,255,0.04));
+            border: 1px solid var(--border-default, rgba(255,255,255,0.1));
+            border-radius: 16px;
+            padding: 22px 24px;
+            margin-bottom: 24px;
+        }
+        .cdt-sum-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .cdt-sum-no { font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+        .cdt-sum-company { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+        .cdt-sum-badge {
+            font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 20px; white-space: nowrap;
+        }
+        .cdt-badge-green { background: rgba(5,150,105,0.12); color: #059669; }
+        .cdt-badge-red { background: rgba(220,38,38,0.12); color: #dc2626; }
+
+        .cdt-sum-rows { margin-bottom: 14px; }
+        .cdt-sum-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 7px 0; font-size: 13px; color: var(--text-secondary);
+        }
+        .cdt-sum-row strong { color: var(--text-primary); font-feature-settings: 'tnum'; font-size: 14px; }
+        .cdt-sum-row.cdt-sum-balance { border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); margin-top: 4px; padding-top: 11px; }
+        .cdt-sum-row.cdt-sum-balance strong { font-size: 17px; }
+        .cdt-ok { color: #059669; }
+
+        .cdt-sum-bar {
+            height: 6px; border-radius: 20px;
+            background: rgba(125,125,125,0.15); overflow: hidden; margin-bottom: 12px;
+        }
+        .cdt-sum-fill { height: 100%; border-radius: 20px; transition: width 0.6s ease; }
+        .cdt-sum-by { font-size: 11px; color: var(--text-tertiary); }
+
+        .cdt-section-label {
+            font-size: 11px; font-weight: 700; color: var(--text-tertiary);
+            text-transform: uppercase; letter-spacing: 0.6px;
+            margin: 0 0 12px 2px;
+        }
+
+        .cdt-act-row {
+            background: var(--bg-card, rgba(255,255,255,0.03));
+            border: 1px solid var(--border-default, rgba(255,255,255,0.08));
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 10px;
+        }
+        .cdt-act-row.cdt-pending { opacity: 0.7; border-style: dashed; }
+        .cdt-act-head {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 10px; margin-bottom: 8px;
+        }
+        .cdt-act-id { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+        .cdt-act-amt { font-size: 15px; font-weight: 800; color: #dc2626; font-feature-settings: 'tnum'; white-space: nowrap; }
+        .cdt-act-amt.cdt-muted { color: var(--text-tertiary); font-weight: 600; }
+        .cdt-act-work { font-size: 13px; color: var(--text-primary); margin-bottom: 14px; line-height: 1.45; }
+
+        .cdt-act-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 18px;
+        }
+        .cdt-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .cdt-k { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+        .cdt-v { font-size: 12.5px; color: var(--text-primary); font-weight: 500; }
+        .cdt-v.cdt-ok { color: #059669; font-weight: 600; }
+
+        .cdt-empty { padding: 28px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+
+        @media (max-width: 560px) {
+            .cdt-act-grid { grid-template-columns: 1fr; gap: 10px; }
+        }
+
+        [data-theme="light"] .cdt-summary,
+        [data-theme="light"] .cdt-act-row { background: #f8fafc; border-color: #e2e8f0; }
+
+        .det-ebr-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 0 4px 12px;
+            line-height: 1.5;
+        }
+
+        .cc-section-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin: 16px 0 10px;
+            letter-spacing: 0.02em;
+        }
+        .cc-section-label:first-child { margin-top: 0; }
+
+        .cc-done-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(5, 150, 105, 0.15);
+            color: #059669;
+            vertical-align: middle;
+        }
+
+        .contract-card.cc-done {
+            border-color: rgba(5, 150, 105, 0.25);
+            opacity: 0.95;
+        }
+
+        .cc-balance.cc-complete .cc-balance-val { color: #059669; }
+
+        .cdt-done-banner {
+            background: rgba(5, 150, 105, 0.1);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+            color: #059669;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+        }
+
+        /* ★ Гэрээ дэлгэрэнгүйн толгой — буцах + засах товч */
+        .cdt-detail-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .cdt-edit-btn {
+            background: none;
+            border: none;
+            color: var(--brand, #635bff);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 6px 0;
+            font-weight: 600;
+        }
+        .cdt-edit-btn:hover { opacity: 0.8; }
+
+        .label-optional {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 7px;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            vertical-align: middle;
+            line-height: 1.4;
+        }
+    </style>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+
+    <script>
+        (function() {
+            try {
+                var saved = localStorage.getItem('talst-theme');
+                if (saved === 'light' || saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', saved);
+                }
+            } catch(e) {}
+        })();
+    </script>
 </head>
 
 <body>
@@ -172,722 +267,774 @@
 <canvas id="meshCanvas"></canvas>
 
 <script>
-  function toggleTheme() {
-    var current = document.documentElement.getAttribute('data-theme');
-    var next = current === 'light' ? 'dark' : 'light';
-    if (next === 'dark') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', next);
-    }
-    try { localStorage.setItem('talst-theme', next); } catch(e) {}
-
-    try {
-      if (typeof window.go === 'function') {
-        var dashTab = document.getElementById('p3');
-        if (dashTab && dashTab.style.display !== 'none') {
-          setTimeout(function(){ window.go(3); }, 80);
+    function toggleTheme() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'light' ? 'dark' : 'light';
+        if (next === 'dark') {
+            document.documentElement.removeAttribute('data-theme');
+        } else {
+            document.documentElement.setAttribute('data-theme', next);
         }
-      }
-    } catch(e) {}
-  }
+        try { localStorage.setItem('talst-theme', next); } catch(e) {}
+
+        try {
+            if (typeof window.go === 'function') {
+                var dashTab = document.getElementById('p3');
+                if (dashTab && dashTab.style.display !== 'none') {
+                    setTimeout(function(){ window.go(3); }, 80);
+                }
+            }
+        } catch(e) {}
+    }
 </script>
 
 
 <!-- 1. НЭВТРЭХ ХУУДАС -->
 <div class="login-wrap" id="loginPage">
-  <div class="login-card">
-    <img src="images/white.png" class="logo logo-light"
-         style="height:54px;width:auto;object-fit:contain;margin:0 auto 20px;display:block"
-         alt="Talst Group">
-    <img src="images/blue.png" class="logo logo-dark"
-         style="height:54px;width:auto;object-fit:contain;margin:0 auto 20px;display:block"
-         alt="Talst Group">
+    <div class="login-card">
+        <img src="images/white.png" class="logo logo-light"
+             style="height:54px;width:auto;object-fit:contain;margin:0 auto 20px;display:block"
+             alt="Talst Group">
+        <img src="images/blue.png" class="logo logo-dark"
+             style="height:54px;width:auto;object-fit:contain;margin:0 auto 20px;display:block"
+             alt="Talst Group">
 
-    <div class="login-sub">
-      Гүйцэтгэлийн акт баталгаажуулах систем.<br>
-      Google имэйлээрээ нэвтэрнэ үү.
-    </div>
+        <div class="login-sub">
+            Гүйцэтгэлийн акт баталгаажуулах систем.<br>
+            Google имэйлээрээ нэвтэрнэ үү.
+        </div>
 
-    <button class="google-btn" onclick="signInGoogle()">
-      <svg width="20" height="20" viewBox="0 0 24 24">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-      </svg>
-      Google-р нэвтрэх
-    </button>
-    <div class="login-note">
-      Координатор, Барилгийн Инженер, Ерөнхий Инженер, Ерөнхий Захирал, Ерөнхий Нягтлан нар talstgroup.mn имэйлээрээ нэвтэрнэ.<br>
-      Гүйцэтгэгч компаниуд ч Gmail-р нэвтэрч болно.
+        <button class="google-btn" onclick="signInGoogle()">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Google-р нэвтрэх
+        </button>
+        <div class="login-note">
+            Координатор, Барилгийн Инженер, Ерөнхий Инженер, Ерөнхий Захирал, Ерөнхий Нягтлан нар talstgroup.mn имэйлээрээ нэвтэрнэ.<br>
+            Гүйцэтгэгч компаниуд ч Gmail-р нэвтэрч болно.
+        </div>
     </div>
-  </div>
 </div>
 
 
 <!-- 2. ҮНДСЭН АПП -->
 <div class="app" id="appPage">
 
-  <div class="topbar">
-    <img src="images/white.png" class="logo logo-light"
-         style="height:32px;width:auto;object-fit:contain"
-         alt="Talst Group">
-    <img src="images/blue.png" class="logo logo-dark"
-         style="height:32px;width:auto;object-fit:contain"
-         alt="Talst Group">
+    <div class="topbar">
+        <img src="images/white.png" class="logo logo-light"
+             style="height:32px;width:auto;object-fit:contain"
+             alt="Talst Group">
+        <img src="images/blue.png" class="logo logo-dark"
+             style="height:32px;width:auto;object-fit:contain"
+             alt="Talst Group">
 
-    <div class="topbar-right">
-      <div class="user-pill" onclick="doSignOut()">
-        <div class="uav" id="uav"></div>
-        <div>
-          <div class="uname" id="uname">...</div>
-          <div class="urole" id="urole">...</div>
+        <div class="topbar-right">
+            <div class="user-pill" onclick="doSignOut()">
+                <div class="uav" id="uav"></div>
+                <div>
+                    <div class="uname" id="uname">...</div>
+                    <div class="urole" id="urole">...</div>
+                </div>
+            </div>
+
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Theme toggle">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+                </svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
         </div>
-      </div>
-
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Theme toggle">
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="4"></circle>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
-        </svg>
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-      </button>
     </div>
-  </div>
 
-  <div id="toast" class="toast"></div>
+    <div id="toast" class="toast"></div>
 
-  <div class="tabs">
-    <button class="tab on" id="tb0" onclick="go(0)">Илгээх</button>
-    <button class="tab"    id="tb1" onclick="go(1)">Батлах</button>
-    <button class="tab"    id="tb2" onclick="go(2)">Актууд</button>
-    <button class="tab"    id="tb4" onclick="go(4)">Гэрээ</button>
-    <button class="tab"    id="tb3" onclick="go(3)">Дашборд</button>
-  </div>
+    <div class="tabs">
+        <button class="tab on" id="tb0" onclick="go(0)">Илгээх</button>
+        <button class="tab"    id="tb1" onclick="go(1)">Батлах</button>
+        <button class="tab"    id="tb2" onclick="go(2)">Актууд</button>
+        <button class="tab"    id="tb4" onclick="go(4)">Гэрээ</button>
+        <button class="tab"    id="tb3" onclick="go(3)">Дашборд</button>
+    </div>
 
 
-  <!-- TAB 0: ШИНЭ АКТ ИЛГЭЭХ -->
-  <div id="p0">
-    <div class="form-card">
-      <div class="ftitle">Шинэ акт илгээх</div>
+    <!-- TAB 0: ШИНЭ АКТ ИЛГЭЭХ -->
+    <div id="p0">
+        <div class="form-card">
+            <div class="ftitle">Шинэ акт илгээх</div>
 
-      <div class="fl">Компанийн нэр</div>
-      <input type="text" id="fc" placeholder="Модун Констракшн ХХК">
+            <div class="fl">Компанийн нэр</div>
+            <input type="text" id="fc" placeholder="Модун Констракшн ХХК">
 
-      <div class="fl">Гэрээний дугаар</div>
-      <input type="text" id="fg" placeholder="ГЭР-2026-14" oninput="checkContractBalance()">
-      <div id="contractInfo" class="contract-info-box" style="display:none"></div>
+            <div class="fl">Гэрээний дугаар</div>
+            <input type="text" id="fg" placeholder="ГЭР-2026-14" oninput="checkContractBalance()">
+            <div id="contractInfo" class="contract-info-box" style="display:none"></div>
 
-      <div class="fl">Ажлын тайлбар</div>
-      <textarea id="fw" placeholder="Хийсэн ажлын дэлгэрэнгүй..."></textarea>
+            <div class="fl">Ажлын тайлбар</div>
+            <textarea id="fw" placeholder="Хийсэн ажлын дэлгэрэнгүй..."></textarea>
 
-      <div class="fl">Ажлын хугацаа (эхлэх — дуусах)</div>
-      <div class="date-row">
-        <input type="date" id="fd1" placeholder="Эхлэх">
-        <span class="date-sep">—</span>
-        <input type="date" id="fd2" placeholder="Дуусах">
-      </div>
+            <div class="fl">Ажлын хугацаа (эхлэх — дуусах)</div>
+            <div class="date-row">
+                <input type="date" id="fd1" placeholder="Эхлэх">
+                <span class="date-sep">—</span>
+                <input type="date" id="fd2" placeholder="Дуусах">
+            </div>
 
-      <div class="fl">Дүн (₮)</div>
-      <div class="amount-wrap">
-        <input type="number" id="fa" placeholder="48500000" oninput="fmtAmt()">
-        <div class="amt-fmt" id="amtFmt"></div>
-      </div>
+            <div class="fl">Дүн (₮)</div>
+            <div class="amount-wrap">
+                <input type="number" id="fa" placeholder="48500000" oninput="fmtAmt()">
+                <div class="amt-fmt" id="amtFmt"></div>
+            </div>
 
-      <div class="fl">Ажлын баримт бичгүүд (PDF)</div>
-      <label class="file-upload-btn" for="fpdfs">📄 PDF файл сонгох</label>
-      <input type="file"
-             id="fpdfs"
-             class="file-input"
-             multiple
-             accept="application/pdf"
-             onchange="addPdfs(this)">
-      <div class="pdf-list" id="pdfList"></div>
-      <div class="compress-info" id="compInfo"></div>
+            <div class="fl">Ажлын баримт бичгүүд (PDF)</div>
+            <label class="file-upload-btn" for="fpdfs">📄 PDF файл сонгох</label>
+            <input type="file"
+                   id="fpdfs"
+                   class="file-input"
+                   multiple
+                   accept="application/pdf"
+                   onchange="addPdfs(this)">
+            <div class="pdf-list" id="pdfList"></div>
+            <div class="compress-info" id="compInfo"></div>
 
-      <!-- Е-БАРИМТЫН БАРИМТ UPLOAD -->
-      <div class="fl">
-        Е-баримтын баримт (PDF)
-        <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-tertiary);font-size:10px">
+            <!-- Е-БАРИМТЫН БАРИМТ UPLOAD -->
+            <div class="fl">
+                Е-баримтын баримт (PDF)
+                <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-tertiary);font-size:10px">
           · Сонголттой
         </span>
-      </div>
-      <div class="notary-hint">
-        ℹ️ Е-баримтын төлбөрийн баримт хавсаргаагүй бол Нягтлан баримт төлөгдсөн эсэхийг шалгаж, төлөөгүй тохиолдолд <strong>гэрээний бүтэн дүнгээс 10%</strong> хасалт тооцох болно. Хэсэгчилсэн төлбөр байсан ч хасалт <strong>нэг л удаа</strong> хийгдэнэ.
-      </div>
-      <label class="file-upload-btn notary-upload" for="fnotary">📜 Е-баримт сонгох (PDF)</label>
-      <input type="file"
-             id="fnotary"
-             class="file-input"
-             multiple
-             accept="application/pdf"
-             onchange="addEbrPdfs(this)">
-      <div class="pdf-list" id="notaryList"></div>
-      <div class="compress-info" id="notaryInfo"></div>
+            </div>
+            <div class="notary-hint">
+                ℹ️ Е-баримтын төлбөрийн баримт хавсаргаагүй бол Нягтлан баримт төлөгдсөн эсэхийг шалгаж, төлөөгүй тохиолдолд <strong>гэрээний бүтэн дүнгээс 10%</strong> хасалт тооцох болно. Хэсэгчилсэн төлбөр байсан ч хасалт <strong>нэг л удаа</strong> хийгдэнэ.
+            </div>
+            <label class="file-upload-btn notary-upload" for="fnotary">📜 Е-баримт сонгох (PDF)</label>
+            <input type="file"
+                   id="fnotary"
+                   class="file-input"
+                   multiple
+                   accept="application/pdf"
+                   onchange="addEbrPdfs(this)">
+            <div class="pdf-list" id="notaryList"></div>
+            <div class="compress-info" id="notaryInfo"></div>
 
-      <div class="prog-bar-wrap" id="progWrap">
-        <div class="prog-bar" id="progBar"></div>
-      </div>
-      <div class="prog-text" id="progText"></div>
+            <div class="prog-bar-wrap" id="progWrap">
+                <div class="prog-bar" id="progBar"></div>
+            </div>
+            <div class="prog-text" id="progText"></div>
 
-      <button class="sbtn" id="sbtn" onclick="submitAct()">Акт илгээх</button>
-    </div>
-  </div>
-
-
-  <!-- TAB 1: БАТЛАХ -->
-  <div id="p1" style="display:none">
-    <div class="seclbl" id="aplbl">Батлах боломжтой актууд</div>
-    <div id="al">
-      <div class="loading"><div class="spin"></div></div>
-    </div>
-  </div>
-
-
-  <!-- TAB 2: АКТУУД -->
-  <div id="p2" style="display:none">
-    <div id="ll">
-      <div class="loading"><div class="spin"></div></div>
-    </div>
-  </div>
-
-
-  <!-- TAB 4: ГЭРЭЭ -->
-  <div id="p4" style="display:none">
-
-    <!-- Гэрээ бүртгэх форм (зөвхөн Координатор) -->
-    <div id="contractFormCard" class="form-card" style="margin-bottom:14px">
-      <div class="ftitle">Шинэ гэрээ бүртгэх</div>
-
-      <div class="fl">Компанийн нэр</div>
-      <input type="text" id="cfCompany" placeholder="Модун Констракшн ХХК">
-
-      <div class="fl">Гэрээний дугаар</div>
-      <input type="text" id="cfNo" placeholder="ГЭР-2026-14">
-
-      <div class="fl">Гэрээний нийт дүн (₮)</div>
-      <div class="amount-wrap">
-        <input type="number" id="cfAmount" placeholder="1000000000" oninput="fmtContractAmt()">
-        <div class="amt-fmt" id="cfAmtFmt"></div>
-      </div>
-
-      <button class="sbtn" id="cfBtn" onclick="submitContract()">Гэрээ бүртгэх</button>
-    </div>
-
-    <!-- Бүртгэлтэй гэрээний жагсаалт -->
-    <div class="seclbl">Бүртгэлтэй гэрээнүүд</div>
-    <div id="contractList">
-      <div class="loading"><div class="spin"></div></div>
-    </div>
-  </div>
-
-
-  <!-- TAB 3: ДАШБОРД -->
-  <div id="p3" style="display:none">
-    <div class="db-greeting">
-      <span style="font-size:12px;color:var(--text-secondary)">Гүйцэтгэлийн актын дашборд</span>
-    </div>
-
-    <div class="metric-grid">
-      <div class="metric-card">
-        <div class="metric-label">Нийт акт</div>
-        <div class="metric-val" id="s0">—</div>
-        <div style="color:var(--text-tertiary);font-size:11px;margin-top:5px" id="s0sub">ачааллаж байна</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Явцад</div>
-        <div class="metric-val" id="s1">—</div>
-        <div style="color:var(--text-tertiary);font-size:11px;margin-top:5px" id="s1sub">батлуулж байна</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Дууссан</div>
-        <div class="metric-val" id="s2" style="color:#34d399">—</div>
-        <div style="font-size:11px;margin-top:5px;color:#6ee7b7" id="s2sub">бүрэн батлагдсан</div>
-      </div>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">Өдөр тутмын хүсэлтийн тоо</div>
-          <div class="chart-subtitle">Сүүлийн 7 хоног</div>
+            <button class="sbtn" id="sbtn" onclick="submitAct()">Акт илгээх</button>
         </div>
-      </div>
+    </div>
 
-      <div style="position:relative;width:100%;height:160px">
-        <canvas id="dbBarChart" role="img" aria-label="Өдөр тутмын хүсэлтийн диаграм"></canvas>
-      </div>
 
-      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;align-items:center">
-        <span style="font-size:11px;color:var(--text-secondary);font-weight:500">Хүсэлт олон → бараан өнгө:</span>
+    <!-- TAB 1: БАТЛАХ -->
+    <div id="p1" style="display:none">
+        <div class="seclbl" id="aplbl">Батлах боломжтой актууд</div>
+        <div id="al">
+            <div class="loading"><div class="spin"></div></div>
+        </div>
+    </div>
+
+
+    <!-- TAB 2: АКТУУД -->
+    <div id="p2" style="display:none">
+        <div id="ll">
+            <div class="loading"><div class="spin"></div></div>
+        </div>
+    </div>
+
+
+    <!-- TAB 4: ГЭРЭЭ -->
+    <div id="p4" style="display:none">
+
+        <!-- Гэрээ бүртгэх форм (зөвхөн Координатор) -->
+        <div id="contractFormCard" class="form-card" style="margin-bottom:14px">
+            <div class="ftitle">Шинэ гэрээ бүртгэх</div>
+
+            <div class="fl">Компанийн нэр</div>
+            <input type="text" id="cfCompany" placeholder="Модун Констракшн ХХК">
+
+            <div class="fl">Гэрээний дугаар</div>
+            <input type="text" id="cfNo" placeholder="ГЭР-2026-14">
+
+            <div class="fl">Гэрээний нийт дүн (₮)</div>
+            <div class="amount-wrap">
+                <input type="number" id="cfAmount" placeholder="1000000000" oninput="fmtContractAmt()">
+                <div class="amt-fmt" id="cfAmtFmt"></div>
+            </div>
+
+            <div class="fl">
+                Гэрээний файл (PDF)
+                <span class="label-optional">Сонголттой</span>
+            </div>
+            <label class="file-upload-btn" for="cfPdfs">📄 Гэрээний PDF сонгох</label>
+            <input type="file" id="cfPdfs" class="file-input" multiple accept="application/pdf" onchange="addContractPdfs(this)">
+            <div class="pdf-list" id="cfPdfList"></div>
+            <div class="compress-info" id="cfPdfInfo"></div>
+
+            <button class="sbtn" id="cfBtn" onclick="submitContract()">Гэрээ бүртгэх</button>
+        </div>
+
+        <!-- Бүртгэлтэй гэрээний жагсаалт -->
+        <div class="seclbl">Бүртгэлтэй гэрээнүүд</div>
+        <div id="contractList">
+            <div class="loading"><div class="spin"></div></div>
+        </div>
+    </div>
+
+
+    <!-- TAB 3: ДАШБОРД -->
+    <div id="p3" style="display:none">
+        <div class="db-greeting">
+            <span style="font-size:12px;color:var(--text-secondary)">Гүйцэтгэлийн актын дашборд</span>
+        </div>
+
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-label">Нийт акт</div>
+                <div class="metric-val" id="s0">—</div>
+                <div style="color:var(--text-tertiary);font-size:11px;margin-top:5px" id="s0sub">ачааллаж байна</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Явцад</div>
+                <div class="metric-val" id="s1">—</div>
+                <div style="color:var(--text-tertiary);font-size:11px;margin-top:5px" id="s1sub">батлуулж байна</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Дууссан</div>
+                <div class="metric-val" id="s2" style="color:#34d399">—</div>
+                <div style="font-size:11px;margin-top:5px;color:#6ee7b7" id="s2sub">бүрэн батлагдсан</div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Өдөр тутмын хүсэлтийн тоо</div>
+                    <div class="chart-subtitle">Сүүлийн 7 хоног</div>
+                </div>
+            </div>
+
+            <div style="position:relative;width:100%;height:160px">
+                <canvas id="dbBarChart" role="img" aria-label="Өдөр тутмын хүсэлтийн диаграм"></canvas>
+            </div>
+
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;align-items:center">
         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)">
             <span style="width:8px;height:8px;border-radius:50%;background:#60a5fa;display:inline-block;box-shadow:0 0 4px #60a5fa"></span>Цөөн
         </span>
-        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)">
+                <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)">
             <span style="width:8px;height:8px;border-radius:50%;background:#a78bfa;display:inline-block;box-shadow:0 0 4px #a78bfa"></span>Дунд
         </span>
-        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)">
+                <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)">
             <span style="width:8px;height:8px;border-radius:50%;background:#635bff;display:inline-block;box-shadow:0 0 4px #635bff"></span>Их
         </span>
-        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)">
+                <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)">
             <span style="width:8px;height:8px;border-radius:50%;background:#4f46e5;display:inline-block;box-shadow:0 0 6px #4f46e5"></span>Маш их
         </span>
-      </div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Батлалтын шат</div>
+                    <div class="chart-subtitle">Хэдэн акт хаана байгаа</div>
+                </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px" id="dStatusList">
+                <!-- Координатор — алхам 0 -->
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Координатор</div>
+                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
+                        <div style="height:6px;border-radius:20px;background:#ff5757;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(255,87,87,0.6)" id="dBar0"></div>
+                    </div>
+                    <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV0">—</div>
+                </div>
+
+                <!-- Барилгийн Инженер — алхам 1 -->
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Б.Инженер</div>
+                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
+                        <div style="height:6px;border-radius:20px;background:#f59e0b;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(245,158,11,0.6)" id="dBar1"></div>
+                    </div>
+                    <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV1">—</div>
+                </div>
+
+                <!-- Инженер — алхам 2 -->
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Ер.Инженер</div>
+                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
+                        <div style="height:6px;border-radius:20px;background:#635bff;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(99,91,255,0.6)" id="dBar2"></div>
+                    </div>
+                    <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV2">—</div>
+                </div>
+
+                <!-- Захирал — алхам 3 -->
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Ер.Захирал</div>
+                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
+                        <div style="height:6px;border-radius:20px;background:#a78bfa;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(167,139,250,0.6)" id="dBar3"></div>
+                    </div>
+                    <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV3">—</div>
+                </div>
+
+                <!-- Нягтлан — алхам 4 -->
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Ер.Нягтлан</div>
+                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
+                        <div style="height:6px;border-radius:20px;background:#00d9a3;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(0,217,163,0.6)" id="dBar4"></div>
+                    </div>
+                    <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV4">—</div>
+                </div>
+
+                <!-- Хэсэгчлэн -->
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;color:#fcd34d;width:90px;flex-shrink:0;font-weight:500">Хэсэгчлэн</div>
+                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
+                        <div style="height:6px;border-radius:20px;background:#ffb547;width:0%;transition:width 0.6s;box-shadow:0 0 10px rgba(255,181,71,0.7)" id="dBarPartial"></div>
+                    </div>
+                    <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:#fcd34d" id="dVPartial">—</div>
+                </div>
+
+                <!-- Дууссан -->
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-size:12px;color:#6ee7b7;width:90px;flex-shrink:0;font-weight:500">Дууссан</div>
+                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
+                        <div style="height:6px;border-radius:20px;background:#00d9a3;width:0%;transition:width 0.6s;box-shadow:0 0 10px rgba(0,217,163,0.7)" id="dBarDone"></div>
+                    </div>
+                    <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:#6ee7b7" id="dVDone">—</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div class="metric-card">
+                <div class="metric-label">Нийт дүн</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-top:4px;word-break:break-all" id="dTotalAmt">—</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Батлагдсан</div>
+                <div style="font-size:13px;font-weight:600;color:#6ee7b7;margin-top:4px;word-break:break-all" id="dDoneAmt">—</div>
+            </div>
+        </div>
+
+        <!-- ★ Гэрээний үлдэгдэл -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Гэрээний үлдэгдэл</div>
+                    <div class="chart-subtitle">Нийт дүн · батлагдсан · үлдэгдэл</div>
+                </div>
+            </div>
+            <div id="dContractList">
+                <div class="empty" style="padding:24px">Ачааллаж байна...</div>
+            </div>
+        </div>
     </div>
 
-    <div class="chart-card">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">Батлалтын шат</div>
-          <div class="chart-subtitle">Хэдэн акт хаана байгаа</div>
-        </div>
-      </div>
 
-      <div style="display:flex;flex-direction:column;gap:10px" id="dStatusList">
-        <<!-- Координатор — алхам 0 -->
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Координатор</div>
-          <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
-            <div style="height:6px;border-radius:20px;background:#ff5757;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(255,87,87,0.6)" id="dBar0"></div>
-          </div>
-          <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV0">—</div>
-        </div>
-
-        <!-- Барилгийн Инженер — алхам 1 -->
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Б.Инженер</div>
-          <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
-            <div style="height:6px;border-radius:20px;background:#f59e0b;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(245,158,11,0.6)" id="dBar1"></div>
-          </div>
-          <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV1">—</div>
-        </div>
-
-        <!-- Инженер — алхам 2 -->
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Ер.Инженер</div>
-          <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
-            <div style="height:6px;border-radius:20px;background:#635bff;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(99,91,255,0.6)" id="dBar2"></div>
-          </div>
-          <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV2">—</div>
-        </div>
-
-        <!-- Захирал — алхам 3 -->
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Ер.Захирал</div>
-          <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
-            <div style="height:6px;border-radius:20px;background:#a78bfa;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(167,139,250,0.6)" id="dBar3"></div>
-          </div>
-          <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV3">—</div>
-        </div>
-
-        <!-- Нягтлан — алхам 4 -->
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:12px;color:var(--text-secondary);width:90px;flex-shrink:0">Ер.Нягтлан</div>
-          <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
-            <div style="height:6px;border-radius:20px;background:#00d9a3;width:0%;transition:width 0.6s;box-shadow:0 0 8px rgba(0,217,163,0.6)" id="dBar4"></div>
-          </div>
-          <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:var(--text-primary)" id="dV4">—</div>
-        </div>
-
-        <!-- Хэсэгчлэн -->
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:12px;color:#fcd34d;width:90px;flex-shrink:0;font-weight:500">Хэсэгчлэн</div>
-          <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
-            <div style="height:6px;border-radius:20px;background:#ffb547;width:0%;transition:width 0.6s;box-shadow:0 0 10px rgba(255,181,71,0.7)" id="dBarPartial"></div>
-          </div>
-          <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:#fcd34d" id="dVPartial">—</div>
-        </div>
-
-        <!-- Дууссан -->
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:12px;color:#6ee7b7;width:90px;flex-shrink:0;font-weight:500">Дууссан</div>
-          <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:20px;height:6px;overflow:hidden">
-            <div style="height:6px;border-radius:20px;background:#00d9a3;width:0%;transition:width 0.6s;box-shadow:0 0 10px rgba(0,217,163,0.7)" id="dBarDone"></div>
-          </div>
-          <div style="font-size:12px;font-weight:600;min-width:20px;text-align:right;color:#6ee7b7" id="dVDone">—</div>
-        </div>
-      </div>
+    <!-- DETAIL PAGE -->
+    <div id="pd" style="display:none">
+        <span class="back" onclick="bk()">← Буцах</span>
+        <div id="dc"></div>
     </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-      <div class="metric-card">
-        <div class="metric-label">Нийт дүн</div>
-        <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-top:4px;word-break:break-all" id="dTotalAmt">—</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Батлагдсан</div>
-        <div style="font-size:13px;font-weight:600;color:#6ee7b7;margin-top:4px;word-break:break-all" id="dDoneAmt">—</div>
-      </div>
-    </div>
-
-    <!-- ★ Гэрээний үлдэгдэл -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">Гэрээний үлдэгдэл</div>
-          <div class="chart-subtitle">Нийт дүн · батлагдсан · үлдэгдэл</div>
-        </div>
-      </div>
-      <div id="dContractList">
-        <div class="empty" style="padding:24px">Ачааллаж байна...</div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- DETAIL PAGE -->
-  <div id="pd" style="display:none">
-    <span class="back" onclick="bk()">← Буцах</span>
-    <div id="dc"></div>
-  </div>
 
 </div>
 
 
 <!-- ★★★ Е-БАРИМТ ШАЛГАХ MODAL ★★★ -->
 <div class="modal-overlay" id="notaryModal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">📜 Е-баримт шалгах</div>
-        <div class="modal-subtitle" id="nmActId">АКТ-2026-XXXX</div>
-      </div>
-      <button class="modal-close" onclick="closeEbrModal()">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="pm-original">
-        <div class="pm-original-label">Ажлын нийт дүн</div>
-        <div class="pm-original-value" id="nmOriginalAmt">0₮</div>
-      </div>
-
-      <div id="nmContractHint" class="nm-contract-hint" style="display:none"></div>
-
-      <div id="nmNotaryFilesBlock" class="nm-notary-files">
-        <div class="nm-files-header">
-          <span class="nm-files-icon">📜</span>
-          <div>
-            <div class="nm-files-title" id="nmFilesTitle">Хавсаргасан е-баримтын баримт</div>
-            <div class="nm-files-sub" id="nmFilesSub">—</div>
-          </div>
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">📜 Е-баримт шалгах</div>
+                <div class="modal-subtitle" id="nmActId">АКТ-2026-XXXX</div>
+            </div>
+            <button class="modal-close" onclick="closeEbrModal()">✕</button>
         </div>
-        <div id="nmNotaryList" class="nm-notary-list"></div>
-      </div>
 
-      <div class="nm-question">
-        <div class="nm-q-title">❓ Е-баримтын төлбөрийг төлсөн үү?</div>
-        <div class="nm-q-sub">Доорх сонголтын аль нэгийг сонгоно уу. Сонголт нь дараагийн алхамд нөлөөлнө.</div>
-      </div>
+        <div class="modal-body">
+            <div class="pm-original">
+                <div class="pm-original-label">Ажлын нийт дүн</div>
+                <div class="pm-original-value" id="nmOriginalAmt">0₮</div>
+            </div>
 
-      <div class="nm-options">
-        <button class="nm-option nm-option-paid" id="nmPaidBtn" onclick="chooseEbrPaid()">
-          <div class="nm-opt-icon">✓</div>
-          <div class="nm-opt-body">
-            <div class="nm-opt-title">Е-баримт төлсөн</div>
-            <div class="nm-opt-desc">Дүн <strong>хэвээр</strong> үлдэнэ · Дараа нь "Батлах" товчийг дарна</div>
-            <div class="nm-opt-amount" id="nmPaidAmt">0₮</div>
-          </div>
-        </button>
+            <div id="nmContractHint" class="nm-contract-hint" style="display:none"></div>
 
-        <button class="nm-option nm-option-unpaid" id="nmUnpaidBtn" onclick="chooseEbrUnpaid()">
-          <div class="nm-opt-icon">✗</div>
-          <div class="nm-opt-body">
-            <div class="nm-opt-title">Е-баримт төлөөгүй</div>
-            <div class="nm-opt-desc"><strong>Гэрээний бүтэн дүнгээс 10% хасагдана</strong> · Нэг гэрээнд нэг л удаа</div>
-            <div class="nm-opt-amount" id="nmUnpaidAmt">0₮</div>
-            <div class="nm-opt-detail">Хасагдах: <span id="nmDeductAmt">0₮</span></div>
-          </div>
-        </button>
-      </div>
+            <div id="nmNotaryFilesBlock" class="nm-notary-files">
+                <div class="nm-files-header">
+                    <span class="nm-files-icon">📜</span>
+                    <div>
+                        <div class="nm-files-title" id="nmFilesTitle">Хавсаргасан е-баримтын баримт</div>
+                        <div class="nm-files-sub" id="nmFilesSub">—</div>
+                    </div>
+                </div>
+                <div id="nmNotaryList" class="nm-notary-list"></div>
+            </div>
 
-      <div class="pm-info-box">
-        <div class="pm-info-icon">ℹ️</div>
-        <div class="pm-info-text">
-          Сонголтыг audit log-д тэмдэглэнэ. <strong>Төлөөгүй</strong> бол нийт дүнгээс 10% хасагдан, эцсийн дүн шинэчлэгдэнэ.
+            <div class="nm-question">
+                <div class="nm-q-title">❓ Е-баримтын төлбөрийг төлсөн үү?</div>
+                <div class="nm-q-sub">Доорх сонголтын аль нэгийг сонгоно уу. Сонголт нь дараагийн алхамд нөлөөлнө.</div>
+            </div>
+
+            <div class="nm-options">
+                <button class="nm-option nm-option-paid" id="nmPaidBtn" onclick="chooseEbrPaid()">
+                    <div class="nm-opt-icon">✓</div>
+                    <div class="nm-opt-body">
+                        <div class="nm-opt-title">Е-баримт төлсөн</div>
+                        <div class="nm-opt-desc">Дүн <strong>хэвээр</strong> үлдэнэ · Шууд батлагдана</div>
+                        <div class="nm-opt-amount" id="nmPaidAmt">0₮</div>
+                    </div>
+                </button>
+
+                <button class="nm-option nm-option-unpaid" id="nmUnpaidBtn" onclick="chooseEbrUnpaid()">
+                    <div class="nm-opt-icon">✗</div>
+                    <div class="nm-opt-body">
+                        <div class="nm-opt-title">Е-баримт төлөөгүй</div>
+                        <div class="nm-opt-desc"><strong>Гэрээний бүтэн дүнгээс 10% хасагдана</strong> · Нэг гэрээнд нэг л удаа</div>
+                        <div class="nm-opt-amount" id="nmUnpaidAmt">0₮</div>
+                        <div class="nm-opt-detail">Хасагдах: <span id="nmDeductAmt">0₮</span></div>
+                    </div>
+                </button>
+            </div>
+
+            <div class="pm-info-box">
+                <div class="pm-info-icon">ℹ️</div>
+                <div class="pm-info-text">
+                    Сонголтыг audit log-д тэмдэглэнэ. <strong>Төлөөгүй</strong> бол нийт дүнгээс 10% хасагдан, эцсийн дүн шинэчлэгдэнэ.
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <div class="modal-footer">
-      <button class="modal-btn modal-btn-cancel" onclick="closeEbrModal()">Цуцлах</button>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeEbrModal()">Цуцлах</button>
+        </div>
     </div>
-  </div>
 </div>
 
 
 <!-- ХЭСЭГЧЛЭН БАТЛАХ MODAL -->
 <div class="modal-overlay" id="partialModal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">Хэсэгчлэн батлах</div>
-        <div class="modal-subtitle" id="pmActId">АКТ-2026-XXXX</div>
-      </div>
-      <button class="modal-close" onclick="closePartialModal()">✕</button>
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">Хэсэгчлэн батлах</div>
+                <div class="modal-subtitle" id="pmActId">АКТ-2026-XXXX</div>
+            </div>
+            <button class="modal-close" onclick="closePartialModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div id="pmNotaryWarn" class="pm-notary-warn" style="display:none">
+                <div class="pm-notary-warn-icon">⚠</div>
+                <div class="pm-notary-warn-text">
+                    <strong>Е-баримтын төлбөр төлөгдөөгүй.</strong>
+                    Нийт дүнгээс <strong>10% хасагдсан</strong>.
+                </div>
+            </div>
+
+            <div class="pm-original">
+                <div class="pm-original-label" id="pmOriginalLabel">Нийт ажлын дүн</div>
+                <div class="pm-original-value" id="pmOriginalAmt">0₮</div>
+                <div id="pmOriginalSub" class="pm-original-sub" style="display:none"></div>
+            </div>
+
+            <div class="pm-slider-section">
+                <div class="pm-slider-header">
+                    <span class="pm-slider-label">Батлах хувь</span>
+                    <span class="pm-slider-value" id="pmPercentVal">85%</span>
+                </div>
+
+                <input type="range" id="pmSlider" class="pm-slider" min="1" max="99" value="85" oninput="updatePartialPreview()">
+
+                <div class="pm-slider-marks">
+                    <span>1%</span><span>25%</span><span>50%</span><span>75%</span><span>99%</span>
+                </div>
+            </div>
+
+            <div class="pm-breakdown">
+                <div class="pm-breakdown-row pm-approved">
+                    <div class="pm-bd-icon">✓</div>
+                    <div class="pm-bd-text">
+                        <div class="pm-bd-label">Батлагдах дүн</div>
+                        <div class="pm-bd-sub" id="pmApprovedPct">85% батлагдана</div>
+                    </div>
+                    <div class="pm-bd-amount" id="pmApprovedAmt">0₮</div>
+                </div>
+
+                <div class="pm-breakdown-row pm-remaining">
+                    <div class="pm-bd-icon">⏳</div>
+                    <div class="pm-bd-text">
+                        <div class="pm-bd-label">Үлдэгдэл</div>
+                        <div class="pm-bd-sub" id="pmRemainingPct">15% гүйцэтгэгчид буцна</div>
+                    </div>
+                    <div class="pm-bd-amount" id="pmRemainingAmt">0₮</div>
+                </div>
+            </div>
+
+            <div class="pm-reason-section">
+                <label class="pm-reason-label">Шалтгаан <span style="color:#ff5757">*</span></label>
+                <textarea id="pmReason" class="pm-reason-input"
+                          placeholder="Жишээ: Барилгын талбайн цэвэрлэгээ дутуу хийгдсэн. Үлдсэн ажлыг гүйцээж шинэчлэн илгээнэ үү."></textarea>
+                <div class="pm-reason-hint">Гүйцэтгэгчид яагаад үлдэгдэл буцаагдсан тухай тайлбарлана уу.</div>
+            </div>
+
+            <div class="pm-info-box">
+                <div class="pm-info-icon">ℹ️</div>
+                <div class="pm-info-text">
+                    Батласан дүн (<strong id="pmInfoApproved">0₮</strong>) шууд Инженер→Захирал→Нягтлан явцыг үргэлжлүүлнэ. Үлдэгдэл (<strong id="pmInfoRemaining">0₮</strong>) гүйцэтгэгчид буцна.
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closePartialModal()">Цуцлах</button>
+            <button class="modal-btn modal-btn-confirm" id="pmConfirmBtn" onclick="confirmPartialApprove()">
+                ✓ Хэсэгчлэн батлах
+            </button>
+        </div>
     </div>
-
-    <div class="modal-body">
-      <div id="pmNotaryWarn" class="pm-notary-warn" style="display:none">
-        <div class="pm-notary-warn-icon">⚠</div>
-        <div class="pm-notary-warn-text">
-          <strong>Е-баримтын төлбөр төлөгдөөгүй.</strong>
-          Нийт дүнгээс <strong>10% хасагдсан</strong>.
-        </div>
-      </div>
-
-      <div class="pm-original">
-        <div class="pm-original-label" id="pmOriginalLabel">Нийт ажлын дүн</div>
-        <div class="pm-original-value" id="pmOriginalAmt">0₮</div>
-        <div id="pmOriginalSub" class="pm-original-sub" style="display:none"></div>
-      </div>
-
-      <div class="pm-slider-section">
-        <div class="pm-slider-header">
-          <span class="pm-slider-label">Батлах хувь</span>
-          <span class="pm-slider-value" id="pmPercentVal">85%</span>
-        </div>
-
-        <input type="range" id="pmSlider" class="pm-slider" min="1" max="99" value="85" oninput="updatePartialPreview()">
-
-        <div class="pm-slider-marks">
-          <span>1%</span><span>25%</span><span>50%</span><span>75%</span><span>99%</span>
-        </div>
-      </div>
-
-      <div class="pm-breakdown">
-        <div class="pm-breakdown-row pm-approved">
-          <div class="pm-bd-icon">✓</div>
-          <div class="pm-bd-text">
-            <div class="pm-bd-label">Батлагдах дүн</div>
-            <div class="pm-bd-sub" id="pmApprovedPct">85% батлагдана</div>
-          </div>
-          <div class="pm-bd-amount" id="pmApprovedAmt">0₮</div>
-        </div>
-
-        <div class="pm-breakdown-row pm-remaining">
-          <div class="pm-bd-icon">⏳</div>
-          <div class="pm-bd-text">
-            <div class="pm-bd-label">Үлдэгдэл</div>
-            <div class="pm-bd-sub" id="pmRemainingPct">15% гүйцэтгэгчид буцна</div>
-          </div>
-          <div class="pm-bd-amount" id="pmRemainingAmt">0₮</div>
-        </div>
-      </div>
-
-      <div class="pm-reason-section">
-        <label class="pm-reason-label">Шалтгаан <span style="color:#ff5757">*</span></label>
-        <textarea id="pmReason" class="pm-reason-input"
-                  placeholder="Жишээ: Барилгын талбайн цэвэрлэгээ дутуу хийгдсэн. Үлдсэн ажлыг гүйцээж шинэчлэн илгээнэ үү."></textarea>
-        <div class="pm-reason-hint">Гүйцэтгэгчид яагаад үлдэгдэл буцаагдсан тухай тайлбарлана уу.</div>
-      </div>
-
-      <div class="pm-info-box">
-        <div class="pm-info-icon">ℹ️</div>
-        <div class="pm-info-text">
-          Батласан дүн (<strong id="pmInfoApproved">0₮</strong>) шууд Инженер→Захирал→Нягтлан явцыг үргэлжлүүлнэ. Үлдэгдэл (<strong id="pmInfoRemaining">0₮</strong>) гүйцэтгэгчид буцна.
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="modal-btn modal-btn-cancel" onclick="closePartialModal()">Цуцлах</button>
-      <button class="modal-btn modal-btn-confirm" id="pmConfirmBtn" onclick="confirmPartialApprove()">
-        ✓ Хэсэгчлэн батлах
-      </button>
-    </div>
-  </div>
 </div>
 
 
 <!-- ҮЛДЭГДЭЛ ГҮЙЦЭЭХ MODAL -->
 <div class="modal-overlay" id="remainingModal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">Үлдэгдэл гүйцээж илгээх</div>
-        <div class="modal-subtitle" id="rmActId">АКТ-2026-XXXX</div>
-      </div>
-      <button class="modal-close" onclick="closeRemainingModal()">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="pm-original">
-        <div class="pm-original-label">Үлдэгдэл дүн</div>
-        <div class="pm-original-value" id="rmAmount" style="color:#fcd34d">0₮</div>
-      </div>
-
-      <div class="rm-prev-reason">
-        <div class="rm-prev-label">Координаторын тэмдэглэл:</div>
-        <div class="rm-prev-text" id="rmPrevReason">—</div>
-      </div>
-
-      <div class="pm-reason-section">
-        <label class="pm-reason-label">Гүйцээсэн ажлын тайлбар <span style="color:#ff5757">*</span></label>
-        <textarea id="rmCompletionNote" class="pm-reason-input"
-                  placeholder="Жишээ: Барилгын талбайг бүрэн цэвэрлэж дуусгасан..."></textarea>
-      </div>
-
-      <div class="pm-reason-label" style="margin-top:14px">Шинэ баримт бичгүүд (заавал биш)</div>
-      <label class="file-upload-btn" for="rmPdfs" style="margin-top:6px">📄 PDF файл сонгох</label>
-      <input type="file" id="rmPdfs" class="file-input" multiple accept="application/pdf" onchange="addRemainingPdfs(this)">
-      <div class="pdf-list" id="rmPdfList"></div>
-
-      <div class="pm-info-box">
-        <div class="pm-info-icon">ℹ️</div>
-        <div class="pm-info-text">
-          Илгээсний дараа Координатор дахин шалгана. Батлагдвал ажлын акт <strong>100% бүрэн</strong> болно.
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">Үлдэгдэл гүйцээж илгээх</div>
+                <div class="modal-subtitle" id="rmActId">АКТ-2026-XXXX</div>
+            </div>
+            <button class="modal-close" onclick="closeRemainingModal()">✕</button>
         </div>
-      </div>
-    </div>
 
-    <div class="modal-footer">
-      <button class="modal-btn modal-btn-cancel" onclick="closeRemainingModal()">Цуцлах</button>
-      <button class="modal-btn modal-btn-confirm" id="rmConfirmBtn" onclick="confirmSubmitRemaining()">
-        📤 Илгээх
-      </button>
+        <div class="modal-body">
+            <div class="pm-original">
+                <div class="pm-original-label">Үлдэгдэл дүн</div>
+                <div class="pm-original-value" id="rmAmount" style="color:#fcd34d">0₮</div>
+            </div>
+
+            <div class="rm-prev-reason">
+                <div class="rm-prev-label">Координаторын тэмдэглэл:</div>
+                <div class="rm-prev-text" id="rmPrevReason">—</div>
+            </div>
+
+            <div class="pm-reason-section">
+                <label class="pm-reason-label">Гүйцээсэн ажлын тайлбар <span style="color:#ff5757">*</span></label>
+                <textarea id="rmCompletionNote" class="pm-reason-input"
+                          placeholder="Жишээ: Барилгын талбайг бүрэн цэвэрлэж дуусгасан..."></textarea>
+            </div>
+
+            <div class="pm-reason-label" style="margin-top:14px">Шинэ баримт бичгүүд (заавал биш)</div>
+            <label class="file-upload-btn" for="rmPdfs" style="margin-top:6px">📄 PDF файл сонгох</label>
+            <input type="file" id="rmPdfs" class="file-input" multiple accept="application/pdf" onchange="addRemainingPdfs(this)">
+            <div class="pdf-list" id="rmPdfList"></div>
+
+            <div class="pm-info-box">
+                <div class="pm-info-icon">ℹ️</div>
+                <div class="pm-info-text">
+                    Илгээсний дараа Координатор дахин шалгана. Батлагдвал ажлын акт <strong>100% бүрэн</strong> болно.
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeRemainingModal()">Цуцлах</button>
+            <button class="modal-btn modal-btn-confirm" id="rmConfirmBtn" onclick="confirmSubmitRemaining()">
+                📤 Илгээх
+            </button>
+        </div>
     </div>
-  </div>
 </div>
 
 
 <!-- БУЦААГДСАН АКТ ЗАСААД ДАХИН ИЛГЭЭХ MODAL -->
 <div class="modal-overlay" id="resubmitModal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title">Засаад дахин илгээх</div>
-        <div class="modal-subtitle" id="rsActId">АКТ-2026-XXXX</div>
-      </div>
-      <button class="modal-close" onclick="closeResubmitModal()">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="rm-prev-reason" style="border-left-color:#dc2626;background:rgba(254,226,226,0.4)">
-        <div class="rm-prev-label" style="color:#b91c1c">❌ Буцаасан шалтгаан:</div>
-        <div class="rm-prev-text" id="rsRejectReason">—</div>
-      </div>
-
-      <div class="pm-reason-label" style="margin-top:14px">Компанийн нэр <span style="color:#ff5757">*</span></div>
-      <input type="text" id="rsCompany" class="pm-reason-input" style="min-height:auto;height:auto" placeholder="Модун Констракшн ХХК">
-
-      <div class="pm-reason-label" style="margin-top:14px">Ажлын тайлбар <span style="color:#ff5757">*</span></div>
-      <textarea id="rsWork" class="pm-reason-input" placeholder="Хийсэн ажлын дэлгэрэнгүй..."></textarea>
-
-      <div class="pm-reason-label" style="margin-top:14px">Дүн (₮) <span style="color:#ff5757">*</span></div>
-      <input type="number" id="rsAmount" class="pm-reason-input" style="min-height:auto;height:auto" placeholder="48500000">
-
-      <div class="pm-reason-label" style="margin-top:14px">Засварын тэмдэглэл (заавал биш)</div>
-      <textarea id="rsNote" class="pm-reason-input" placeholder="Юу зассан тухай тайлбар... (Координаторт харагдана)"></textarea>
-
-      <div class="pm-reason-label" style="margin-top:14px">Нэмэлт баримт бичиг (PDF)</div>
-      <div class="rm-prev-text" id="rsOldPdfInfo" style="margin-bottom:8px;font-size:11px;color:var(--text-tertiary)"></div>
-      <label class="file-upload-btn" for="rsPdfs">📄 PDF файл нэмэх</label>
-      <input type="file" id="rsPdfs" class="file-input" multiple accept="application/pdf" onchange="addResubmitPdfs(this)">
-      <div class="pdf-list" id="rsPdfList"></div>
-
-      <div class="pm-reason-label" style="margin-top:14px">Е-баримтын баримт (PDF)</div>
-      <div class="rm-prev-text" id="rsOldEbrInfo" style="margin-bottom:8px;font-size:11px;color:var(--text-tertiary)"></div>
-      <label class="file-upload-btn notary-upload" for="rsEbr">📜 Е-баримт нэмэх (PDF)</label>
-      <input type="file" id="rsEbr" class="file-input" multiple accept="application/pdf" onchange="addResubmitEbr(this)">
-      <div class="pdf-list" id="rsEbrList"></div>
-
-      <div class="pm-info-box">
-        <div class="pm-info-icon">ℹ️</div>
-        <div class="pm-info-text">
-          Засаж илгээсний дараа акт <strong>Координатораас эхлэн</strong> дахин батлагдана. Устгах таймер цуцлагдана.
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">Засаад дахин илгээх</div>
+                <div class="modal-subtitle" id="rsActId">АКТ-2026-XXXX</div>
+            </div>
+            <button class="modal-close" onclick="closeResubmitModal()">✕</button>
         </div>
-      </div>
-    </div>
 
-    <div class="modal-footer">
-      <button class="modal-btn modal-btn-cancel" onclick="closeResubmitModal()">Цуцлах</button>
-      <button class="modal-btn modal-btn-confirm" id="rsConfirmBtn" onclick="confirmResubmit()">
-        🔄 Дахин илгээх
-      </button>
+        <div class="modal-body">
+            <div class="rm-prev-reason" style="border-left-color:#dc2626;background:rgba(254,226,226,0.4)">
+                <div class="rm-prev-label" style="color:#b91c1c">❌ Буцаасан шалтгаан:</div>
+                <div class="rm-prev-text" id="rsRejectReason">—</div>
+            </div>
+
+            <div class="pm-reason-label" style="margin-top:14px">Компанийн нэр <span style="color:#ff5757">*</span></div>
+            <input type="text" id="rsCompany" class="pm-reason-input" style="min-height:auto;height:auto" placeholder="Модун Констракшн ХХК">
+
+            <div class="pm-reason-label" style="margin-top:14px">Ажлын тайлбар <span style="color:#ff5757">*</span></div>
+            <textarea id="rsWork" class="pm-reason-input" placeholder="Хийсэн ажлын дэлгэрэнгүй..."></textarea>
+
+            <div class="pm-reason-label" style="margin-top:14px">Дүн (₮) <span style="color:#ff5757">*</span></div>
+            <input type="number" id="rsAmount" class="pm-reason-input" style="min-height:auto;height:auto" placeholder="48500000">
+
+            <div class="pm-reason-label" style="margin-top:14px">Засварын тэмдэглэл (заавал биш)</div>
+            <textarea id="rsNote" class="pm-reason-input" placeholder="Юу зассан тухай тайлбар... (Координаторт харагдана)"></textarea>
+
+            <div class="pm-reason-label" style="margin-top:14px">Нэмэлт баримт бичиг (PDF)</div>
+            <div class="rm-prev-text" id="rsOldPdfInfo" style="margin-bottom:8px;font-size:11px;color:var(--text-tertiary)"></div>
+            <label class="file-upload-btn" for="rsPdfs">📄 PDF файл нэмэх</label>
+            <input type="file" id="rsPdfs" class="file-input" multiple accept="application/pdf" onchange="addResubmitPdfs(this)">
+            <div class="pdf-list" id="rsPdfList"></div>
+
+            <div class="pm-reason-label" style="margin-top:14px">Е-баримтын баримт (PDF)</div>
+            <div class="rm-prev-text" id="rsOldEbrInfo" style="margin-bottom:8px;font-size:11px;color:var(--text-tertiary)"></div>
+            <label class="file-upload-btn notary-upload" for="rsEbr">📜 Е-баримт нэмэх (PDF)</label>
+            <input type="file" id="rsEbr" class="file-input" multiple accept="application/pdf" onchange="addResubmitEbr(this)">
+            <div class="pdf-list" id="rsEbrList"></div>
+
+            <div class="pm-info-box">
+                <div class="pm-info-icon">ℹ️</div>
+                <div class="pm-info-text">
+                    Засаж илгээсний дараа акт <strong>Координатораас эхлэн</strong> дахин батлагдана. Устгах таймер цуцлагдана.
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeResubmitModal()">Цуцлах</button>
+            <button class="modal-btn modal-btn-confirm" id="rsConfirmBtn" onclick="confirmResubmit()">
+                🔄 Дахин илгээх
+            </button>
+        </div>
     </div>
-  </div>
+</div>
+
+
+<!-- ★★★ ГЭРЭЭ ЗАСАХ MODAL (зөвхөн Координатор) ★★★ -->
+<div class="modal-overlay" id="contractEditModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">Гэрээ засах</div>
+                <div class="modal-subtitle" id="ceNo">ГЭР-XXXX</div>
+            </div>
+            <button class="modal-close" onclick="closeContractEdit()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="pm-reason-label">Компанийн нэр <span style="color:#ff5757">*</span></div>
+            <input type="text" id="ceCompany" class="pm-reason-input" style="min-height:auto;height:auto" placeholder="Модун Констракшн ХХК">
+
+            <div class="pm-reason-label" style="margin-top:14px">Гэрээний дугаар <span style="color:#ff5757">*</span></div>
+            <input type="text" id="ceContractNo" class="pm-reason-input" style="min-height:auto;height:auto" placeholder="ГЭР-2026-14">
+
+            <div class="pm-reason-label" style="margin-top:14px">Гэрээний нийт дүн (₮) <span style="color:#ff5757">*</span></div>
+            <input type="number" id="ceAmount" class="pm-reason-input" style="min-height:auto;height:auto" placeholder="1000000000" oninput="fmtContractEditAmt()">
+            <div class="amt-fmt" id="ceAmtFmt"></div>
+
+            <div class="pm-reason-label" style="margin-top:14px">Гэрээний файл (PDF)</div>
+            <div class="rm-prev-text" id="ceOldPdfInfo" style="margin-bottom:8px;font-size:11px;color:var(--text-tertiary)"></div>
+            <label class="file-upload-btn" for="cePdfs">📄 PDF нэмэх</label>
+            <input type="file" id="cePdfs" class="file-input" multiple accept="application/pdf" onchange="addContractEditPdfs(this)">
+            <div class="pdf-list" id="cePdfList"></div>
+
+            <div class="pm-info-box">
+                <div class="pm-info-icon">ℹ️</div>
+                <div class="pm-info-text">
+                    Дүн засвал <strong>үлдэгдэл автоматаар дахин тооцогдоно</strong>. Ашигласан дүн (батлагдсан актууд) хэвээр хадгалагдана.
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeContractEdit()">Цуцлах</button>
+            <button class="modal-btn modal-btn-confirm" id="ceConfirmBtn" onclick="confirmContractEdit()">💾 Хадгалах</button>
+        </div>
+    </div>
 </div>
 
 
 <script>
-  (function(){
-    const cv = document.getElementById('meshCanvas');
-    if (!cv) return;
-    const ctx = cv.getContext('2d');
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    (function(){
+        const cv = document.getElementById('meshCanvas');
+        if (!cv) return;
+        const ctx = cv.getContext('2d');
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    function resize() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      cv.width = w * dpr;
-      cv.height = h * dpr;
-      cv.style.width = w + 'px';
-      cv.style.height = h + 'px';
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(dpr, dpr);
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    function getRibbons() {
-      const h = window.innerHeight;
-      return [
-        { y: h * 0.15, amp: 70,  freq: 0.008, speed: 0.003,   c1: 'rgba(99, 91, 255, 0.18)',  c2: 'rgba(99, 91, 255, 0)',   w: 150 },
-        { y: h * 0.40, amp: 90,  freq: 0.006, speed: -0.002,  c1: 'rgba(167, 139, 250, 0.14)', c2: 'rgba(167, 139, 250, 0)', w: 170 },
-        { y: h * 0.65, amp: 60,  freq: 0.01,  speed: 0.0025,  c1: 'rgba(0, 217, 163, 0.12)',   c2: 'rgba(0, 217, 163, 0)',   w: 130 },
-        { y: h * 0.85, amp: 80,  freq: 0.007, speed: -0.0018, c1: 'rgba(244, 114, 182, 0.10)', c2: 'rgba(244, 114, 182, 0)', w: 140 }
-      ];
-    }
-
-    let t = 0;
-    let ribbons = getRibbons();
-    window.addEventListener('resize', () => { ribbons = getRibbons(); });
-
-    function draw() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      ctx.clearRect(0, 0, w, h);
-      t += 1;
-
-      ribbons.forEach(r => {
-        ctx.beginPath();
-        const grad = ctx.createLinearGradient(0, r.y - r.w / 2, 0, r.y + r.w / 2);
-        grad.addColorStop(0, r.c2);
-        grad.addColorStop(0.5, r.c1);
-        grad.addColorStop(1, r.c2);
-        ctx.fillStyle = grad;
-
-        ctx.moveTo(0, r.y);
-        for (let x = 0; x <= w; x += 4) {
-          const y = r.y
-                  + Math.sin(x * r.freq + t * r.speed) * r.amp
-                  + Math.sin(x * r.freq * 2 + t * r.speed * 1.5) * (r.amp / 3);
-          ctx.lineTo(x, y);
+        function resize() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            cv.width = w * dpr;
+            cv.height = h * dpr;
+            cv.style.width = w + 'px';
+            cv.style.height = h + 'px';
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.scale(dpr, dpr);
         }
-        for (let x = w; x >= 0; x -= 4) {
-          const y = r.y
-                  + Math.sin(x * r.freq + t * r.speed) * r.amp
-                  + Math.sin(x * r.freq * 2 + t * r.speed * 1.5) * (r.amp / 3)
-                  + r.w;
-          ctx.lineTo(x, y);
+        resize();
+        window.addEventListener('resize', resize);
+
+        function getRibbons() {
+            const h = window.innerHeight;
+            return [
+                { y: h * 0.15, amp: 70,  freq: 0.008, speed: 0.003,   c1: 'rgba(99, 91, 255, 0.18)',  c2: 'rgba(99, 91, 255, 0)',   w: 150 },
+                { y: h * 0.40, amp: 90,  freq: 0.006, speed: -0.002,  c1: 'rgba(167, 139, 250, 0.14)', c2: 'rgba(167, 139, 250, 0)', w: 170 },
+                { y: h * 0.65, amp: 60,  freq: 0.01,  speed: 0.0025,  c1: 'rgba(0, 217, 163, 0.12)',   c2: 'rgba(0, 217, 163, 0)',   w: 130 },
+                { y: h * 0.85, amp: 80,  freq: 0.007, speed: -0.0018, c1: 'rgba(244, 114, 182, 0.10)', c2: 'rgba(244, 114, 182, 0)', w: 140 }
+            ];
         }
-        ctx.closePath();
-        ctx.fill();
-      });
 
-      requestAnimationFrame(draw);
-    }
+        let t = 0;
+        let ribbons = getRibbons();
+        window.addEventListener('resize', () => { ribbons = getRibbons(); });
 
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      t = 100;
-      requestAnimationFrame(draw);
-    } else {
-      draw();
-    }
-  })();
+        function draw() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            ctx.clearRect(0, 0, w, h);
+            t += 1;
+
+            ribbons.forEach(r => {
+                ctx.beginPath();
+                const grad = ctx.createLinearGradient(0, r.y - r.w / 2, 0, r.y + r.w / 2);
+                grad.addColorStop(0, r.c2);
+                grad.addColorStop(0.5, r.c1);
+                grad.addColorStop(1, r.c2);
+                ctx.fillStyle = grad;
+
+                ctx.moveTo(0, r.y);
+                for (let x = 0; x <= w; x += 4) {
+                    const y = r.y
+                        + Math.sin(x * r.freq + t * r.speed) * r.amp
+                        + Math.sin(x * r.freq * 2 + t * r.speed * 1.5) * (r.amp / 3);
+                    ctx.lineTo(x, y);
+                }
+                for (let x = w; x >= 0; x -= 4) {
+                    const y = r.y
+                        + Math.sin(x * r.freq + t * r.speed) * r.amp
+                        + Math.sin(x * r.freq * 2 + t * r.speed * 1.5) * (r.amp / 3)
+                        + r.w;
+                    ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+            });
+
+            requestAnimationFrame(draw);
+        }
+
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            t = 100;
+            requestAnimationFrame(draw);
+        } else {
+            draw();
+        }
+    })();
 </script>
 
 

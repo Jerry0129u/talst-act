@@ -40,8 +40,13 @@
     textarea { font-size: 14px; padding: 13px 16px; }
     textarea { height: 96px; }
 
-    #al, #listBody, #contractList {
+    #al, #listBody {
         display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .cc-section-grid {
         grid-template-columns: 1fr 1fr;
         gap: 12px;
     }
@@ -71,13 +76,16 @@
     .role-card {
         padding: 14px 16px;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        text-align: center;
         gap: 8px;
     }
 
-    .role-card-title { font-size: 12px; white-space: normal; word-break: keep-all; line-height: 1.35; }
-    .role-card-desc { font-size: 10px; white-space: normal; word-break: keep-all; line-height: 1.4; margin-top: 3px; }
-    .role-card-count { font-size: 22px; flex-shrink: 0; margin-top: 4px; }
+    .role-card-icon { margin: 0 auto; }
+    .role-card-body { text-align: center; }
+    .role-card-title { font-size: 12px; white-space: normal; word-break: keep-all; line-height: 1.35; text-align: center; }
+    .role-card-desc { font-size: 10px; white-space: normal; word-break: keep-all; line-height: 1.4; margin-top: 3px; text-align: center; }
+    .role-card-count { font-size: 22px; flex-shrink: 0; margin-top: 8px; width: 100%; text-align: center; align-self: center; }
 
     .metric-grid { gap: 14px; }
     .metric-card { padding: 18px; }
@@ -237,8 +245,13 @@
     textarea { height: 92px; }
 
     /* LIST */
-    #al, #listBody, #contractList {
+    #al, #listBody {
         display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .cc-section-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 14px;
     }
@@ -269,14 +282,17 @@
     .role-card {
         padding: 14px !important;
         flex-direction: column !important;
-        align-items: flex-start !important;
+        align-items: center !important;
+        text-align: center !important;
         gap: 8px !important;
         min-height: 100px;
     }
 
     .role-card-icon { width: 36px; height: 36px; flex-shrink: 0; }
 
-    .role-card-body { flex: 1; min-width: 0; width: 100%; overflow: visible; }
+    .role-card-body { flex: 1; min-width: 0; width: 100%; overflow: visible; text-align: center !important; }
+
+    .role-card-icon { margin: 0 auto; }
 
     .role-card-title {
         font-size: 12px !important;
@@ -285,6 +301,7 @@
         word-break: keep-all !important;
         line-height: 1.35;
         margin-bottom: 4px;
+        text-align: center !important;
     }
 
     .role-card-desc {
@@ -292,12 +309,16 @@
         white-space: normal !important;
         word-break: keep-all !important;
         line-height: 1.45;
+        text-align: center !important;
     }
 
     .role-card-count {
         font-size: 26px !important;
         flex-shrink: 0;
-        margin-top: 6px;
+        margin-top: 8px;
+        width: 100% !important;
+        text-align: center !important;
+        align-self: center !important;
     }
 
     /* DASHBOARD */
@@ -381,7 +402,9 @@
     .tabs { padding: 14px !important; top: 100px !important; }
     .tab { padding: 13px 18px; font-size: 14px; }
 
-    #al, #listBody, #contractList { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    #al, #listBody { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+    .cc-section-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
 
     #listBody > .role-cards { grid-template-columns: repeat(6, 1fr); gap: 14px; }
 
@@ -407,11 +430,55 @@
 
 @media (min-width: 1920px) {
     .app { max-width: 1600px !important; }
-    #al, #listBody, #contractList { grid-template-columns: repeat(3, 1fr); }
+    #al, #listBody { grid-template-columns: repeat(3, 1fr); }
+
+    .cc-section-grid { grid-template-columns: repeat(3, 1fr); }
     #listBody > .role-cards { grid-template-columns: repeat(6, 1fr); }
     .role-card { padding: 20px 18px !important; }
     .role-card-title { font-size: 14px !important; }
     .role-card-count { font-size: 30px !important; }
+}
+
+
+/* ================================================================
+   MOBILE — 768px хүртэл
+   ================================================================ */
+
+@media (max-width: 768px) {
+
+    #listBody > .role-cards {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .role-card {
+        align-items: center !important;
+        text-align: center !important;
+        padding: 16px 14px !important;
+    }
+
+    .role-card-icon {
+        margin: 0 auto;
+    }
+
+    .role-card-body {
+        width: 100% !important;
+        text-align: center !important;
+    }
+
+    .role-card-title,
+    .role-card-desc {
+        text-align: center !important;
+    }
+
+    .role-card-count {
+        align-self: center !important;
+        width: 100% !important;
+        text-align: center !important;
+        margin-top: 10px !important;
+        font-size: 34px !important;
+    }
 }
 
 
